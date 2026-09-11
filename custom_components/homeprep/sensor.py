@@ -24,6 +24,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             HomePrepItemsSensor(store, entry),
+            HomePrepExpiredSensor(store, entry),
             HomePrepExpiringSoonSensor(store, entry),
             HomePrepDueForCheckSensor(store, entry),
             HomePrepStatusSensor(store, entry),
@@ -58,6 +59,101 @@ class HomePrepSensor(SensorEntity):
     def _handle_store_update(self) -> None:
         """Handle a HomePrep storage update."""
         self.async_write_ha_state()
+
+
+def get_expired_items(store: HomePrepStore) -> list[dict]:
+    """Return expired HomePrep items."""
+
+    today = date.today()
+    expired_items = []
+
+    for item in store.items:
+        expires_at = item.get("expires_at")
+
+        if not expires_at:
+            continue
+
+        try:
+            expiry_date = date.fromisoformat(expires_at)
+        except ValueError:
+            continue
+
+        if expiry_date < today:
+            expired_items.append(
+                {
+                    "id": item.get("id"),
+                    "name": item.get("name"),
+                    "category": item.get("category"),
+                    "expires_at": expires_at,
+                    "days_overdue": (today - expiry_date).days,
+                }
+            )
+
+    return expired_items
+
+
+def get_expiring_items(store: HomePrepStore) -> list[dict]:
+    """Return items expiring within 30 days."""
+
+    today = date.today()
+    limit = today + timedelta(days=30)
+
+    expiring_items = []
+
+    for item in store.items:
+        expires_at = item.get("expires_at")
+
+        if not expires_at:
+            continue
+
+        try:
+            expiry_date = date.fromisoformat(expires_at)
+        except ValueError:
+            continue
+
+        if today <= expiry_date <= limit:
+            expiring_items.append(
+                {
+                    "id": item.get("id"),
+                    "name": item.get("name"),
+                    "category": item.get("category"),
+                    "expires_at": expires_at,
+                    "days_remaining": (expiry_date - today).days,
+                }
+            )
+
+    return expiring_items
+
+
+def get_due_items(store: HomePrepStore) -> list[dict]:
+    """Return items due for check."""
+
+    today = date.today()
+    due_items = []
+
+    for item in store.items:
+        next_check_at = item.get("next_check_at")
+
+        if not next_check_at:
+            continue
+
+        try:
+            check_date = date.fromisoformat(next_check_at)
+        except ValueError:
+            continue
+
+        if check_date <= today:
+            due_items.append(
+                {
+                    "id": item.get("id"),
+                    "name": item.get("name"),
+                    "category": item.get("category"),
+                    "next_check_at": next_check_at,
+                    "days_overdue": (today - check_date).days,
+                }
+            )
+
+    return due_items
 
 
 class HomePrepItemsSensor(HomePrepSensor):
@@ -102,6 +198,34 @@ class HomePrepItemsSensor(HomePrepSensor):
         }
 
 
+class HomePrepExpiredSensor(HomePrepSensor):
+    """Sensor showing expired HomePrep items."""
+
+    _attr_name = "HomePrep Expired"
+    _attr_icon = "mdi:calendar-remove"
+
+    def __init__(
+        self,
+        store: HomePrepStore,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(store, entry)
+        self._attr_unique_id = f"{entry.entry_id}_expired"
+
+    @property
+    def native_value(self) -> int:
+        """Return number of expired items."""
+        return len(get_expired_items(self._store))
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return expired item details."""
+        return {
+            "items": get_expired_items(self._store),
+        }
+
+
 class HomePrepExpiringSoonSensor(HomePrepSensor):
     """Sensor showing items expiring soon."""
 
@@ -117,47 +241,16 @@ class HomePrepExpiringSoonSensor(HomePrepSensor):
         super().__init__(store, entry)
         self._attr_unique_id = f"{entry.entry_id}_expiring_soon"
 
-    def _get_expiring_items(self) -> list[dict]:
-        """Return items expiring within 30 days."""
-
-        today = date.today()
-        limit = today + timedelta(days=30)
-
-        expiring_items = []
-
-        for item in self._store.items:
-            expires_at = item.get("expires_at")
-
-            if not expires_at:
-                continue
-
-            try:
-                expiry_date = date.fromisoformat(expires_at)
-            except ValueError:
-                continue
-
-            if today <= expiry_date <= limit:
-                expiring_items.append(
-                    {
-                        "id": item.get("id"),
-                        "name": item.get("name"),
-                        "expires_at": expires_at,
-                        "days_remaining": (expiry_date - today).days,
-                    }
-                )
-
-        return expiring_items
-
     @property
     def native_value(self) -> int:
         """Return number of items expiring within 30 days."""
-        return len(self._get_expiring_items())
+        return len(get_expiring_items(self._store))
 
     @property
     def extra_state_attributes(self) -> dict:
         """Return details about expiring items."""
         return {
-            "items": self._get_expiring_items(),
+            "items": get_expiring_items(self._store),
         }
 
 
@@ -176,46 +269,16 @@ class HomePrepDueForCheckSensor(HomePrepSensor):
         super().__init__(store, entry)
         self._attr_unique_id = f"{entry.entry_id}_due_for_check"
 
-    def _get_due_items(self) -> list[dict]:
-        """Return items due for check."""
-
-        today = date.today()
-
-        due_items = []
-
-        for item in self._store.items:
-            next_check_at = item.get("next_check_at")
-
-            if not next_check_at:
-                continue
-
-            try:
-                check_date = date.fromisoformat(next_check_at)
-            except ValueError:
-                continue
-
-            if check_date <= today:
-                due_items.append(
-                    {
-                        "id": item.get("id"),
-                        "name": item.get("name"),
-                        "next_check_at": next_check_at,
-                        "days_overdue": (today - check_date).days,
-                    }
-                )
-
-        return due_items
-
     @property
     def native_value(self) -> int:
         """Return number of items due for check."""
-        return len(self._get_due_items())
+        return len(get_due_items(self._store))
 
     @property
     def extra_state_attributes(self) -> dict:
         """Return details about items due for check."""
         return {
-            "items": self._get_due_items(),
+            "items": get_due_items(self._store),
         }
 
 
@@ -233,58 +296,18 @@ class HomePrepStatusSensor(HomePrepSensor):
         super().__init__(store, entry)
         self._attr_unique_id = f"{entry.entry_id}_status"
 
-    def _get_counts(self) -> dict[str, int]:
-        """Calculate HomePrep status counts."""
-
-        today = date.today()
-        expiry_limit = today + timedelta(days=30)
-
-        expired = 0
-        expiring_soon = 0
-        due_for_check = 0
-
-        for item in self._store.items:
-            expires_at = item.get("expires_at")
-
-            if expires_at:
-                try:
-                    expiry_date = date.fromisoformat(expires_at)
-                except ValueError:
-                    expiry_date = None
-
-                if expiry_date is not None:
-                    if expiry_date < today:
-                        expired += 1
-                    elif expiry_date <= expiry_limit:
-                        expiring_soon += 1
-
-            next_check_at = item.get("next_check_at")
-
-            if next_check_at:
-                try:
-                    check_date = date.fromisoformat(next_check_at)
-                except ValueError:
-                    check_date = None
-
-                if check_date is not None and check_date <= today:
-                    due_for_check += 1
-
-        return {
-            "expired": expired,
-            "expiring_soon": expiring_soon,
-            "due_for_check": due_for_check,
-        }
-
     @property
     def native_value(self) -> str:
         """Return overall HomePrep status."""
 
-        counts = self._get_counts()
+        expired = get_expired_items(self._store)
+        expiring = get_expiring_items(self._store)
+        due = get_due_items(self._store)
 
-        if counts["expired"] > 0 or counts["due_for_check"] > 0:
+        if expired or due:
             return "critical"
 
-        if counts["expiring_soon"] > 0:
+        if expiring:
             return "attention"
 
         return "ok"
@@ -303,5 +326,17 @@ class HomePrepStatusSensor(HomePrepSensor):
 
     @property
     def extra_state_attributes(self) -> dict:
-        """Return status details."""
-        return self._get_counts()
+        """Return complete HomePrep attention summary."""
+
+        expired = get_expired_items(self._store)
+        expiring = get_expiring_items(self._store)
+        due = get_due_items(self._store)
+
+        return {
+            "expired": len(expired),
+            "expiring_soon": len(expiring),
+            "due_for_check": len(due),
+            "expired_items": expired,
+            "expiring_soon_items": expiring,
+            "due_for_check_items": due,
+        }
