@@ -79,6 +79,27 @@ class HomePrepItemsSensor(HomePrepSensor):
         """Return total number of items."""
         return len(self._store.items)
 
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return item type statistics."""
+
+        consumables = sum(
+            1
+            for item in self._store.items
+            if item.get("item_type") == "consumable"
+        )
+
+        equipment = sum(
+            1
+            for item in self._store.items
+            if item.get("item_type") == "equipment"
+        )
+
+        return {
+            "consumables": consumables,
+            "equipment": equipment,
+        }
+
 
 class HomePrepExpiringSoonSensor(HomePrepSensor):
     """Sensor showing items expiring soon."""
@@ -95,14 +116,13 @@ class HomePrepExpiringSoonSensor(HomePrepSensor):
         super().__init__(store, entry)
         self._attr_unique_id = f"{entry.entry_id}_expiring_soon"
 
-    @property
-    def native_value(self) -> int:
-        """Return number of items expiring within 30 days."""
+    def _get_expiring_items(self) -> list[dict]:
+        """Return items expiring within 30 days."""
 
         today = date.today()
         limit = today + timedelta(days=30)
 
-        count = 0
+        expiring_items = []
 
         for item in self._store.items:
             expires_at = item.get("expires_at")
@@ -110,12 +130,34 @@ class HomePrepExpiringSoonSensor(HomePrepSensor):
             if not expires_at:
                 continue
 
-            expiry_date = date.fromisoformat(expires_at)
+            try:
+                expiry_date = date.fromisoformat(expires_at)
+            except ValueError:
+                continue
 
             if today <= expiry_date <= limit:
-                count += 1
+                expiring_items.append(
+                    {
+                        "id": item.get("id"),
+                        "name": item.get("name"),
+                        "expires_at": expires_at,
+                        "days_remaining": (expiry_date - today).days,
+                    }
+                )
 
-        return count
+        return expiring_items
+
+    @property
+    def native_value(self) -> int:
+        """Return number of items expiring within 30 days."""
+        return len(self._get_expiring_items())
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return details about expiring items."""
+        return {
+            "items": self._get_expiring_items(),
+        }
 
 
 class HomePrepDueForCheckSensor(HomePrepSensor):
@@ -133,13 +175,12 @@ class HomePrepDueForCheckSensor(HomePrepSensor):
         super().__init__(store, entry)
         self._attr_unique_id = f"{entry.entry_id}_due_for_check"
 
-    @property
-    def native_value(self) -> int:
-        """Return number of items due for check."""
+    def _get_due_items(self) -> list[dict]:
+        """Return items due for check."""
 
         today = date.today()
 
-        count = 0
+        due_items = []
 
         for item in self._store.items:
             next_check_at = item.get("next_check_at")
@@ -147,9 +188,31 @@ class HomePrepDueForCheckSensor(HomePrepSensor):
             if not next_check_at:
                 continue
 
-            check_date = date.fromisoformat(next_check_at)
+            try:
+                check_date = date.fromisoformat(next_check_at)
+            except ValueError:
+                continue
 
             if check_date <= today:
-                count += 1
+                due_items.append(
+                    {
+                        "id": item.get("id"),
+                        "name": item.get("name"),
+                        "next_check_at": next_check_at,
+                        "days_overdue": (today - check_date).days,
+                    }
+                )
 
-        return count
+        return due_items
+
+    @property
+    def native_value(self) -> int:
+        """Return number of items due for check."""
+        return len(self._get_due_items())
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return details about items due for check."""
+        return {
+            "items": self._get_due_items(),
+        }
