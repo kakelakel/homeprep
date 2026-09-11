@@ -71,3 +71,87 @@ add_item:
       selector:
         text:
           multiline: true
+          
+update_item:
+  name: Update item
+  description: Update an existing HomePrep item.
+  fields:
+    item_id:
+      name: Item ID
+      description: Unique ID of the item to update.
+      required: true
+      selector:
+        text:
+
+    name:
+      name: Name
+      required: false
+      selector:
+        text:
+
+    category:
+      name: Category
+      required: false
+      selector:
+        text:
+
+    item_type:
+      name: Item type
+      required: false
+      selector:
+        select:
+          options:
+            - consumable
+            - equipment
+
+    quantity:
+      name: Quantity
+      required: false
+      selector:
+        number:
+          min: 0
+          step: 1
+          mode: box
+
+    unit:
+      name: Unit
+      required: false
+      selector:
+        text:
+
+    expires_at:
+      name: Expiration date
+      required: false
+      selector:
+        date:
+
+    last_checked:
+      name: Last checked
+      required: false
+      selector:
+        date:
+
+    next_check_at:
+      name: Next check
+      required: false
+      selector:
+        date:
+
+    notes:
+      name: Notes
+      required: false
+      selector:
+        text:
+          multiline: true
+
+
+delete_item:
+  name: Delete item
+  description: Delete an existing HomePrep item.
+  fields:
+    item_id:
+      name: Item ID
+      description: Unique ID of the item to delete.
+      required: true
+      selector:
+        text:
