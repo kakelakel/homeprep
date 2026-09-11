@@ -17,6 +17,9 @@ from .const import (
 from .store import HomePrepStore
 
 
+PLATFORMS = ["sensor"]
+
+
 ADD_ITEM_SCHEMA = vol.Schema(
     {
         vol.Required("name"): cv.string,
@@ -67,6 +70,11 @@ async def async_setup_entry(
     await store.async_load()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = store
+
+    await hass.config_entries.async_forward_entry_setups(
+        entry,
+        PLATFORMS,
+    )
 
     async def async_handle_add_item(call: ServiceCall) -> None:
         """Handle the add item action."""
@@ -141,6 +149,14 @@ async def async_unload_entry(
     entry: ConfigEntry,
 ) -> bool:
     """Unload a HomePrep config entry."""
+
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry,
+        PLATFORMS,
+    )
+
+    if not unload_ok:
+        return False
 
     hass.services.async_remove(
         DOMAIN,
