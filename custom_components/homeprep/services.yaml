@@ -1,0 +1,73 @@
+add_item:
+  name: Add item
+  description: Add a preparedness item to HomePrep.
+  fields:
+    name:
+      name: Name
+      description: Name of the item.
+      required: true
+      selector:
+        text:
+
+    category:
+      name: Category
+      description: Category of the item.
+      required: true
+      selector:
+        text:
+
+    item_type:
+      name: Item type
+      description: Whether the item is a consumable or equipment.
+      required: true
+      selector:
+        select:
+          options:
+            - consumable
+            - equipment
+
+    quantity:
+      name: Quantity
+      description: Amount of the item.
+      required: true
+      selector:
+        number:
+          min: 0
+          step: 1
+          mode: box
+
+    unit:
+      name: Unit
+      description: Unit used for the quantity.
+      required: true
+      selector:
+        text:
+
+    expires_at:
+      name: Expiration date
+      description: Optional expiration or best-before date.
+      required: false
+      selector:
+        date:
+
+    last_checked:
+      name: Last checked
+      description: Optional date when the item was last checked.
+      required: false
+      selector:
+        date:
+
+    next_check_at:
+      name: Next check
+      description: Optional date when the item should next be checked.
+      required: false
+      selector:
+        date:
+
+    notes:
+      name: Notes
+      description: Optional notes about the item.
+      required: false
+      selector:
+        text:
+          multiline: true
