@@ -4,10 +4,11 @@ from datetime import date, timedelta
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, SIGNAL_ITEMS_UPDATED
 from .store import HomePrepStore
 
 
@@ -29,7 +30,36 @@ async def async_setup_entry(
     )
 
 
-class HomePrepItemsSensor(SensorEntity):
+class HomePrepSensor(SensorEntity):
+    """Base class for HomePrep sensors."""
+
+    def __init__(
+        self,
+        store: HomePrepStore,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        self._store = store
+        self._entry = entry
+
+    async def async_added_to_hass(self) -> None:
+        """Subscribe to HomePrep storage updates."""
+
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass,
+                SIGNAL_ITEMS_UPDATED,
+                self._handle_store_update,
+            )
+        )
+
+    @callback
+    def _handle_store_update(self) -> None:
+        """Handle a HomePrep storage update."""
+        self.async_write_ha_state()
+
+
+class HomePrepItemsSensor(HomePrepSensor):
     """Sensor showing total number of HomePrep items."""
 
     _attr_name = "HomePrep Items"
@@ -41,7 +71,7 @@ class HomePrepItemsSensor(SensorEntity):
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
-        self._store = store
+        super().__init__(store, entry)
         self._attr_unique_id = f"{entry.entry_id}_items"
 
     @property
@@ -50,7 +80,7 @@ class HomePrepItemsSensor(SensorEntity):
         return len(self._store.items)
 
 
-class HomePrepExpiringSoonSensor(SensorEntity):
+class HomePrepExpiringSoonSensor(HomePrepSensor):
     """Sensor showing items expiring soon."""
 
     _attr_name = "HomePrep Expiring Soon"
@@ -62,7 +92,7 @@ class HomePrepExpiringSoonSensor(SensorEntity):
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
-        self._store = store
+        super().__init__(store, entry)
         self._attr_unique_id = f"{entry.entry_id}_expiring_soon"
 
     @property
@@ -88,7 +118,7 @@ class HomePrepExpiringSoonSensor(SensorEntity):
         return count
 
 
-class HomePrepDueForCheckSensor(SensorEntity):
+class HomePrepDueForCheckSensor(HomePrepSensor):
     """Sensor showing items due for check."""
 
     _attr_name = "HomePrep Due For Check"
@@ -100,7 +130,7 @@ class HomePrepDueForCheckSensor(SensorEntity):
         entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
-        self._store = store
+        super().__init__(store, entry)
         self._attr_unique_id = f"{entry.entry_id}_due_for_check"
 
     @property
