@@ -8,7 +8,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN, SERVICE_ADD_ITEM
+from .const import (
+    DOMAIN,
+    SERVICE_ADD_ITEM,
+    SERVICE_DELETE_ITEM,
+    SERVICE_UPDATE_ITEM,
+)
 from .store import HomePrepStore
 
 
@@ -25,6 +30,29 @@ ADD_ITEM_SCHEMA = vol.Schema(
         vol.Optional("last_checked"): cv.string,
         vol.Optional("next_check_at"): cv.string,
         vol.Optional("notes"): cv.string,
+    }
+)
+
+UPDATE_ITEM_SCHEMA = vol.Schema(
+    {
+        vol.Required("item_id"): cv.string,
+        vol.Optional("name"): cv.string,
+        vol.Optional("category"): cv.string,
+        vol.Optional("item_type"): vol.In(
+            ["consumable", "equipment"]
+        ),
+        vol.Optional("quantity"): vol.Coerce(float),
+        vol.Optional("unit"): cv.string,
+        vol.Optional("expires_at"): cv.string,
+        vol.Optional("last_checked"): cv.string,
+        vol.Optional("next_check_at"): cv.string,
+        vol.Optional("notes"): cv.string,
+    }
+)
+
+DELETE_ITEM_SCHEMA = vol.Schema(
+    {
+        vol.Required("item_id"): cv.string,
     }
 )
 
@@ -58,12 +86,51 @@ async def async_setup_entry(
 
         await store.async_add_item(item)
 
+    async def async_handle_update_item(call: ServiceCall) -> None:
+        """Handle the update item action."""
+
+        item_id = call.data["item_id"]
+
+        updates = {
+            key: value
+            for key, value in call.data.items()
+            if key != "item_id"
+        }
+
+        await store.async_update_item(
+            item_id,
+            updates,
+        )
+
+    async def async_handle_delete_item(call: ServiceCall) -> None:
+        """Handle the delete item action."""
+
+        await store.async_delete_item(
+            call.data["item_id"],
+        )
+
     if not hass.services.has_service(DOMAIN, SERVICE_ADD_ITEM):
         hass.services.async_register(
             DOMAIN,
             SERVICE_ADD_ITEM,
             async_handle_add_item,
             schema=ADD_ITEM_SCHEMA,
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_UPDATE_ITEM):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_UPDATE_ITEM,
+            async_handle_update_item,
+            schema=UPDATE_ITEM_SCHEMA,
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_DELETE_ITEM):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_DELETE_ITEM,
+            async_handle_delete_item,
+            schema=DELETE_ITEM_SCHEMA,
         )
 
     return True
@@ -78,6 +145,14 @@ async def async_unload_entry(
     hass.services.async_remove(
         DOMAIN,
         SERVICE_ADD_ITEM,
+    )
+    hass.services.async_remove(
+        DOMAIN,
+        SERVICE_UPDATE_ITEM,
+    )
+    hass.services.async_remove(
+        DOMAIN,
+        SERVICE_DELETE_ITEM,
     )
 
     if DOMAIN in hass.data:
