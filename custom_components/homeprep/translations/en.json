@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HomePrep",
+        "description": "Set up HomePrep to manage your household emergency preparedness."
+      }
+    },
+    "abort": {
+      "already_configured": "HomePrep is already configured."
+    }
+  }
+}
