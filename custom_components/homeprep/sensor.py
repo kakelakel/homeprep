@@ -26,6 +26,7 @@ async def async_setup_entry(
             HomePrepItemsSensor(store, entry),
             HomePrepExpiringSoonSensor(store, entry),
             HomePrepDueForCheckSensor(store, entry),
+            HomePrepStatusSensor(store, entry),
         ]
     )
 
@@ -216,3 +217,91 @@ class HomePrepDueForCheckSensor(HomePrepSensor):
         return {
             "items": self._get_due_items(),
         }
+
+
+class HomePrepStatusSensor(HomePrepSensor):
+    """Sensor showing overall HomePrep status."""
+
+    _attr_name = "HomePrep Status"
+
+    def __init__(
+        self,
+        store: HomePrepStore,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(store, entry)
+        self._attr_unique_id = f"{entry.entry_id}_status"
+
+    def _get_counts(self) -> dict[str, int]:
+        """Calculate HomePrep status counts."""
+
+        today = date.today()
+        expiry_limit = today + timedelta(days=30)
+
+        expired = 0
+        expiring_soon = 0
+        due_for_check = 0
+
+        for item in self._store.items:
+            expires_at = item.get("expires_at")
+
+            if expires_at:
+                try:
+                    expiry_date = date.fromisoformat(expires_at)
+                except ValueError:
+                    expiry_date = None
+
+                if expiry_date is not None:
+                    if expiry_date < today:
+                        expired += 1
+                    elif expiry_date <= expiry_limit:
+                        expiring_soon += 1
+
+            next_check_at = item.get("next_check_at")
+
+            if next_check_at:
+                try:
+                    check_date = date.fromisoformat(next_check_at)
+                except ValueError:
+                    check_date = None
+
+                if check_date is not None and check_date <= today:
+                    due_for_check += 1
+
+        return {
+            "expired": expired,
+            "expiring_soon": expiring_soon,
+            "due_for_check": due_for_check,
+        }
+
+    @property
+    def native_value(self) -> str:
+        """Return overall HomePrep status."""
+
+        counts = self._get_counts()
+
+        if counts["expired"] > 0 or counts["due_for_check"] > 0:
+            return "critical"
+
+        if counts["expiring_soon"] > 0:
+            return "attention"
+
+        return "ok"
+
+    @property
+    def icon(self) -> str:
+        """Return icon based on current status."""
+
+        if self.native_value == "critical":
+            return "mdi:alert-circle"
+
+        if self.native_value == "attention":
+            return "mdi:alert"
+
+        return "mdi:check-circle"
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return status details."""
+        return self._get_counts()
