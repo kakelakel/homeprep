@@ -3,7 +3,11 @@
 from typing import Any
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.storage import Store
+
+from .const import SIGNAL_ITEMS_UPDATED
+
 
 STORAGE_VERSION = 1
 STORAGE_KEY = "homeprep.storage"
@@ -14,6 +18,8 @@ class HomePrepStore:
 
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialize the HomePrep store."""
+        self._hass = hass
+
         self._store: Store[dict[str, Any]] = Store(
             hass,
             STORAGE_VERSION,
@@ -54,7 +60,13 @@ class HomePrepStore:
     ) -> None:
         """Add an item and save the store."""
         self._data["items"].append(item)
+
         await self.async_save()
+
+        async_dispatcher_send(
+            self._hass,
+            SIGNAL_ITEMS_UPDATED,
+        )
 
     async def async_update_item(
         self,
@@ -68,7 +80,13 @@ class HomePrepStore:
             return False
 
         item.update(updates)
+
         await self.async_save()
+
+        async_dispatcher_send(
+            self._hass,
+            SIGNAL_ITEMS_UPDATED,
+        )
 
         return True
 
@@ -83,6 +101,12 @@ class HomePrepStore:
             return False
 
         self._data["items"].remove(item)
+
         await self.async_save()
+
+        async_dispatcher_send(
+            self._hass,
+            SIGNAL_ITEMS_UPDATED,
+        )
 
         return True
