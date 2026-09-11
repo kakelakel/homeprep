@@ -40,6 +40,14 @@ class HomePrepStore:
         """Return all HomePrep items."""
         return self._data["items"]
 
+    def get_item(self, item_id: str) -> dict[str, Any] | None:
+        """Return one HomePrep item by ID."""
+        for item in self._data["items"]:
+            if item.get("id") == item_id:
+                return item
+
+        return None
+
     async def async_add_item(
         self,
         item: dict[str, Any],
@@ -47,3 +55,34 @@ class HomePrepStore:
         """Add an item and save the store."""
         self._data["items"].append(item)
         await self.async_save()
+
+    async def async_update_item(
+        self,
+        item_id: str,
+        updates: dict[str, Any],
+    ) -> bool:
+        """Update an existing item."""
+        item = self.get_item(item_id)
+
+        if item is None:
+            return False
+
+        item.update(updates)
+        await self.async_save()
+
+        return True
+
+    async def async_delete_item(
+        self,
+        item_id: str,
+    ) -> bool:
+        """Delete an item."""
+        item = self.get_item(item_id)
+
+        if item is None:
+            return False
+
+        self._data["items"].remove(item)
+        await self.async_save()
+
+        return True
