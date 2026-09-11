@@ -1,9 +1,11 @@
 """HomePrep integration for Home Assistant."""
 
+from pathlib import Path
 from uuid import uuid4
 
 import voluptuous as vol
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
@@ -18,6 +20,9 @@ from .store import HomePrepStore
 
 
 PLATFORMS = ["sensor"]
+
+FRONTEND_PATH = Path(__file__).parent / "frontend"
+FRONTEND_URL = "/api/homeprep/frontend"
 
 
 ADD_ITEM_SCHEMA = vol.Schema(
@@ -66,11 +71,24 @@ async def async_setup_entry(
 ) -> bool:
     """Set up HomePrep from a config entry."""
 
+    # Register HomePrep frontend files.
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                FRONTEND_URL,
+                str(FRONTEND_PATH),
+                False,
+            )
+        ]
+    )
+
+    # Load persistent HomePrep storage.
     store = HomePrepStore(hass)
     await store.async_load()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = store
 
+    # Load Home Assistant platforms.
     await hass.config_entries.async_forward_entry_setups(
         entry,
         PLATFORMS,
@@ -117,7 +135,10 @@ async def async_setup_entry(
             call.data["item_id"],
         )
 
-    if not hass.services.has_service(DOMAIN, SERVICE_ADD_ITEM):
+    if not hass.services.has_service(
+        DOMAIN,
+        SERVICE_ADD_ITEM,
+    ):
         hass.services.async_register(
             DOMAIN,
             SERVICE_ADD_ITEM,
@@ -125,7 +146,10 @@ async def async_setup_entry(
             schema=ADD_ITEM_SCHEMA,
         )
 
-    if not hass.services.has_service(DOMAIN, SERVICE_UPDATE_ITEM):
+    if not hass.services.has_service(
+        DOMAIN,
+        SERVICE_UPDATE_ITEM,
+    ):
         hass.services.async_register(
             DOMAIN,
             SERVICE_UPDATE_ITEM,
@@ -133,7 +157,10 @@ async def async_setup_entry(
             schema=UPDATE_ITEM_SCHEMA,
         )
 
-    if not hass.services.has_service(DOMAIN, SERVICE_DELETE_ITEM):
+    if not hass.services.has_service(
+        DOMAIN,
+        SERVICE_DELETE_ITEM,
+    ):
         hass.services.async_register(
             DOMAIN,
             SERVICE_DELETE_ITEM,
@@ -158,21 +185,38 @@ async def async_unload_entry(
     if not unload_ok:
         return False
 
-    hass.services.async_remove(
+    if hass.services.has_service(
         DOMAIN,
         SERVICE_ADD_ITEM,
-    )
-    hass.services.async_remove(
+    ):
+        hass.services.async_remove(
+            DOMAIN,
+            SERVICE_ADD_ITEM,
+        )
+
+    if hass.services.has_service(
         DOMAIN,
         SERVICE_UPDATE_ITEM,
-    )
-    hass.services.async_remove(
+    ):
+        hass.services.async_remove(
+            DOMAIN,
+            SERVICE_UPDATE_ITEM,
+        )
+
+    if hass.services.has_service(
         DOMAIN,
         SERVICE_DELETE_ITEM,
-    )
+    ):
+        hass.services.async_remove(
+            DOMAIN,
+            SERVICE_DELETE_ITEM,
+        )
 
     if DOMAIN in hass.data:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+        hass.data[DOMAIN].pop(
+            entry.entry_id,
+            None,
+        )
 
         if not hass.data[DOMAIN]:
             hass.data.pop(DOMAIN)
