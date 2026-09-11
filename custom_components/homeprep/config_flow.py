@@ -1,20 +1,21 @@
 """Config flow for HomePrep."""
 
-from homeassistant import config_entries
-from homeassistant.data_entry_flow import FlowResult
+from typing import Any
+
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 
 from .const import DOMAIN
 
 
-class HomePrepConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class HomePrepConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for HomePrep."""
 
     VERSION = 1
 
     async def async_step_user(
         self,
-        user_input: dict | None = None,
-    ) -> FlowResult:
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
         """Handle the initial setup step."""
 
         await self.async_set_unique_id(DOMAIN)
