@@ -1,0 +1,149 @@
+{
+  "id": "homeprep-general-v1",
+  "country_code": "OTHER",
+  "authority": "HomePrep",
+  "authority_url": "https://github.com/kakelakel/homeprep",
+  "title": "HomePrep – general preparedness baseline",
+  "version": "2026.1",
+  "reviewed_at": "2026-09-12",
+  "default_duration_days": 7,
+  "unofficial": true,
+  "disclaimer": "This is a general HomePrep starter baseline, not official government guidance. Review local civil-protection guidance and adapt every target to your household.",
+  "sources": [],
+  "recommendations": [
+    {
+      "id": "water",
+      "title": "Emergency water reserve",
+      "category": "water",
+      "target_type": "quantity",
+      "matcher": {"category": "water"},
+      "priority": "critical",
+      "rule": {"kind": "quantity_per_person_per_day", "minimum": 3, "target": 3, "unit": "liter"},
+      "advisory_note": "HomePrep uses 3 litres per person per day as a conservative starter value. This is not country-specific official guidance; check local recommendations and personal needs."
+    },
+    {
+      "id": "food_coverage",
+      "title": "Emergency food coverage",
+      "category": "food",
+      "target_type": "coverage",
+      "matcher": {"category": "food"},
+      "priority": "critical",
+      "rule": {"kind": "coverage_days", "days": 7},
+      "advisory_note": "Use this as a starter planning horizon and adapt it to local guidance and household needs."
+    },
+    {
+      "id": "alternative_cooking",
+      "title": "Alternative cooking capability",
+      "category": "cooking",
+      "target_type": "capability",
+      "priority": "high",
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "cook_without_mains", "label": "I can prepare food without mains electricity"}
+      ]
+    },
+    {
+      "id": "communication",
+      "title": "Emergency information access",
+      "category": "communication",
+      "target_type": "capability",
+      "priority": "high",
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "information_without_mains", "label": "I can receive important information during a power or internet outage"}
+      ]
+    },
+    {
+      "id": "phone_power",
+      "title": "Alternative phone power",
+      "category": "power",
+      "target_type": "capability",
+      "priority": "high",
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "phone_power", "label": "I can charge a phone during a power outage"}
+      ]
+    },
+    {
+      "id": "lighting",
+      "title": "Emergency lighting",
+      "category": "lighting",
+      "target_type": "presence",
+      "priority": "high",
+      "rule": {"kind": "presence"},
+      "requirements": [
+        {"id": "lighting", "label": "Working lighting is available without mains power"}
+      ]
+    },
+    {
+      "id": "warmth",
+      "title": "Warmth during heating disruption",
+      "category": "shelter_warmth",
+      "target_type": "capability",
+      "priority": "high",
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "warmth", "label": "My household has a practical way to stay warm if normal heating stops"}
+      ]
+    },
+    {
+      "id": "first_aid",
+      "title": "First aid readiness",
+      "category": "first_aid",
+      "target_type": "checklist",
+      "priority": "high",
+      "rule": {"kind": "checklist"},
+      "requirements": [
+        {"id": "first_aid", "label": "First-aid supplies are available"},
+        {"id": "essential_medicine", "label": "Essential household medicines are available"}
+      ]
+    },
+    {
+      "id": "hygiene",
+      "title": "Hygiene during utility disruption",
+      "category": "hygiene",
+      "target_type": "capability",
+      "priority": "normal",
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "hygiene", "label": "Hygiene can be managed during a water or utility disruption"}
+      ]
+    },
+    {
+      "id": "payment",
+      "title": "Alternative payment capability",
+      "category": "cash",
+      "target_type": "checklist",
+      "priority": "normal",
+      "rule": {"kind": "checklist"},
+      "requirements": [
+        {"id": "cash", "label": "Some cash is available"},
+        {"id": "alternative_payment", "label": "An alternative payment method is available"}
+      ]
+    },
+    {
+      "id": "contacts",
+      "title": "Important contacts available offline",
+      "category": "documents",
+      "target_type": "presence",
+      "priority": "normal",
+      "rule": {"kind": "presence"},
+      "requirements": [
+        {"id": "offline_contacts", "label": "Important contact details are available offline"}
+      ]
+    },
+    {
+      "id": "pet_supplies",
+      "title": "Emergency supplies for pets",
+      "category": "pet_supplies",
+      "target_type": "capability",
+      "priority": "high",
+      "conditional": true,
+      "condition_note": "Relevant when the household has pets.",
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "pet_supplies", "label": "Emergency food, water and essential supplies are included for pets"}
+      ]
+    }
+  ]
+}
