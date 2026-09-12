@@ -6,7 +6,8 @@ import {
   getHomePrepLanguageOverride,
   hpT,
   setHomePrepLanguageOverride,
-} from "./homeprep-i18n.js?v=2";
+} from "./homeprep-i18n.js?v=3";
+import { localizeHomePrepElementExtra } from "./homeprep-i18n-extra.js?v=1";
 
 const HomePrepPanel = customElements.get("homeprep-panel");
 
@@ -31,6 +32,7 @@ function localizeLiveDom(root, hass) {
       if (translated !== value) el.setAttribute(attr, translated);
     });
   });
+  localizeHomePrepElementExtra(root, hass);
 }
 
 function languageOptions(hass) {
@@ -156,7 +158,6 @@ if (HomePrepPanel) {
       .hp-language-card label{display:grid;gap:6px;max-width:420px}
       .hp-language-card select{min-height:40px;border-radius:8px;padding:0 10px;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color)}
 
-      /* Consistent HomePrep action buttons. Navigation controls stay neutral. */
       .row-actions button,
       .actions button,
       .section-head button,
