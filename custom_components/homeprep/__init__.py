@@ -40,7 +40,7 @@ UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=2"
 
 PANEL_URL_PATH = "homeprep"
 PANEL_WEB_COMPONENT = "homeprep-panel"
-PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel-v7.js?v=8"
+PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel-v7.js?v=9"
 
 INSPECTION_FIELDS = {
     "inspection_enabled",
