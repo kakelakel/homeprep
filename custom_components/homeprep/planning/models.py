@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-TARGET_SCHEMA_VERSION = 2
+TARGET_SCHEMA_VERSION = 3
 HOUSEHOLD_SCHEMA_VERSION = 1
 
 TARGET_TYPES = {
@@ -15,6 +15,7 @@ TARGET_TYPES = {
     "coverage",
     "presence",
     "capability",
+    "checklist",
 }
 
 TARGET_ORIGINS = {
@@ -51,6 +52,31 @@ def normalize_household_profile(
     return create_household_profile(data or {})
 
 
+def _normalize_requirements(value: Any) -> list[dict[str, Any]]:
+    requirements: list[dict[str, Any]] = []
+
+    for index, raw in enumerate(value or []):
+        if not isinstance(raw, dict):
+            continue
+
+        requirement_id = str(raw.get("id") or f"requirement_{index + 1}").strip()
+        label = str(raw.get("label") or requirement_id).strip()
+        if not requirement_id or not label:
+            continue
+
+        requirements.append(
+            {
+                "id": requirement_id,
+                "label": label,
+                "description": raw.get("description"),
+                "matcher": dict(raw.get("matcher") or {}),
+                "required": bool(raw.get("required", True)),
+            }
+        )
+
+    return requirements
+
+
 def create_target(data: dict[str, Any]) -> dict[str, Any]:
     now = utcnow_iso()
 
@@ -63,8 +89,16 @@ def create_target(data: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"Unsupported target origin: {origin}")
 
     matcher = dict(data.get("matcher") or {})
-    if not matcher:
-        raise ValueError("A target requires a matcher")
+    requirements = _normalize_requirements(data.get("requirements"))
+
+    if not matcher and target_type in {"quantity", "count"}:
+        raise ValueError("A numeric target requires a matcher")
+
+    completed = {
+        str(value)
+        for value in (data.get("completed_requirement_ids") or [])
+    }
+    valid_requirement_ids = {item["id"] for item in requirements}
 
     return {
         "id": str(data.get("id") or uuid4()),
@@ -76,6 +110,8 @@ def create_target(data: dict[str, Any]) -> dict[str, Any]:
         "minimum_value": data.get("minimum_value"),
         "target_value": data.get("target_value"),
         "current_value": data.get("current_value"),
+        "requirements": requirements,
+        "completed_requirement_ids": sorted(completed & valid_requirement_ids),
         "priority": str(data.get("priority", "normal")),
         "enabled": bool(data.get("enabled", True)),
         "notes": data.get("notes"),
@@ -91,7 +127,23 @@ def create_target(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def normalize_target(data: dict[str, Any]) -> dict[str, Any]:
-    normalized = create_target(data)
+    migrated = dict(data)
+
+    if (
+        migrated.get("target_type") in {"presence", "capability"}
+        and not migrated.get("requirements")
+    ):
+        migrated["requirements"] = [
+            {
+                "id": "ready",
+                "label": migrated.get("name") or "Requirement is ready",
+                "description": "Confirm when this preparedness capability is available and usable.",
+                "matcher": {},
+                "required": True,
+            }
+        ]
+
+    normalized = create_target(migrated)
     normalized["id"] = str(data.get("id") or normalized["id"])
     normalized["created_at"] = data.get(
         "created_at",
