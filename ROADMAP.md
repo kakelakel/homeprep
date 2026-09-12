@@ -6,19 +6,29 @@ Ideas may move, change shape, or be dropped as HomePrep evolves and real-world f
 
 ## Current focus
 
-- Prepare the first proper GitHub/HACS release flow.
-- Verify inventory image support across sidebar views and linked inspection tasks.
-- Keep HACS and Hassfest validation green.
-- Improve clarity and polish in the HomePrep sidebar app.
+- Finish the 0.6.1 multilingual UI pass and stabilize the current Home Assistant experience.
+- Complete the HACS default-repository review process so HomePrep can be discovered directly in HACS.
+- Keep HACS and Hassfest validation green across stable and prerelease channels.
+- Polish the HomePrep sidebar app and Lovelace cards based on real usage feedback.
+
+## Recently completed
+
+- Proper GitHub release flow with semantic versions and HACS prerelease testing.
+- Inventory images in the sidebar and applicable Lovelace/task views.
+- Automatic Lovelace card registration and visual card editors.
+- Recurring tasks, linked inventory inspections and Home Assistant notifications.
+- Preparedness targets, household planning and country guidance profiles.
+- Initial multilingual support with automatic Home Assistant language detection and optional HomePrep language override.
+- English, Swedish, Norwegian Bokmål, Danish, Finnish, German and French language foundations.
+- HomePrep and HomePrep Mini cards upgraded to summarize both Inventory and Tasks.
 
 ## Near term
 
 ### Inventory
-- Optional images for inventory items across more HomePrep views and Lovelace cards.
 - Better filtering, sorting and searching.
 - Storage-location support, for example pantry, basement, garage or evacuation bag.
 - Faster bulk editing for common inventory maintenance.
-- Clearer expiry and inspection workflows.
+- Clearer expiry and rotation workflows.
 
 ### Tasks and notifications
 - More actionable task notifications.
@@ -27,15 +37,16 @@ Ideas may move, change shape, or be dropped as HomePrep evolves and real-world f
 - Improved task history and completion visibility.
 
 ### Lovelace and UI
-- Continue expanding visual editors for HomePrep cards.
-- More reusable layout/display options while keeping the number of card types small.
+- Continue refining visual editors and reusable display options while keeping the number of card types small.
 - Further mobile-first improvements.
-- Better use of inventory thumbnails where space allows.
+- Continue localization coverage across all card/editor subtexts and dynamic content.
+- Improve summary cards and dashboard views without duplicating the detailed Inventory and Tasks cards.
 
 ### Guidance and preparedness planning
 - Add more country-specific preparedness guidance from authoritative public sources.
 - Improve explanation of why a recommendation exists and what counts as ready.
 - Expand household-specific planning without silently changing personal targets.
+- Continue localized presentation of curated guidance content.
 
 ## Medium term ideas
 
@@ -60,7 +71,7 @@ Ideas may move, change shape, or be dropped as HomePrep evolves and real-world f
 - Inventory history and change log.
 - Better support for replacement cycles, maintenance intervals and consumable rotation.
 - More flexible dashboards and preparedness summaries.
-- Additional accessibility and frontend localization work.
+- Additional accessibility work.
 
 ## Longer-term product direction
 
