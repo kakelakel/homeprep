@@ -16,54 +16,113 @@ from .const import (
     SERVICE_UPDATE_ITEM,
 )
 from .core.service import HomePrepService
+from .core.taxonomy import (
+    CATEGORIES,
+    ITEM_TYPES,
+    UNITS,
+)
 from .repositories.ha_storage import HAStorageRepository
 from .websocket import async_register_websocket_api
 
 
 PLATFORMS = ["sensor"]
 
-FRONTEND_PATH = Path(__file__).parent / "frontend"
-FRONTEND_URL = "/api/homeprep/frontend"
+FRONTEND_PATH = (
+    Path(__file__).parent
+    / "frontend"
+)
+
+FRONTEND_URL = (
+    "/api/homeprep/frontend"
+)
 
 
 ADD_ITEM_SCHEMA = vol.Schema(
     {
-        vol.Required("name"): cv.string,
-        vol.Required("category"): cv.string,
-        vol.Required("item_type"): vol.In(
-            ["consumable", "equipment"]
-        ),
-        vol.Required("quantity"): vol.Coerce(float),
-        vol.Required("unit"): cv.string,
-        vol.Optional("expires_at"): cv.string,
-        vol.Optional("last_checked"): cv.string,
-        vol.Optional("next_check_at"): cv.string,
-        vol.Optional("notes"): cv.string,
+        vol.Required("name"):
+            cv.string,
+
+        vol.Required("category"):
+            vol.In(
+                list(CATEGORIES)
+            ),
+
+        vol.Required("item_type"):
+            vol.In(
+                list(ITEM_TYPES)
+            ),
+
+        vol.Required("quantity"):
+            vol.Coerce(float),
+
+        vol.Required("unit"):
+            vol.In(
+                list(UNITS)
+            ),
+
+        vol.Optional("expires_at"):
+            cv.string,
+
+        vol.Optional("last_checked"):
+            cv.string,
+
+        vol.Optional("next_check_at"):
+            cv.string,
+
+        vol.Optional("notes"):
+            cv.string,
     }
 )
+
 
 UPDATE_ITEM_SCHEMA = vol.Schema(
     {
-        vol.Required("item_id"): cv.string,
-        vol.Optional("name"): cv.string,
-        vol.Optional("category"): cv.string,
-        vol.Optional("item_type"): vol.In(
-            ["consumable", "equipment"]
-        ),
-        vol.Optional("quantity"): vol.Coerce(float),
-        vol.Optional("unit"): cv.string,
-        vol.Optional("expires_at"): cv.string,
-        vol.Optional("last_checked"): cv.string,
-        vol.Optional("next_check_at"): cv.string,
-        vol.Optional("notes"): cv.string,
+        vol.Required("item_id"):
+            cv.string,
+
+        vol.Optional("name"):
+            cv.string,
+
+        vol.Optional("category"):
+            vol.In(
+                list(CATEGORIES)
+            ),
+
+        vol.Optional("item_type"):
+            vol.In(
+                list(ITEM_TYPES)
+            ),
+
+        vol.Optional("quantity"):
+            vol.Coerce(float),
+
+        vol.Optional("unit"):
+            vol.In(
+                list(UNITS)
+            ),
+
+        vol.Optional("expires_at"):
+            cv.string,
+
+        vol.Optional("last_checked"):
+            cv.string,
+
+        vol.Optional("next_check_at"):
+            cv.string,
+
+        vol.Optional("notes"):
+            cv.string,
     }
 )
 
+
 DELETE_ITEM_SCHEMA = vol.Schema(
     {
-        vol.Required("item_id"): cv.string,
+        vol.Required("item_id"):
+            cv.string,
     }
 )
+
 
 async def async_setup(
     hass: HomeAssistant,
@@ -71,9 +130,12 @@ async def async_setup(
 ) -> bool:
     """Set up HomePrep."""
 
-    async_register_websocket_api(hass)
+    async_register_websocket_api(
+        hass
+    )
 
     return True
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -91,7 +153,9 @@ async def async_setup_entry(
         ]
     )
 
-    repository = HAStorageRepository(hass)
+    repository = HAStorageRepository(
+        hass
+    )
 
     service = HomePrepService(
         hass,
@@ -100,9 +164,10 @@ async def async_setup_entry(
 
     await service.async_load()
 
-    hass.data.setdefault(DOMAIN, {})[
-        entry.entry_id
-    ] = service
+    hass.data.setdefault(
+        DOMAIN,
+        {},
+    )[entry.entry_id] = service
 
     await hass.config_entries.async_forward_entry_setups(
         entry,
@@ -113,6 +178,7 @@ async def async_setup_entry(
         call: ServiceCall,
     ) -> None:
         """Handle add item."""
+
         await service.async_add_item(
             dict(call.data)
         )
@@ -122,11 +188,14 @@ async def async_setup_entry(
     ) -> None:
         """Handle update item."""
 
-        item_id = call.data["item_id"]
+        item_id = call.data[
+            "item_id"
+        ]
 
         updates = {
             key: value
-            for key, value in call.data.items()
+            for key, value
+            in call.data.items()
             if key != "item_id"
         }
 
@@ -230,6 +299,8 @@ async def async_unload_entry(
         )
 
         if not hass.data[DOMAIN]:
-            hass.data.pop(DOMAIN)
+            hass.data.pop(
+                DOMAIN
+            )
 
     return True
