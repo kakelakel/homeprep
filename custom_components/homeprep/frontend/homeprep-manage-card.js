@@ -3,6 +3,7 @@ class HomePrepManageCard extends HTMLElement {
     super();
 
     this._items = [];
+
     this._taxonomy = {
       categories: [],
       item_types: [],
@@ -11,6 +12,7 @@ class HomePrepManageCard extends HTMLElement {
 
     this._loading = false;
     this._error = null;
+
     this._editingItem = null;
     this._formMode = null;
 
@@ -67,7 +69,8 @@ class HomePrepManageCard extends HTMLElement {
   }
 
   async handleClick(event) {
-    const target = this.getClickedElement(event);
+    const target =
+      this.getClickedElement(event);
 
     if (!target) {
       return;
@@ -99,14 +102,19 @@ class HomePrepManageCard extends HTMLElement {
       return;
     }
 
-    if (target.dataset.action === "edit") {
+    if (
+      target.dataset.action === "edit"
+    ) {
       this.openEditForm(
         target.dataset.id
       );
+
       return;
     }
 
-    if (target.dataset.action === "delete") {
+    if (
+      target.dataset.action === "delete"
+    ) {
       await this.deleteItem(
         target.dataset.id
       );
@@ -114,7 +122,10 @@ class HomePrepManageCard extends HTMLElement {
   }
 
   async loadData() {
-    if (!this._hass || this._loading) {
+    if (
+      !this._hass ||
+      this._loading
+    ) {
       return;
     }
 
@@ -161,6 +172,7 @@ class HomePrepManageCard extends HTMLElement {
     }
 
     this._loading = false;
+
     this.render();
   }
 
@@ -195,21 +207,6 @@ class HomePrepManageCard extends HTMLElement {
     );
   }
 
-  getUnitLabel(unitId) {
-    const unit =
-      this.getUnit(unitId);
-
-    if (!unit) {
-      return unitId ?? "";
-    }
-
-    if (unit.symbol) {
-      return `${unit.label} (${unit.symbol})`;
-    }
-
-    return unit.label;
-  }
-
   getUnitDisplay(unitId) {
     const unit =
       this.getUnit(unitId);
@@ -227,16 +224,21 @@ class HomePrepManageCard extends HTMLElement {
   openAddForm() {
     this._editingItem = {
       name: "",
+
       category:
         this._taxonomy.categories[0]
           ?.id ?? "other",
+
       item_type:
         this._taxonomy.item_types[0]
           ?.id ?? "consumable",
+
       quantity: 1,
+
       unit:
         this._taxonomy.units[0]
           ?.id ?? "piece",
+
       expires_at: "",
       last_checked: "",
       next_check_at: "",
@@ -249,10 +251,11 @@ class HomePrepManageCard extends HTMLElement {
   }
 
   openEditForm(itemId) {
-    const item = this._items.find(
-      (entry) =>
-        entry.id === itemId
-    );
+    const item =
+      this._items.find(
+        (entry) =>
+          entry.id === itemId
+      );
 
     if (!item) {
       return;
@@ -260,12 +263,16 @@ class HomePrepManageCard extends HTMLElement {
 
     this._editingItem = {
       ...item,
+
       expires_at:
         item.expires_at ?? "",
+
       last_checked:
         item.last_checked ?? "",
+
       next_check_at:
         item.next_check_at ?? "",
+
       notes:
         item.notes ?? "",
     };
@@ -344,9 +351,7 @@ class HomePrepManageCard extends HTMLElement {
     }
 
     if (
-      Number.isNaN(
-        data.quantity
-      ) ||
+      Number.isNaN(data.quantity) ||
       data.quantity < 0
     ) {
       window.alert(
@@ -358,12 +363,16 @@ class HomePrepManageCard extends HTMLElement {
     const serviceData = {
       name:
         data.name,
+
       category:
         data.category,
+
       item_type:
         data.item_type,
+
       quantity:
         data.quantity,
+
       unit:
         data.unit,
     };
@@ -409,6 +418,7 @@ class HomePrepManageCard extends HTMLElement {
           {
             item_id:
               this._editingItem.id,
+
             ...serviceData,
           }
         );
@@ -472,26 +482,65 @@ class HomePrepManageCard extends HTMLElement {
     }
   }
 
+  groupEntries(entries) {
+    const groups = new Map();
+
+    entries.forEach((entry) => {
+      const group =
+        entry.group || "Other";
+
+      if (!groups.has(group)) {
+        groups.set(
+          group,
+          []
+        );
+      }
+
+      groups.get(group).push(
+        entry
+      );
+    });
+
+    return groups;
+  }
+
   renderCategoryOptions(
     selectedId
   ) {
-    return this._taxonomy.categories
-      .map((entry) => `
-        <option
-          value="${this.escapeHtml(
-            entry.id
-          )}"
-          ${
-            entry.id === selectedId
-              ? "selected"
-              : ""
-          }
-        >
-          ${this.escapeHtml(
-            entry.label
-          )}
-        </option>
-      `)
+    const groups =
+      this.groupEntries(
+        this._taxonomy.categories
+      );
+
+    return [...groups.entries()]
+      .map(
+        ([groupName, entries]) => `
+          <optgroup
+            label="${this.escapeHtml(
+              groupName
+            )}"
+          >
+            ${entries
+              .map((entry) => `
+                <option
+                  value="${this.escapeHtml(
+                    entry.id
+                  )}"
+                  ${
+                    entry.id === selectedId
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  ${this.escapeHtml(
+                    entry.label
+                  )}
+                </option>
+              `)
+              .join("")}
+          </optgroup>
+        `
+      )
       .join("");
   }
 
@@ -521,30 +570,50 @@ class HomePrepManageCard extends HTMLElement {
   renderUnitOptions(
     selectedId
   ) {
-    return this._taxonomy.units
-      .map((entry) => {
-        const label =
-          entry.symbol
-            ? `${entry.label} (${entry.symbol})`
-            : entry.label;
+    const groups =
+      this.groupEntries(
+        this._taxonomy.units
+      );
 
-        return `
-          <option
-            value="${this.escapeHtml(
-              entry.id
+    return [...groups.entries()]
+      .map(
+        ([groupName, entries]) => `
+          <optgroup
+            label="${this.escapeHtml(
+              groupName
             )}"
-            ${
-              entry.id === selectedId
-                ? "selected"
-                : ""
-            }
           >
-            ${this.escapeHtml(
-              label
-            )}
-          </option>
-        `;
-      })
+            ${entries
+              .map((entry) => {
+                let label =
+                  entry.label;
+
+                if (entry.symbol) {
+                  label +=
+                    ` (${entry.symbol})`;
+                }
+
+                return `
+                  <option
+                    value="${this.escapeHtml(
+                      entry.id
+                    )}"
+                    ${
+                      entry.id === selectedId
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    ${this.escapeHtml(
+                      label
+                    )}
+                  </option>
+                `;
+              })
+              .join("")}
+          </optgroup>
+        `
+      )
       .join("");
   }
 
@@ -601,11 +670,14 @@ class HomePrepManageCard extends HTMLElement {
             </div>
 
             <div class="item-meta">
-              ${category} • ${type}
+              ${category}
+              •
+              ${type}
             </div>
 
             <div class="item-quantity">
-              ${quantity} ${unit}
+              ${quantity}
+              ${unit}
             </div>
           </div>
         </div>
@@ -681,8 +753,12 @@ class HomePrepManageCard extends HTMLElement {
         </div>
 
         <div class="form-grid">
-          <label class="field field-wide">
-            <span>Name</span>
+          <label
+            class="field field-wide"
+          >
+            <span>
+              Name
+            </span>
 
             <input
               id="hp-name"
@@ -694,7 +770,9 @@ class HomePrepManageCard extends HTMLElement {
           </label>
 
           <label class="field">
-            <span>Category</span>
+            <span>
+              Category
+            </span>
 
             <select
               id="hp-category"
@@ -706,7 +784,9 @@ class HomePrepManageCard extends HTMLElement {
           </label>
 
           <label class="field">
-            <span>Item type</span>
+            <span>
+              Item type
+            </span>
 
             <select
               id="hp-type"
@@ -718,7 +798,9 @@ class HomePrepManageCard extends HTMLElement {
           </label>
 
           <label class="field">
-            <span>Quantity</span>
+            <span>
+              Quantity
+            </span>
 
             <input
               id="hp-quantity"
@@ -732,7 +814,9 @@ class HomePrepManageCard extends HTMLElement {
           </label>
 
           <label class="field">
-            <span>Unit</span>
+            <span>
+              Unit
+            </span>
 
             <select
               id="hp-unit"
@@ -744,7 +828,9 @@ class HomePrepManageCard extends HTMLElement {
           </label>
 
           <label class="field">
-            <span>Expiration date</span>
+            <span>
+              Expiration date
+            </span>
 
             <input
               id="hp-expires"
@@ -756,7 +842,9 @@ class HomePrepManageCard extends HTMLElement {
           </label>
 
           <label class="field">
-            <span>Last checked</span>
+            <span>
+              Last checked
+            </span>
 
             <input
               id="hp-last-checked"
@@ -768,7 +856,9 @@ class HomePrepManageCard extends HTMLElement {
           </label>
 
           <label class="field">
-            <span>Next check</span>
+            <span>
+              Next check
+            </span>
 
             <input
               id="hp-next-check"
@@ -779,8 +869,12 @@ class HomePrepManageCard extends HTMLElement {
             >
           </label>
 
-          <label class="field field-wide">
-            <span>Notes</span>
+          <label
+            class="field field-wide"
+          >
+            <span>
+              Notes
+            </span>
 
             <textarea
               id="hp-notes"
@@ -921,7 +1015,12 @@ class HomePrepManageCard extends HTMLElement {
             color:
               var(--primary-text-color);
             background:
-              rgba(128,128,128,.10);
+              rgba(
+                128,
+                128,
+                128,
+                .10
+              );
           }
 
           .add-button {
@@ -972,7 +1071,12 @@ class HomePrepManageCard extends HTMLElement {
             flex-shrink: 0;
             color: #42a5f5;
             background:
-              rgba(66,165,245,.12);
+              rgba(
+                66,
+                165,
+                245,
+                .12
+              );
           }
 
           .item-content {
@@ -1018,7 +1122,12 @@ class HomePrepManageCard extends HTMLElement {
               var(--divider-color);
             border-radius: 12px;
             background:
-              rgba(128,128,128,.05);
+              rgba(
+                128,
+                128,
+                128,
+                .05
+              );
           }
 
           .editor-header {
@@ -1076,6 +1185,10 @@ class HomePrepManageCard extends HTMLElement {
               var(
                 --card-background-color
               );
+          }
+
+          .field select {
+            cursor: pointer;
           }
 
           .editor-actions {
@@ -1137,7 +1250,8 @@ class HomePrepManageCard extends HTMLElement {
             max-width: 500px
           ) {
             .form-grid {
-              grid-template-columns: 1fr;
+              grid-template-columns:
+                1fr;
             }
 
             .field-wide {
@@ -1204,6 +1318,7 @@ if (
     HomePrepManageCard
   );
 }
+
 
 window.customCards =
   window.customCards || [];
