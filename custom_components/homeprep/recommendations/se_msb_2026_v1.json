@@ -4,22 +4,18 @@
   "authority": "Myndigheten för samhällsskydd och beredskap (MSB)",
   "authority_url": "https://www.msb.se/",
   "title": "Sweden – household preparedness",
-  "version": "2026.1",
+  "version": "2026.2",
   "reviewed_at": "2026-09-12",
   "default_duration_days": 7,
   "disclaimer": "Official guidance is translated into HomePrep planning primitives. Personal circumstances always take precedence.",
   "sources": [
     {
+      "title": "Important information to all residents of Sweden – Home preparedness",
+      "url": "https://rib.msb.se/filer/pdf/30874.pdf"
+    },
+    {
       "title": "Hemberedskap – preppa för minst en vecka",
       "url": "https://www.msb.se/sv/rad-till-privatpersoner/hemberedskap---preppa-for-minst-en-vecka/"
-    },
-    {
-      "title": "Tillgång till vatten i kris",
-      "url": "https://www.msb.se/sv/rad-till-privatpersoner/forbered-dig-for-kris/hemberedskap---preppa-for-en-vecka/vatten/"
-    },
-    {
-      "title": "Sju dagar – öva för att klara en vecka i kris eller krig",
-      "url": "https://www.msb.se/"
     }
   ],
   "recommendations": [
@@ -33,12 +29,14 @@
       },
       "priority": "critical",
       "rule": {
-        "kind": "quantity_per_adult_per_day",
+        "kind": "quantity_per_person_per_day",
         "minimum": 3,
-        "maximum": 5,
+        "target": 3,
         "unit": "liter"
       },
-      "advisory_note": "MSB states that an adult needs about 3–5 litres per day for drinking, cooking and basic hygiene. Children, pets and special circumstances require individual adjustment."
+      "advisory_note": "MSB's current preparedness guidance states that at least three litres of water per day are needed, mainly for drinking and cooking. Adapt the amount to individual needs and circumstances.",
+      "pet_adjustment_note": "Pets are included in the household context, but this profile does not invent a numeric official pet-water allowance. Add a separate personal pet-water target when relevant.",
+      "household_adjustment_note": "Some people may need more water because of age, health, climate, diet or other individual circumstances."
     },
     {
       "id": "food_coverage",

@@ -4,7 +4,7 @@
   "authority": "Direktoratet for samfunnssikkerhet og beredskap (DSB)",
   "authority_url": "https://www.dsb.no/",
   "title": "Norway – self-preparedness",
-  "version": "2026.1",
+  "version": "2026.2",
   "reviewed_at": "2026-09-12",
   "default_duration_days": 7,
   "disclaimer": "Official guidance is translated into HomePrep planning primitives. Personal circumstances always take precedence.",
@@ -37,7 +37,9 @@
         "value": 20,
         "unit": "liter"
       },
-      "advisory_note": "DSB recommends storing around 20 litres of drinking water per person, intended to cover minimum needs for one week."
+      "advisory_note": "DSB recommends storing around 20 litres of drinking water per person, intended to cover minimum needs for one week.",
+      "household_adjustment_note": "The 20-litre recommendation is per person. Individual circumstances may justify a larger personal target.",
+      "pet_adjustment_note": "Pet water is not included in this numeric recommendation; add a separate personal target when relevant."
     },
     {
       "id": "food_coverage",
