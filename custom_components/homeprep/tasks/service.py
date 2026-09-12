@@ -123,7 +123,15 @@ class HomePrepTaskService:
                     **task,
                     "status": task_status(task),
                     "linked_item": (
-                        {"id": item["id"], "name": item["name"], "category": item["category"]}
+                        {
+                            "id": item["id"],
+                            "name": item["name"],
+                            "category": item["category"],
+                            "image_id": item.get("image_id"),
+                            "image_token": item.get("image_token"),
+                            "image_content_type": item.get("image_content_type"),
+                            "image_filename": item.get("image_filename"),
+                        }
                         if item
                         else None
                     ),
