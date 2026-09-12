@@ -4,7 +4,7 @@
   "authority": "Myndigheten för samhällsskydd och beredskap (MSB)",
   "authority_url": "https://www.msb.se/",
   "title": "Sweden – household preparedness",
-  "version": "2026.2",
+  "version": "2026.3",
   "reviewed_at": "2026-09-12",
   "default_duration_days": 7,
   "disclaimer": "Official guidance is translated into HomePrep planning primitives. Personal circumstances always take precedence.",
@@ -24,16 +24,9 @@
       "title": "Stored emergency water",
       "category": "water",
       "target_type": "quantity",
-      "matcher": {
-        "category": "water"
-      },
+      "matcher": {"category": "water"},
       "priority": "critical",
-      "rule": {
-        "kind": "quantity_per_person_per_day",
-        "minimum": 3,
-        "target": 3,
-        "unit": "liter"
-      },
+      "rule": {"kind": "quantity_per_person_per_day", "minimum": 3, "target": 3, "unit": "liter"},
       "advisory_note": "MSB's current preparedness guidance states that at least three litres of water per day are needed, mainly for drinking and cooking. Adapt the amount to individual needs and circumstances.",
       "pet_adjustment_note": "Pets are included in the household context, but this profile does not invent a numeric official pet-water allowance. Add a separate personal pet-water target when relevant.",
       "household_adjustment_note": "Some people may need more water because of age, health, climate, diet or other individual circumstances."
@@ -43,14 +36,9 @@
       "title": "Food for one week",
       "category": "food",
       "target_type": "coverage",
-      "matcher": {
-        "category": "food"
-      },
+      "matcher": {"category": "food"},
       "priority": "critical",
-      "rule": {
-        "kind": "coverage_days",
-        "days": 7
-      },
+      "rule": {"kind": "coverage_days", "days": 7},
       "advisory_note": "Keep food that supplies enough energy and can be stored at room temperature, prepared quickly, with little water, or eaten without cooking."
     },
     {
@@ -58,123 +46,127 @@
       "title": "Alternative cooking capability",
       "category": "cooking",
       "target_type": "capability",
-      "matcher": {
-        "category": "cooking",
-        "item_type": "equipment"
-      },
       "priority": "high",
-      "rule": {
-        "kind": "capability"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {
+          "id": "cook_without_mains",
+          "label": "I can prepare food without mains electricity",
+          "description": "Confirm when your household has a usable alternative way to prepare food during an outage."
+        }
+      ]
     },
     {
       "id": "emergency_radio",
       "title": "Radio independent of mains power",
       "category": "communication",
       "target_type": "presence",
-      "matcher": {
-        "category": "communication"
-      },
       "priority": "high",
-      "rule": {
-        "kind": "presence"
-      },
+      "rule": {"kind": "presence"},
+      "requirements": [
+        {
+          "id": "off_grid_radio",
+          "label": "A working radio can be used without mains power",
+          "description": "Battery, solar or hand-crank power are examples described by MSB."
+        }
+      ],
       "advisory_note": "MSB recommends a radio powered by batteries, solar cells or a hand crank."
     },
     {
       "id": "powerbank",
       "title": "Alternative phone power",
       "category": "power",
-      "target_type": "presence",
-      "matcher": {
-        "category": "power"
-      },
+      "target_type": "capability",
       "priority": "high",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {
+          "id": "phone_power",
+          "label": "I can charge a phone during a power outage",
+          "description": "Confirm when a charged power bank or another independent charging method is available."
+        }
+      ]
     },
     {
       "id": "lighting",
       "title": "Emergency lighting",
       "category": "lighting",
       "target_type": "presence",
-      "matcher": {
-        "category": "lighting"
-      },
       "priority": "high",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "presence"},
+      "requirements": [
+        {
+          "id": "off_grid_light",
+          "label": "Working lighting is available without mains power",
+          "description": "Confirm when your household has an independent light source ready to use."
+        }
+      ]
     },
     {
       "id": "warmth",
       "title": "Warmth without normal heating",
       "category": "shelter_warmth",
       "target_type": "capability",
-      "matcher": {
-        "category": "shelter_warmth"
-      },
       "priority": "high",
-      "rule": {
-        "kind": "capability"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {
+          "id": "keep_warm",
+          "label": "My household can stay warm if normal heating stops",
+          "description": "Confirm when you have a practical plan and supplies for retaining warmth."
+        }
+      ]
     },
     {
       "id": "first_aid_medicine",
       "title": "First aid and household medicine",
       "category": "first_aid",
-      "target_type": "presence",
-      "matcher": {
-        "category": "first_aid"
-      },
+      "target_type": "checklist",
       "priority": "high",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "checklist"},
+      "requirements": [
+        {"id": "first_aid", "label": "First-aid supplies are available"},
+        {"id": "household_medicine", "label": "Necessary household medicines are available"}
+      ]
     },
     {
       "id": "long_term_medicine",
       "title": "Long-term prescription medicine reserve",
       "category": "medicine",
       "target_type": "coverage",
-      "matcher": {
-        "category": "medicine"
-      },
+      "matcher": {"category": "medicine"},
       "priority": "critical",
       "conditional": true,
       "condition_note": "Relevant for people with long-term prescription treatment.",
-      "rule": {
-        "kind": "coverage_days",
-        "days": 30
-      },
+      "rule": {"kind": "coverage_days", "days": 30},
       "advisory_note": "MSB advises people with long-term prescription treatment to preferably keep medicine for one month at home."
     },
     {
       "id": "hygiene",
       "title": "Hygiene supplies without running water",
       "category": "hygiene",
-      "target_type": "presence",
-      "matcher": {
-        "category": "hygiene"
-      },
+      "target_type": "capability",
       "priority": "normal",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {
+          "id": "hygiene_without_water",
+          "label": "Hygiene can be managed without running water",
+          "description": "Confirm when suitable hygiene supplies and a practical routine are available."
+        }
+      ]
     },
     {
       "id": "cash_payment",
       "title": "Alternative payment capability",
       "category": "cash",
-      "target_type": "capability",
-      "matcher": {
-        "category": "cash"
-      },
+      "target_type": "checklist",
       "priority": "normal",
-      "rule": {
-        "kind": "capability"
-      },
+      "rule": {"kind": "checklist"},
+      "requirements": [
+        {"id": "cash", "label": "Cash in smaller denominations is available"},
+        {"id": "alternative_payment", "label": "An alternative payment method is available"}
+      ],
       "advisory_note": "MSB recommends cash in smaller denominations and alternative payment options."
     },
     {
@@ -182,28 +174,30 @@
       "title": "Important phone numbers on paper",
       "category": "documents",
       "target_type": "presence",
-      "matcher": {
-        "category": "documents"
-      },
       "priority": "normal",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "presence"},
+      "requirements": [
+        {
+          "id": "paper_contacts",
+          "label": "Important phone numbers are written down and accessible offline"
+        }
+      ]
     },
     {
       "id": "pet_supplies",
       "title": "Emergency supplies for pets",
       "category": "pet_supplies",
-      "target_type": "presence",
-      "matcher": {
-        "category": "pet_supplies"
-      },
+      "target_type": "capability",
       "priority": "high",
       "conditional": true,
       "condition_note": "Relevant when the household has pets.",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {
+          "id": "pet_supplies",
+          "label": "Emergency food, water and essential supplies are included for pets"
+        }
+      ]
     }
   ]
 }
