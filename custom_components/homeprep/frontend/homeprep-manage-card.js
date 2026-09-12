@@ -14,7 +14,7 @@ class HomePrepManageCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 6;
+    return 8;
   }
 
   escapeHtml(value) {
@@ -54,6 +54,377 @@ class HomePrepManageCard extends HTMLElement {
 
     this._loading = false;
     this.render();
+  }
+
+  openAddForm() {
+    this._editingItem = {
+      name: "",
+      category: "",
+      item_type: "consumable",
+      quantity: 1,
+      unit: "pcs",
+      expires_at: "",
+      last_checked: "",
+      next_check_at: "",
+      notes: "",
+    };
+
+    this._formMode = "add";
+    this.render();
+  }
+
+  openEditForm(itemId) {
+    const item = this._items?.find(
+      (entry) => entry.id === itemId
+    );
+
+    if (!item) {
+      return;
+    }
+
+    this._editingItem = {
+      ...item,
+      expires_at: item.expires_at ?? "",
+      last_checked: item.last_checked ?? "",
+      next_check_at: item.next_check_at ?? "",
+      notes: item.notes ?? "",
+    };
+
+    this._formMode = "edit";
+    this.render();
+  }
+
+  closeForm() {
+    this._editingItem = null;
+    this._formMode = null;
+    this.render();
+  }
+
+  readForm() {
+    const root = this;
+
+    return {
+      name:
+        root.querySelector("#hp-name")
+          ?.value.trim() ?? "",
+
+      category:
+        root.querySelector("#hp-category")
+          ?.value.trim() ?? "",
+
+      item_type:
+        root.querySelector("#hp-type")
+          ?.value ?? "consumable",
+
+      quantity: Number(
+        root.querySelector("#hp-quantity")
+          ?.value ?? 0
+      ),
+
+      unit:
+        root.querySelector("#hp-unit")
+          ?.value.trim() ?? "",
+
+      expires_at:
+        root.querySelector("#hp-expires")
+          ?.value ?? "",
+
+      last_checked:
+        root.querySelector("#hp-last-checked")
+          ?.value ?? "",
+
+      next_check_at:
+        root.querySelector("#hp-next-check")
+          ?.value ?? "",
+
+      notes:
+        root.querySelector("#hp-notes")
+          ?.value.trim() ?? "",
+    };
+  }
+
+  async saveForm() {
+    const data = this.readForm();
+
+    if (!data.name) {
+      alert("Name is required.");
+      return;
+    }
+
+    if (!data.category) {
+      alert("Category is required.");
+      return;
+    }
+
+    if (!data.unit) {
+      alert("Unit is required.");
+      return;
+    }
+
+    if (
+      Number.isNaN(data.quantity)
+      || data.quantity < 0
+    ) {
+      alert("Quantity must be a valid number.");
+      return;
+    }
+
+    try {
+      if (this._formMode === "add") {
+        await this._hass.callService(
+          "homeprep",
+          "add_item",
+          data
+        );
+      } else if (
+        this._formMode === "edit"
+        && this._editingItem?.id
+      ) {
+        await this._hass.callService(
+          "homeprep",
+          "update_item",
+          {
+            item_id: this._editingItem.id,
+            ...data,
+          }
+        );
+      }
+
+      this._editingItem = null;
+      this._formMode = null;
+
+      await this.loadItems();
+    } catch (error) {
+      console.error(
+        "HomePrep: Failed to save item",
+        error
+      );
+
+      alert(
+        "HomePrep could not save the item."
+      );
+    }
+  }
+
+  async deleteItem(itemId) {
+    const item = this._items?.find(
+      (entry) => entry.id === itemId
+    );
+
+    if (!item) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${item.name}" from HomePrep?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await this._hass.callService(
+        "homeprep",
+        "delete_item",
+        {
+          item_id: itemId,
+        }
+      );
+
+      await this.loadItems();
+    } catch (error) {
+      console.error(
+        "HomePrep: Failed to delete item",
+        error
+      );
+
+      alert(
+        "HomePrep could not delete the item."
+      );
+    }
+  }
+
+  renderForm() {
+    if (!this._editingItem) {
+      return "";
+    }
+
+    const item = this._editingItem;
+
+    const title =
+      this._formMode === "add"
+        ? "Add item"
+        : "Edit item";
+
+    const saveLabel =
+      this._formMode === "add"
+        ? "Add item"
+        : "Save changes";
+
+    return `
+      <div class="editor">
+        <div class="editor-header">
+          <div class="editor-title">
+            ${title}
+          </div>
+
+          <button
+            id="cancel-editor"
+            class="icon-button"
+            title="Close"
+          >
+            <ha-icon icon="mdi:close"></ha-icon>
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <label class="field field-wide">
+            <span>Name</span>
+
+            <input
+              id="hp-name"
+              type="text"
+              value="${this.escapeHtml(
+                item.name
+              )}"
+            >
+          </label>
+
+          <label class="field field-wide">
+            <span>Category</span>
+
+            <input
+              id="hp-category"
+              type="text"
+              value="${this.escapeHtml(
+                item.category
+              )}"
+            >
+          </label>
+
+          <label class="field">
+            <span>Type</span>
+
+            <select id="hp-type">
+              <option
+                value="consumable"
+                ${
+                  item.item_type ===
+                  "consumable"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Consumable
+              </option>
+
+              <option
+                value="equipment"
+                ${
+                  item.item_type ===
+                  "equipment"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Equipment
+              </option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Quantity</span>
+
+            <input
+              id="hp-quantity"
+              type="number"
+              step="any"
+              min="0"
+              value="${this.escapeHtml(
+                item.quantity ?? 1
+              )}"
+            >
+          </label>
+
+          <label class="field">
+            <span>Unit</span>
+
+            <input
+              id="hp-unit"
+              type="text"
+              value="${this.escapeHtml(
+                item.unit ?? ""
+              )}"
+            >
+          </label>
+
+          <label class="field">
+            <span>Expiration date</span>
+
+            <input
+              id="hp-expires"
+              type="date"
+              value="${this.escapeHtml(
+                item.expires_at ?? ""
+              )}"
+            >
+          </label>
+
+          <label class="field">
+            <span>Last checked</span>
+
+            <input
+              id="hp-last-checked"
+              type="date"
+              value="${this.escapeHtml(
+                item.last_checked ?? ""
+              )}"
+            >
+          </label>
+
+          <label class="field">
+            <span>Next check</span>
+
+            <input
+              id="hp-next-check"
+              type="date"
+              value="${this.escapeHtml(
+                item.next_check_at ?? ""
+              )}"
+            >
+          </label>
+
+          <label class="field field-wide">
+            <span>Notes</span>
+
+            <textarea
+              id="hp-notes"
+              rows="3"
+            >${this.escapeHtml(
+              item.notes ?? ""
+            )}</textarea>
+          </label>
+        </div>
+
+        <div class="editor-actions">
+          <button
+            id="cancel-editor-bottom"
+            class="secondary-button"
+          >
+            Cancel
+          </button>
+
+          <button
+            id="save-editor"
+            class="primary-button"
+          >
+            <ha-icon icon="mdi:content-save"></ha-icon>
+            ${saveLabel}
+          </button>
+        </div>
+      </div>
+    `;
   }
 
   renderItem(item) {
@@ -112,7 +483,9 @@ class HomePrepManageCard extends HTMLElement {
           <button
             class="icon-button"
             data-action="edit"
-            data-id="${this.escapeHtml(item.id)}"
+            data-id="${this.escapeHtml(
+              item.id
+            )}"
             title="Edit"
           >
             <ha-icon icon="mdi:pencil"></ha-icon>
@@ -121,7 +494,9 @@ class HomePrepManageCard extends HTMLElement {
           <button
             class="icon-button delete"
             data-action="delete"
-            data-id="${this.escapeHtml(item.id)}"
+            data-id="${this.escapeHtml(
+              item.id
+            )}"
             title="Delete"
           >
             <ha-icon icon="mdi:delete"></ha-icon>
@@ -148,11 +523,43 @@ class HomePrepManageCard extends HTMLElement {
     if (addButton) {
       addButton.addEventListener(
         "click",
-        () => {
-          console.log(
-            "HomePrep: Add item clicked"
-          );
-        }
+        () => this.openAddForm()
+      );
+    }
+
+    const cancelEditor =
+      this.querySelector(
+        "#cancel-editor"
+      );
+
+    if (cancelEditor) {
+      cancelEditor.addEventListener(
+        "click",
+        () => this.closeForm()
+      );
+    }
+
+    const cancelEditorBottom =
+      this.querySelector(
+        "#cancel-editor-bottom"
+      );
+
+    if (cancelEditorBottom) {
+      cancelEditorBottom.addEventListener(
+        "click",
+        () => this.closeForm()
+      );
+    }
+
+    const saveEditor =
+      this.querySelector(
+        "#save-editor"
+      );
+
+    if (saveEditor) {
+      saveEditor.addEventListener(
+        "click",
+        () => this.saveForm()
       );
     }
 
@@ -161,12 +568,10 @@ class HomePrepManageCard extends HTMLElement {
     ).forEach((button) => {
       button.addEventListener(
         "click",
-        () => {
-          console.log(
-            "HomePrep: Edit item",
+        () =>
+          this.openEditForm(
             button.dataset.id
-          );
-        }
+          )
       );
     });
 
@@ -175,12 +580,10 @@ class HomePrepManageCard extends HTMLElement {
     ).forEach((button) => {
       button.addEventListener(
         "click",
-        () => {
-          console.log(
-            "HomePrep: Delete item",
+        () =>
+          this.deleteItem(
             button.dataset.id
-          );
-        }
+          )
       );
     });
   }
@@ -287,7 +690,10 @@ class HomePrepManageCard extends HTMLElement {
             gap: 4px;
           }
 
-          button {
+          button,
+          input,
+          select,
+          textarea {
             font: inherit;
           }
 
@@ -313,15 +719,12 @@ class HomePrepManageCard extends HTMLElement {
             --mdc-icon-size: 20px;
           }
 
-          .add-button {
+          .add-button,
+          .primary-button {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 7px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 14px;
-            padding: 10px 14px;
             border: 0;
             border-radius: 10px;
             cursor: pointer;
@@ -330,8 +733,24 @@ class HomePrepManageCard extends HTMLElement {
             font-weight: 600;
           }
 
-          .add-button ha-icon {
-            --mdc-icon-size: 19px;
+          .add-button {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 14px;
+            padding: 10px 14px;
+          }
+
+          .primary-button {
+            padding: 10px 14px;
+          }
+
+          .secondary-button {
+            padding: 10px 14px;
+            border: 1px solid var(--divider-color);
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--primary-text-color);
+            background: transparent;
           }
 
           .inventory {
@@ -407,6 +826,75 @@ class HomePrepManageCard extends HTMLElement {
             color: var(--error-color, #db4437);
           }
 
+          .editor {
+            margin-bottom: 14px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--divider-color);
+            background: rgba(128, 128, 128, 0.05);
+          }
+
+          .editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+          }
+
+          .editor-title {
+            font-size: 15px;
+            font-weight: 700;
+          }
+
+          .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+          }
+
+          .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 0;
+          }
+
+          .field-wide {
+            grid-column: 1 / -1;
+          }
+
+          .field span {
+            font-size: 10px;
+            color: var(--secondary-text-color);
+          }
+
+          .field input,
+          .field select,
+          .field textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 9px 10px;
+            border: 1px solid var(--divider-color);
+            border-radius: 8px;
+            outline: none;
+            color: var(--primary-text-color);
+            background: var(
+              --input-fill-color,
+              var(--card-background-color)
+            );
+          }
+
+          .field textarea {
+            resize: vertical;
+          }
+
+          .editor-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 14px;
+          }
+
           .message {
             display: flex;
             align-items: center;
@@ -448,6 +936,16 @@ class HomePrepManageCard extends HTMLElement {
             margin-top: 4px;
             font-size: 11px;
           }
+
+          @media (max-width: 500px) {
+            .form-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .field-wide {
+              grid-column: auto;
+            }
+          }
         </style>
 
         <div class="homeprep-manage">
@@ -488,6 +986,8 @@ class HomePrepManageCard extends HTMLElement {
             <ha-icon icon="mdi:plus"></ha-icon>
             Add item
           </button>
+
+          ${this.renderForm()}
 
           ${content}
         </div>
