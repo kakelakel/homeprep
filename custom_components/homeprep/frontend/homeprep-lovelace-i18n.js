@@ -1,4 +1,5 @@
-import { localizeHomePrepElement } from "./homeprep-i18n.js?v=2";
+import { localizeHomePrepElement } from "./homeprep-i18n.js?v=3";
+import { localizeHomePrepElementExtra } from "./homeprep-i18n-extra.js?v=1";
 
 const HOME_PREP_ELEMENTS = [
   "homeprep-card",
@@ -21,7 +22,12 @@ const HOME_PREP_ELEMENTS = [
 ];
 
 function localizeElement(element) {
-  queueMicrotask(() => localizeHomePrepElement(element.shadowRoot || element, element._hass || element.hass));
+  queueMicrotask(() => {
+    const root = element.shadowRoot || element;
+    const hass = element._hass || element.hass;
+    localizeHomePrepElement(root, hass);
+    localizeHomePrepElementExtra(root, hass);
+  });
 }
 
 function patchElement(name) {
