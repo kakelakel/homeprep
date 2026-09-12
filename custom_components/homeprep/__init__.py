@@ -1,7 +1,6 @@
 """HomePrep integration for Home Assistant."""
 
 from pathlib import Path
-from uuid import uuid4
 
 import voluptuous as vol
 
@@ -16,7 +15,8 @@ from .const import (
     SERVICE_DELETE_ITEM,
     SERVICE_UPDATE_ITEM,
 )
-from .store import HomePrepStore
+from .core.service import HomePrepService
+from .repositories.ha_storage import HAStorageRepository
 
 
 PLATFORMS = ["sensor"]
@@ -71,7 +71,6 @@ async def async_setup_entry(
 ) -> bool:
     """Set up HomePrep from a config entry."""
 
-    # Register HomePrep frontend files.
     await hass.http.async_register_static_paths(
         [
             StaticPathConfig(
@@ -82,38 +81,36 @@ async def async_setup_entry(
         ]
     )
 
-    # Load persistent HomePrep storage.
-    store = HomePrepStore(hass)
-    await store.async_load()
+    repository = HAStorageRepository(hass)
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = store
+    service = HomePrepService(
+        hass,
+        repository,
+    )
 
-    # Load Home Assistant platforms.
+    await service.async_load()
+
+    hass.data.setdefault(DOMAIN, {})[
+        entry.entry_id
+    ] = service
+
     await hass.config_entries.async_forward_entry_setups(
         entry,
         PLATFORMS,
     )
 
-    async def async_handle_add_item(call: ServiceCall) -> None:
-        """Handle the add item action."""
+    async def async_handle_add_item(
+        call: ServiceCall,
+    ) -> None:
+        """Handle add item."""
+        await service.async_add_item(
+            dict(call.data)
+        )
 
-        item = {
-            "id": str(uuid4()),
-            "name": call.data["name"],
-            "category": call.data["category"],
-            "item_type": call.data["item_type"],
-            "quantity": call.data["quantity"],
-            "unit": call.data["unit"],
-            "expires_at": call.data.get("expires_at"),
-            "last_checked": call.data.get("last_checked"),
-            "next_check_at": call.data.get("next_check_at"),
-            "notes": call.data.get("notes"),
-        }
-
-        await store.async_add_item(item)
-
-    async def async_handle_update_item(call: ServiceCall) -> None:
-        """Handle the update item action."""
+    async def async_handle_update_item(
+        call: ServiceCall,
+    ) -> None:
+        """Handle update item."""
 
         item_id = call.data["item_id"]
 
@@ -123,16 +120,18 @@ async def async_setup_entry(
             if key != "item_id"
         }
 
-        await store.async_update_item(
+        await service.async_update_item(
             item_id,
             updates,
         )
 
-    async def async_handle_delete_item(call: ServiceCall) -> None:
-        """Handle the delete item action."""
+    async def async_handle_delete_item(
+        call: ServiceCall,
+    ) -> None:
+        """Handle delete item."""
 
-        await store.async_delete_item(
-            call.data["item_id"],
+        await service.async_delete_item(
+            call.data["item_id"]
         )
 
     if not hass.services.has_service(
@@ -175,11 +174,13 @@ async def async_unload_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Unload a HomePrep config entry."""
+    """Unload HomePrep."""
 
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        entry,
-        PLATFORMS,
+    unload_ok = (
+        await hass.config_entries.async_unload_platforms(
+            entry,
+            PLATFORMS,
+        )
     )
 
     if not unload_ok:
