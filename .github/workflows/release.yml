@@ -1,0 +1,55 @@
+name: Publish HomePrep release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish current manifest version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version and changelog
+        id: release_data
+        shell: bash
+        run: |
+          VERSION=$(python -c 'import json; print(json.load(open("custom_components/homeprep/manifest.json"))["version"])')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          python <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          version = json.loads(Path("custom_components/homeprep/manifest.json").read_text())["version"]
+          changelog = Path("CHANGELOG.md").read_text()
+          pattern = rf"^## \[{re.escape(version)}\].*?\n(.*?)(?=^## \[|^## Earlier development|\Z)"
+          match = re.search(pattern, changelog, flags=re.M | re.S)
+          if not match:
+              raise SystemExit(f"CHANGELOG.md has no section for version {version}")
+          Path("release-notes.md").write_text(match.group(1).strip() + "\n")
+          PY
+
+      - name: Ensure release does not already exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release_data.outputs.version }}
+        run: |
+          if gh release view "v${VERSION}" >/dev/null 2>&1; then
+            echo "Release v${VERSION} already exists."
+            exit 1
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release_data.outputs.version }}
+        run: |
+          gh release create "v${VERSION}" \
+            --target "${GITHUB_SHA}" \
+            --title "HomePrep v${VERSION}" \
+            --notes-file release-notes.md
