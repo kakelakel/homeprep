@@ -2,8 +2,41 @@
   "config": {
     "step": {
       "user": {
-        "title": "HomePrep",
-        "description": "Konfigurera HomePrep för att hålla ordning på hemmets beredskap."
+        "title": "Välkommen till HomePrep",
+        "description": "HomePrep guidar dig genom en snabb grundkonfiguration så att hushållsprofil och första beredskapsmål är klara direkt. Allt kan ändras senare från HomePrep-panelen i sidomenyn."
+      },
+      "household": {
+        "title": "Hushåll",
+        "description": "Berätta vilka HomePrep ska hjälpa dig att planera för.",
+        "data": {
+          "country_code": "Land",
+          "adults": "Vuxna",
+          "children": "Barn",
+          "pets": "Husdjur",
+          "preparedness_days": "Beredskapshorisont (dagar)"
+        }
+      },
+      "targets": {
+        "title": "Startmål",
+        "description": "Välj vilka rekommendationer baserade på {authority} som HomePrep ska använda för dina första personliga mål. Målen blir fritt redigerbara; den officiella rekommendationen ändras aldrig.",
+        "data": {
+          "target_water": "Beredskapsvatten",
+          "target_food": "Mat för beredskapsperioden",
+          "target_cooking": "Alternativ matlagning",
+          "target_communication": "Krisinformation / radio",
+          "target_power": "Alternativ ström / powerbanks",
+          "target_lighting": "Nödbelysning",
+          "target_warmth": "Värme utan normal uppvärmning",
+          "target_first_aid": "Första hjälpen och husapotek",
+          "target_hygiene": "Hygienartiklar",
+          "target_cash": "Alternativa betalningsmöjligheter",
+          "target_documents": "Viktiga kontaktuppgifter på papper",
+          "target_pets": "Beredskap för husdjur"
+        }
+      },
+      "review": {
+        "title": "Redo att börja",
+        "description": "Land: {country}\n\nPersoner: {people}\n\nHusdjur: {pets}\n\nBeredskapshorisont: {days} dagar\n\nValda startmål: {targets}\n\nSlutför installationen för att skapa hushållsprofilen och de valda personliga målen."
       }
     },
     "abort": {
