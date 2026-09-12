@@ -1,5 +1,6 @@
 import { localizeHomePrepElement } from "./homeprep-i18n.js?v=3";
 import { localizeHomePrepElementExtra } from "./homeprep-i18n-extra.js?v=1";
+import { localizeHomePrepElementPolishSv } from "./homeprep-i18n-polish-sv.js?v=1";
 
 const HOME_PREP_ELEMENTS = [
   "homeprep-card",
@@ -27,6 +28,7 @@ function localizeElement(element) {
     const hass = element._hass || element.hass;
     localizeHomePrepElement(root, hass);
     localizeHomePrepElementExtra(root, hass);
+    localizeHomePrepElementPolishSv(root, hass);
   });
 }
 
