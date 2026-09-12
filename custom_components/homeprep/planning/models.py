@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-TARGET_SCHEMA_VERSION = 1
+TARGET_SCHEMA_VERSION = 2
 HOUSEHOLD_SCHEMA_VERSION = 1
 
 TARGET_TYPES = {
@@ -75,6 +75,7 @@ def create_target(data: dict[str, Any]) -> dict[str, Any]:
         "unit": data.get("unit"),
         "minimum_value": data.get("minimum_value"),
         "target_value": data.get("target_value"),
+        "current_value": data.get("current_value"),
         "priority": str(data.get("priority", "normal")),
         "enabled": bool(data.get("enabled", True)),
         "notes": data.get("notes"),
