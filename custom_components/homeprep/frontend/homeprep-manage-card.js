@@ -3,6 +3,12 @@ class HomePrepManageCard extends HTMLElement {
     super();
 
     this._items = [];
+    this._taxonomy = {
+      categories: [],
+      item_types: [],
+      units: [],
+    };
+
     this._loading = false;
     this._error = null;
     this._editingItem = null;
@@ -24,7 +30,7 @@ class HomePrepManageCard extends HTMLElement {
     this._hass = hass;
 
     if (firstLoad) {
-      this.loadItems();
+      this.loadData();
     }
   }
 
@@ -71,7 +77,7 @@ class HomePrepManageCard extends HTMLElement {
     event.stopPropagation();
 
     if (target.id === "refresh") {
-      await this.loadItems();
+      await this.loadData();
       return;
     }
 
@@ -107,7 +113,7 @@ class HomePrepManageCard extends HTMLElement {
     }
   }
 
-  async loadItems() {
+  async loadData() {
     if (!this._hass || this._loading) {
       return;
     }
@@ -118,14 +124,35 @@ class HomePrepManageCard extends HTMLElement {
     this.render();
 
     try {
-      const result = await this._hass.callWS({
-        type: "homeprep/items",
-      });
+      const [
+        itemsResult,
+        taxonomyResult,
+      ] = await Promise.all([
+        this._hass.callWS({
+          type: "homeprep/items",
+        }),
 
-      this._items = result.items ?? [];
+        this._hass.callWS({
+          type: "homeprep/taxonomy",
+        }),
+      ]);
+
+      this._items =
+        itemsResult.items ?? [];
+
+      this._taxonomy = {
+        categories:
+          taxonomyResult.categories ?? [],
+
+        item_types:
+          taxonomyResult.item_types ?? [],
+
+        units:
+          taxonomyResult.units ?? [],
+      };
     } catch (error) {
       console.error(
-        "HomePrep: Failed to load inventory",
+        "HomePrep: Failed to load inventory data",
         error
       );
 
@@ -137,13 +164,79 @@ class HomePrepManageCard extends HTMLElement {
     this.render();
   }
 
+  getCategoryLabel(categoryId) {
+    return (
+      this._taxonomy.categories.find(
+        (entry) =>
+          entry.id === categoryId
+      )?.label ??
+      categoryId ??
+      "Unknown"
+    );
+  }
+
+  getItemTypeLabel(itemTypeId) {
+    return (
+      this._taxonomy.item_types.find(
+        (entry) =>
+          entry.id === itemTypeId
+      )?.label ??
+      itemTypeId ??
+      "Unknown"
+    );
+  }
+
+  getUnit(unitId) {
+    return (
+      this._taxonomy.units.find(
+        (entry) =>
+          entry.id === unitId
+      ) ?? null
+    );
+  }
+
+  getUnitLabel(unitId) {
+    const unit =
+      this.getUnit(unitId);
+
+    if (!unit) {
+      return unitId ?? "";
+    }
+
+    if (unit.symbol) {
+      return `${unit.label} (${unit.symbol})`;
+    }
+
+    return unit.label;
+  }
+
+  getUnitDisplay(unitId) {
+    const unit =
+      this.getUnit(unitId);
+
+    if (!unit) {
+      return unitId ?? "";
+    }
+
+    return (
+      unit.symbol ||
+      unit.label
+    );
+  }
+
   openAddForm() {
     this._editingItem = {
       name: "",
-      category: "",
-      item_type: "consumable",
+      category:
+        this._taxonomy.categories[0]
+          ?.id ?? "other",
+      item_type:
+        this._taxonomy.item_types[0]
+          ?.id ?? "consumable",
       quantity: 1,
-      unit: "pcs",
+      unit:
+        this._taxonomy.units[0]
+          ?.id ?? "piece",
       expires_at: "",
       last_checked: "",
       next_check_at: "",
@@ -157,7 +250,8 @@ class HomePrepManageCard extends HTMLElement {
 
   openEditForm(itemId) {
     const item = this._items.find(
-      (entry) => entry.id === itemId
+      (entry) =>
+        entry.id === itemId
     );
 
     if (!item) {
@@ -191,66 +285,68 @@ class HomePrepManageCard extends HTMLElement {
   readForm() {
     return {
       name:
-        this.querySelector("#hp-name")
-          ?.value.trim() ?? "",
+        this.querySelector(
+          "#hp-name"
+        )?.value.trim() ?? "",
 
       category:
-        this.querySelector("#hp-category")
-          ?.value.trim() ?? "",
+        this.querySelector(
+          "#hp-category"
+        )?.value ?? "other",
 
       item_type:
-        this.querySelector("#hp-type")
-          ?.value ?? "consumable",
+        this.querySelector(
+          "#hp-type"
+        )?.value ?? "consumable",
 
       quantity: Number(
-        this.querySelector("#hp-quantity")
-          ?.value ?? 0
+        this.querySelector(
+          "#hp-quantity"
+        )?.value ?? 0
       ),
 
       unit:
-        this.querySelector("#hp-unit")
-          ?.value.trim() ?? "",
+        this.querySelector(
+          "#hp-unit"
+        )?.value ?? "piece",
 
       expires_at:
-        this.querySelector("#hp-expires")
-          ?.value || "",
+        this.querySelector(
+          "#hp-expires"
+        )?.value || "",
 
       last_checked:
-        this.querySelector("#hp-last-checked")
-          ?.value || "",
+        this.querySelector(
+          "#hp-last-checked"
+        )?.value || "",
 
       next_check_at:
-        this.querySelector("#hp-next-check")
-          ?.value || "",
+        this.querySelector(
+          "#hp-next-check"
+        )?.value || "",
 
       notes:
-        this.querySelector("#hp-notes")
-          ?.value.trim() ?? "",
+        this.querySelector(
+          "#hp-notes"
+        )?.value.trim() ?? "",
     };
   }
 
   async saveForm() {
-    const data = this.readForm();
+    const data =
+      this.readForm();
 
     if (!data.name) {
-      window.alert("Name is required.");
-      return;
-    }
-
-    if (!data.category) {
       window.alert(
-        "Category is required."
+        "Name is required."
       );
       return;
     }
 
-    if (!data.unit) {
-      window.alert("Unit is required.");
-      return;
-    }
-
     if (
-      Number.isNaN(data.quantity) ||
+      Number.isNaN(
+        data.quantity
+      ) ||
       data.quantity < 0
     ) {
       window.alert(
@@ -259,16 +355,17 @@ class HomePrepManageCard extends HTMLElement {
       return;
     }
 
-    /*
-     * Optional HA action fields should simply
-     * be omitted when empty.
-     */
     const serviceData = {
-      name: data.name,
-      category: data.category,
-      item_type: data.item_type,
-      quantity: data.quantity,
-      unit: data.unit,
+      name:
+        data.name,
+      category:
+        data.category,
+      item_type:
+        data.item_type,
+      quantity:
+        data.quantity,
+      unit:
+        data.unit,
     };
 
     if (data.expires_at) {
@@ -292,7 +389,9 @@ class HomePrepManageCard extends HTMLElement {
     }
 
     try {
-      if (this._formMode === "add") {
+      if (
+        this._formMode === "add"
+      ) {
         await this._hass.callService(
           "homeprep",
           "add_item",
@@ -318,7 +417,7 @@ class HomePrepManageCard extends HTMLElement {
       this._editingItem = null;
       this._formMode = null;
 
-      await this.loadItems();
+      await this.loadData();
     } catch (error) {
       console.error(
         "HomePrep: Failed to save item",
@@ -332,9 +431,11 @@ class HomePrepManageCard extends HTMLElement {
   }
 
   async deleteItem(itemId) {
-    const item = this._items.find(
-      (entry) => entry.id === itemId
-    );
+    const item =
+      this._items.find(
+        (entry) =>
+          entry.id === itemId
+      );
 
     if (!item) {
       return;
@@ -358,7 +459,7 @@ class HomePrepManageCard extends HTMLElement {
         }
       );
 
-      await this.loadItems();
+      await this.loadData();
     } catch (error) {
       console.error(
         "HomePrep: Failed to delete item",
@@ -371,19 +472,102 @@ class HomePrepManageCard extends HTMLElement {
     }
   }
 
-  renderItem(item) {
-    const name = this.escapeHtml(
-      item.name || "Unnamed item"
-    );
+  renderCategoryOptions(
+    selectedId
+  ) {
+    return this._taxonomy.categories
+      .map((entry) => `
+        <option
+          value="${this.escapeHtml(
+            entry.id
+          )}"
+          ${
+            entry.id === selectedId
+              ? "selected"
+              : ""
+          }
+        >
+          ${this.escapeHtml(
+            entry.label
+          )}
+        </option>
+      `)
+      .join("");
+  }
 
-    const category = this.escapeHtml(
-      item.category || "Uncategorized"
-    );
+  renderItemTypeOptions(
+    selectedId
+  ) {
+    return this._taxonomy.item_types
+      .map((entry) => `
+        <option
+          value="${this.escapeHtml(
+            entry.id
+          )}"
+          ${
+            entry.id === selectedId
+              ? "selected"
+              : ""
+          }
+        >
+          ${this.escapeHtml(
+            entry.label
+          )}
+        </option>
+      `)
+      .join("");
+  }
+
+  renderUnitOptions(
+    selectedId
+  ) {
+    return this._taxonomy.units
+      .map((entry) => {
+        const label =
+          entry.symbol
+            ? `${entry.label} (${entry.symbol})`
+            : entry.label;
+
+        return `
+          <option
+            value="${this.escapeHtml(
+              entry.id
+            )}"
+            ${
+              entry.id === selectedId
+                ? "selected"
+                : ""
+            }
+          >
+            ${this.escapeHtml(
+              label
+            )}
+          </option>
+        `;
+      })
+      .join("");
+  }
+
+  renderItem(item) {
+    const name =
+      this.escapeHtml(
+        item.name ||
+        "Unnamed item"
+      );
+
+    const category =
+      this.escapeHtml(
+        this.getCategoryLabel(
+          item.category
+        )
+      );
 
     const type =
-      item.item_type === "equipment"
-        ? "Equipment"
-        : "Consumable";
+      this.escapeHtml(
+        this.getItemTypeLabel(
+          item.item_type
+        )
+      );
 
     const quantity =
       this.escapeHtml(
@@ -392,7 +576,9 @@ class HomePrepManageCard extends HTMLElement {
 
     const unit =
       this.escapeHtml(
-        item.unit ?? ""
+        this.getUnitDisplay(
+          item.unit
+        )
       );
 
     return `
@@ -401,7 +587,8 @@ class HomePrepManageCard extends HTMLElement {
           <div class="item-icon">
             <ha-icon
               icon="${
-                item.item_type === "equipment"
+                item.item_type ===
+                "equipment"
                   ? "mdi:tools"
                   : "mdi:package-variant"
               }"
@@ -506,45 +693,27 @@ class HomePrepManageCard extends HTMLElement {
             >
           </label>
 
-          <label class="field field-wide">
+          <label class="field">
             <span>Category</span>
 
-            <input
+            <select
               id="hp-category"
-              type="text"
-              value="${this.escapeHtml(
-                item.category
-              )}"
             >
+              ${this.renderCategoryOptions(
+                item.category
+              )}
+            </select>
           </label>
 
           <label class="field">
-            <span>Type</span>
+            <span>Item type</span>
 
-            <select id="hp-type">
-              <option
-                value="consumable"
-                ${
-                  item.item_type ===
-                  "consumable"
-                    ? "selected"
-                    : ""
-                }
-              >
-                Consumable
-              </option>
-
-              <option
-                value="equipment"
-                ${
-                  item.item_type ===
-                  "equipment"
-                    ? "selected"
-                    : ""
-                }
-              >
-                Equipment
-              </option>
+            <select
+              id="hp-type"
+            >
+              ${this.renderItemTypeOptions(
+                item.item_type
+              )}
             </select>
           </label>
 
@@ -565,13 +734,13 @@ class HomePrepManageCard extends HTMLElement {
           <label class="field">
             <span>Unit</span>
 
-            <input
+            <select
               id="hp-unit"
-              type="text"
-              value="${this.escapeHtml(
-                item.unit ?? ""
-              )}"
             >
+              ${this.renderUnitOptions(
+                item.unit
+              )}
+            </select>
           </label>
 
           <label class="field">
@@ -739,11 +908,6 @@ class HomePrepManageCard extends HTMLElement {
             font: inherit;
           }
 
-          button {
-            -webkit-tap-highlight-color:
-              transparent;
-          }
-
           .icon-button {
             display: flex;
             align-items: center;
@@ -754,7 +918,6 @@ class HomePrepManageCard extends HTMLElement {
             border-radius: 50%;
             padding: 0;
             cursor: pointer;
-            pointer-events: auto;
             color:
               var(--primary-text-color);
             background:
@@ -768,7 +931,6 @@ class HomePrepManageCard extends HTMLElement {
             border: 0;
             border-radius: 10px;
             cursor: pointer;
-            pointer-events: auto;
             color: white;
             background: #2196f3;
             font-weight: 600;
@@ -928,7 +1090,6 @@ class HomePrepManageCard extends HTMLElement {
             padding: 10px 14px;
             border-radius: 10px;
             cursor: pointer;
-            pointer-events: auto;
           }
 
           .primary-button {
