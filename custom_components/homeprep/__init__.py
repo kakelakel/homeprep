@@ -21,11 +21,17 @@ from .core.taxonomy import (
     ITEM_TYPES,
     UNITS,
 )
+from .planning.recommendations import RecommendationCatalog
+from .planning.repository import HAPlanningRepository
+from .planning.service import HomePrepPlanningService
+from .planning.websocket import async_register_planning_websocket
 from .repositories.ha_storage import HAStorageRepository
 from .websocket import async_register_websocket_api
 
 
 PLATFORMS = ["sensor"]
+
+PLANNING_SERVICE_KEY = "planning_service"
 
 FRONTEND_PATH = (
     Path(__file__).parent
@@ -130,7 +136,14 @@ async def async_setup(
 ) -> bool:
     """Set up HomePrep."""
 
+    #
+    # Register HomePrep WebSocket APIs once.
+    #
     async_register_websocket_api(
+        hass
+    )
+
+    async_register_planning_websocket(
         hass
     )
 
@@ -143,6 +156,9 @@ async def async_setup_entry(
 ) -> bool:
     """Set up HomePrep from a config entry."""
 
+    #
+    # Register bundled frontend files.
+    #
     await hass.http.async_register_static_paths(
         [
             StaticPathConfig(
@@ -152,6 +168,14 @@ async def async_setup_entry(
             )
         ]
     )
+
+    #
+    # ---------------------------------------------------------
+    # Inventory
+    # ---------------------------------------------------------
+    #
+    # Existing HomePrep inventory backend.
+    #
 
     repository = HAStorageRepository(
         hass
@@ -169,10 +193,54 @@ async def async_setup_entry(
         {},
     )[entry.entry_id] = service
 
+    #
+    # ---------------------------------------------------------
+    # Planning
+    # ---------------------------------------------------------
+    #
+    # Personal targets, household profile and
+    # official recommendation profiles.
+    #
+
+    planning_repository = (
+        HAPlanningRepository(
+            hass
+        )
+    )
+
+    recommendation_catalog = (
+        RecommendationCatalog()
+    )
+
+    planning_service = (
+        HomePrepPlanningService(
+            planning_repository,
+            recommendation_catalog,
+            service,
+        )
+    )
+
+    await planning_service.async_load()
+
+    hass.data[
+        DOMAIN
+    ][
+        PLANNING_SERVICE_KEY
+    ] = planning_service
+
+    #
+    # Set up Home Assistant platforms.
+    #
     await hass.config_entries.async_forward_entry_setups(
         entry,
         PLATFORMS,
     )
+
+    #
+    # ---------------------------------------------------------
+    # Inventory actions
+    # ---------------------------------------------------------
+    #
 
     async def async_handle_add_item(
         call: ServiceCall,
@@ -265,6 +333,9 @@ async def async_unload_entry(
     if not unload_ok:
         return False
 
+    #
+    # Remove inventory actions.
+    #
     if hass.services.has_service(
         DOMAIN,
         SERVICE_ADD_ITEM,
@@ -292,9 +363,17 @@ async def async_unload_entry(
             SERVICE_DELETE_ITEM,
         )
 
+    #
+    # Remove runtime services.
+    #
     if DOMAIN in hass.data:
         hass.data[DOMAIN].pop(
             entry.entry_id,
+            None,
+        )
+
+        hass.data[DOMAIN].pop(
+            PLANNING_SERVICE_KEY,
             None,
         )
 
