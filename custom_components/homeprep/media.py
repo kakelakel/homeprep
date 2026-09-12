@@ -36,15 +36,23 @@ def _inventory_service(hass: HomeAssistant) -> HomePrepService | None:
 class HomePrepMediaService:
     """Store inventory images outside Home Assistant Store JSON."""
 
-    def __init__(self, hass: HomeAssistant, inventory_service: HomePrepService) -> None:
+    def __init__(self, hass: HomeAssistant) -> None:
         self._hass = hass
-        self._inventory_service = inventory_service
         self._directory = Path(hass.config.path(".storage", "homeprep_media"))
 
-    async def async_setup(self) -> None:
-        await self._hass.async_add_executor_job(self._directory.mkdir, 0o755, True, True)
+    def _inventory(self) -> HomePrepService:
+        service = _inventory_service(self._hass)
+        if service is None:
+            raise RuntimeError("HomePrep inventory service is not loaded")
+        return service
 
-    def image_url(self, item: dict[str, Any]) -> str | None:
+    async def _ensure_directory(self) -> None:
+        def _mkdir() -> None:
+            self._directory.mkdir(parents=True, exist_ok=True)
+        await self._hass.async_add_executor_job(_mkdir)
+
+    @staticmethod
+    def image_url(item: dict[str, Any]) -> str | None:
         image_id = item.get("image_id")
         token = item.get("image_token")
         if not image_id or not token:
@@ -58,7 +66,8 @@ class HomePrepMediaService:
         encoded_data: str,
         filename: str | None = None,
     ) -> dict[str, Any]:
-        item = self._inventory_service.get_item(item_id)
+        inventory = self._inventory()
+        item = inventory.get_item(item_id)
         if item is None:
             raise KeyError(item_id)
         if content_type not in ALLOWED_CONTENT_TYPES:
@@ -72,6 +81,7 @@ class HomePrepMediaService:
         if not raw or len(raw) > MAX_IMAGE_BYTES:
             raise ValueError("Image must be between 1 byte and 5 MB")
 
+        await self._ensure_directory()
         old_image_id = item.get("image_id")
         image_id = str(uuid4())
         token = uuid4().hex
@@ -79,7 +89,7 @@ class HomePrepMediaService:
         path = self._directory / f"{image_id}{suffix}"
         await self._hass.async_add_executor_job(path.write_bytes, raw)
 
-        updated = await self._inventory_service.async_update_item(
+        updated = await inventory.async_update_item(
             item_id,
             {
                 "image_id": image_id,
@@ -95,7 +105,7 @@ class HomePrepMediaService:
         if old_image_id:
             await self._async_delete_files(old_image_id)
 
-        refreshed = self._inventory_service.get_item(item_id) or {}
+        refreshed = inventory.get_item(item_id) or {}
         return {
             "item_id": item_id,
             "image_id": image_id,
@@ -103,13 +113,14 @@ class HomePrepMediaService:
         }
 
     async def async_remove_image(self, item_id: str) -> None:
-        item = self._inventory_service.get_item(item_id)
+        inventory = self._inventory()
+        item = inventory.get_item(item_id)
         if item is None:
             raise KeyError(item_id)
         image_id = item.get("image_id")
         if not image_id:
             return
-        await self._inventory_service.async_update_item(
+        await inventory.async_update_item(
             item_id,
             {
                 "image_id": None,
@@ -127,10 +138,13 @@ class HomePrepMediaService:
         await self._hass.async_add_executor_job(_delete)
 
     def resolve(self, image_id: str, token: str) -> tuple[Path, str] | None:
+        inventory = _inventory_service(self._hass)
+        if inventory is None:
+            return None
         item = next(
             (
                 candidate
-                for candidate in self._inventory_service.items
+                for candidate in inventory.items
                 if candidate.get("image_id") == image_id
                 and candidate.get("image_token") == token
             ),
@@ -164,7 +178,10 @@ class HomePrepMediaView(HomeAssistantView):
         if resolved is None:
             raise web.HTTPNotFound()
         path, content_type = resolved
-        return web.FileResponse(path, headers={"Content-Type": content_type, "Cache-Control": "private, max-age=3600"})
+        return web.FileResponse(
+            path,
+            headers={"Content-Type": content_type, "Cache-Control": "private, max-age=3600"},
+        )
 
 
 @websocket_api.websocket_command({
@@ -184,7 +201,7 @@ async def websocket_set_image(hass, connection, msg) -> None:
         result = await media_service.async_set_image(
             msg["item_id"], msg["content_type"], msg["data"], msg.get("filename")
         )
-    except (KeyError, ValueError) as err:
+    except (KeyError, RuntimeError, ValueError) as err:
         connection.send_error(msg["id"], "invalid_image", str(err))
         return
     connection.send_result(msg["id"], result)
@@ -202,12 +219,17 @@ async def websocket_remove_image(hass, connection, msg) -> None:
         return
     try:
         await media_service.async_remove_image(msg["item_id"])
-    except KeyError:
-        connection.send_error(msg["id"], "not_found", "Inventory item not found")
+    except (KeyError, RuntimeError) as err:
+        connection.send_error(msg["id"], "not_found", str(err))
         return
     connection.send_result(msg["id"], {"removed": True})
 
 
-def async_register_media_websocket(hass: HomeAssistant) -> None:
+def async_register_media(hass: HomeAssistant) -> None:
+    """Register image commands and the tokenized media endpoint once."""
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    if MEDIA_SERVICE_KEY not in domain_data:
+        domain_data[MEDIA_SERVICE_KEY] = HomePrepMediaService(hass)
+        hass.http.register_view(HomePrepMediaView)
     websocket_api.async_register_command(hass, websocket_set_image)
     websocket_api.async_register_command(hass, websocket_remove_image)
