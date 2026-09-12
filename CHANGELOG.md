@@ -4,6 +4,21 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.6.1b3] - 2026-09-12
+
+### Added
+- Much broader Swedish translation coverage for sidebar subtexts, notification descriptions, overview summaries, task metadata, inventory counts and Lovelace card copy.
+- Swedish localization for the full Swedish MSB guidance profile shown in HomePrep, including recommendation titles, readiness requirements, descriptions and advisory notes.
+- Pattern-aware translation for dynamic values such as item counts, readiness counts, days, inspection metadata and due-date text.
+
+### Improved
+- Guidance and adopted personal targets now present far less mixed English/Swedish content when HomePrep is set to Swedish.
+- Lovelace cards use the same extra localization pass as the sidebar panel.
+- Sidebar frontend cache versioning was bumped again so the new translation bundle is fetched after upgrade.
+
+### Notes
+- This beta focuses on closing the largest remaining Swedish translation gaps identified during real UI testing. The same translation architecture remains in place for Norwegian Bokmål, Danish, Finnish, German and French.
+
 ## [0.6.1b2] - 2026-09-12
 
 ### Added
