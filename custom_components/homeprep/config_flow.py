@@ -51,7 +51,7 @@ TARGET_MAP = {
 class HomePrepConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle the HomePrep setup wizard."""
 
-    VERSION = 2
+    VERSION = 1
 
     def __init__(self) -> None:
         self._household: dict[str, Any] = {}
