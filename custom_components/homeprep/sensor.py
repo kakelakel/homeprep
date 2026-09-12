@@ -6,8 +6,11 @@ from typing import Any
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, SIGNAL_ITEMS_UPDATED
 from .core.service import HomePrepService
@@ -33,7 +36,7 @@ def get_expired_items(
 ) -> list[dict[str, Any]]:
     """Return expired HomePrep items."""
 
-    today = date.today()
+    today = dt_util.now().date()
     result: list[dict[str, Any]] = []
 
     for item in items:
@@ -65,9 +68,10 @@ def get_expired_items(
 def get_expiring_items(
     items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Return items expiring soon."""
+    """Return HomePrep items expiring soon."""
 
-    today = date.today()
+    today = dt_util.now().date()
+
     limit = today + timedelta(
         days=EXPIRING_SOON_DAYS
     )
@@ -103,9 +107,9 @@ def get_expiring_items(
 def get_due_items(
     items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Return items due for inspection."""
+    """Return HomePrep items due for inspection."""
 
-    today = date.today()
+    today = dt_util.now().date()
     result: list[dict[str, Any]] = []
 
     for item in items:
@@ -151,42 +155,69 @@ async def async_setup_entry(
 
     async_add_entities(
         [
-            HomePrepItemsSensor(service),
-            HomePrepExpiredSensor(service),
+            HomePrepItemsSensor(
+                service,
+                entry,
+            ),
+            HomePrepExpiredSensor(
+                service,
+                entry,
+            ),
             HomePrepExpiringSoonSensor(
-                service
+                service,
+                entry,
             ),
             HomePrepDueForCheckSensor(
-                service
+                service,
+                entry,
             ),
-            HomePrepStatusSensor(service),
+            HomePrepStatusSensor(
+                service,
+                entry,
+            ),
         ]
     )
 
 
 class HomePrepBaseSensor(SensorEntity):
-    """Base HomePrep sensor."""
+    """Base class for HomePrep sensors."""
 
     _attr_has_entity_name = True
 
     def __init__(
         self,
         service: HomePrepService,
+        entry: ConfigEntry,
     ) -> None:
-        """Initialize sensor."""
+        """Initialize a HomePrep sensor."""
 
         self._service = service
+
         self._remove_dispatcher = None
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={
+                (
+                    DOMAIN,
+                    entry.entry_id,
+                )
+            },
+            name="HomePrep",
+            manufacturer="HomePrep",
+            model="HomePrep",
+            entry_type=DeviceEntryType.SERVICE,
+        )
 
     @property
     def items(self) -> list[dict[str, Any]]:
-        """Return HomePrep items."""
+        """Return all HomePrep items."""
+
         return self._service.items
 
     async def async_added_to_hass(
         self,
     ) -> None:
-        """Register dispatcher listener."""
+        """Register HomePrep dispatcher listener."""
 
         self._remove_dispatcher = (
             async_dispatcher_connect(
@@ -199,7 +230,7 @@ class HomePrepBaseSensor(SensorEntity):
     async def async_will_remove_from_hass(
         self,
     ) -> None:
-        """Remove dispatcher listener."""
+        """Remove HomePrep dispatcher listener."""
 
         if self._remove_dispatcher:
             self._remove_dispatcher()
@@ -208,7 +239,7 @@ class HomePrepBaseSensor(SensorEntity):
     def _handle_items_updated(
         self,
     ) -> None:
-        """Handle HomePrep data update."""
+        """Handle HomePrep item updates."""
 
         self.async_write_ha_state()
 
@@ -216,7 +247,7 @@ class HomePrepBaseSensor(SensorEntity):
 class HomePrepItemsSensor(
     HomePrepBaseSensor
 ):
-    """Total HomePrep items."""
+    """Total number of HomePrep items."""
 
     _attr_name = "Items"
     _attr_unique_id = "homeprep_items"
@@ -225,13 +256,14 @@ class HomePrepItemsSensor(
     @property
     def native_value(self) -> int:
         """Return total number of items."""
+
         return len(self.items)
 
     @property
     def extra_state_attributes(
         self,
     ) -> dict[str, Any]:
-        """Return item statistics."""
+        """Return inventory statistics."""
 
         consumables = sum(
             1
@@ -267,6 +299,7 @@ class HomePrepExpiredSensor(
         self,
     ) -> list[dict[str, Any]]:
         """Return expired items."""
+
         return get_expired_items(
             self.items
         )
@@ -274,6 +307,7 @@ class HomePrepExpiredSensor(
     @property
     def native_value(self) -> int:
         """Return number of expired items."""
+
         return len(
             self.expired_items
         )
@@ -282,7 +316,8 @@ class HomePrepExpiredSensor(
     def extra_state_attributes(
         self,
     ) -> dict[str, Any]:
-        """Return expired items."""
+        """Return expired item details."""
+
         return {
             "items": self.expired_items,
         }
@@ -291,9 +326,9 @@ class HomePrepExpiredSensor(
 class HomePrepExpiringSoonSensor(
     HomePrepBaseSensor
 ):
-    """Items expiring soon."""
+    """HomePrep items expiring soon."""
 
-    _attr_name = "Expiring Soon"
+    _attr_name = "Expiring soon"
     _attr_unique_id = (
         "homeprep_expiring_soon"
     )
@@ -303,14 +338,16 @@ class HomePrepExpiringSoonSensor(
     def expiring_items(
         self,
     ) -> list[dict[str, Any]]:
-        """Return expiring items."""
+        """Return items expiring soon."""
+
         return get_expiring_items(
             self.items
         )
 
     @property
     def native_value(self) -> int:
-        """Return count."""
+        """Return number of items expiring soon."""
+
         return len(
             self.expiring_items
         )
@@ -319,7 +356,8 @@ class HomePrepExpiringSoonSensor(
     def extra_state_attributes(
         self,
     ) -> dict[str, Any]:
-        """Return expiring items."""
+        """Return item details."""
+
         return {
             "items": self.expiring_items,
         }
@@ -328,9 +366,9 @@ class HomePrepExpiringSoonSensor(
 class HomePrepDueForCheckSensor(
     HomePrepBaseSensor
 ):
-    """Items due for inspection."""
+    """HomePrep items due for inspection."""
 
-    _attr_name = "Due For Check"
+    _attr_name = "Due for check"
     _attr_unique_id = (
         "homeprep_due_for_check"
     )
@@ -340,14 +378,16 @@ class HomePrepDueForCheckSensor(
     def due_items(
         self,
     ) -> list[dict[str, Any]]:
-        """Return due items."""
+        """Return items due for inspection."""
+
         return get_due_items(
             self.items
         )
 
     @property
     def native_value(self) -> int:
-        """Return count."""
+        """Return number of items due."""
+
         return len(
             self.due_items
         )
@@ -356,7 +396,8 @@ class HomePrepDueForCheckSensor(
     def extra_state_attributes(
         self,
     ) -> dict[str, Any]:
-        """Return due items."""
+        """Return due item details."""
+
         return {
             "items": self.due_items,
         }
@@ -365,7 +406,7 @@ class HomePrepDueForCheckSensor(
 class HomePrepStatusSensor(
     HomePrepBaseSensor
 ):
-    """Overall HomePrep status."""
+    """Overall HomePrep preparedness status."""
 
     _attr_name = "Status"
     _attr_unique_id = "homeprep_status"
@@ -374,7 +415,7 @@ class HomePrepStatusSensor(
     def status_data(
         self,
     ) -> dict[str, Any]:
-        """Calculate status."""
+        """Calculate HomePrep status."""
 
         expired = get_expired_items(
             self.items
@@ -410,14 +451,16 @@ class HomePrepStatusSensor(
 
     @property
     def native_value(self) -> str:
-        """Return overall status."""
+        """Return overall HomePrep status."""
+
         return self.status_data[
             "state"
         ]
 
     @property
     def icon(self) -> str:
-        """Return dynamic icon."""
+        """Return status icon."""
+
         return self.status_data[
             "icon"
         ]
@@ -426,7 +469,7 @@ class HomePrepStatusSensor(
     def extra_state_attributes(
         self,
     ) -> dict[str, Any]:
-        """Return status details."""
+        """Return HomePrep status details."""
 
         data = self.status_data
 
