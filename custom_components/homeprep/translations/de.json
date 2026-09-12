@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Willkommen bei HomePrep",
+        "description": "HomePrep führt dich durch eine schnelle Einrichtung, damit dein Haushaltsprofil und die ersten Vorsorgeziele sofort bereit sind. Alles kann später im HomePrep-Seitenpanel geändert werden."
+      },
+      "household": {
+        "title": "Haushalt",
+        "description": "Teile HomePrep mit, für wen und was du vorsorgst. Wähle Andere, wenn HomePrep für dein Land noch kein offizielles Profil enthält.",
+        "data": {
+          "country_code": "Land / Leitfadenprofil",
+          "adults": "Erwachsene",
+          "children": "Kinder",
+          "pets": "Haustiere",
+          "preparedness_days": "Vorsorgezeitraum (Tage)"
+        }
+      },
+      "targets": {
+        "title": "Startziele",
+        "description": "Wähle die Empfehlungen von {authority}, die HomePrep als deine ersten persönlichen Ziele übernehmen soll. Diese Ziele können frei bearbeitet werden; der zugrunde liegende Leitfaden bleibt unverändert.",
+        "data": {
+          "target_water": "Notfallwasser",
+          "target_food": "Lebensmittelvorrat",
+          "target_cooking": "Alternative Kochmöglichkeit",
+          "target_communication": "Notfallkommunikation / Radio",
+          "target_power": "Alternative Stromversorgung / Powerbanks",
+          "target_lighting": "Notbeleuchtung",
+          "target_warmth": "Wärme ohne reguläre Heizung",
+          "target_first_aid": "Erste Hilfe und Hausapotheke",
+          "target_hygiene": "Hygienevorsorge",
+          "target_cash": "Alternative Zahlungsmöglichkeiten",
+          "target_documents": "Wichtige Kontakte offline",
+          "target_pets": "Notfallvorräte für Haustiere"
+        }
+      },
+      "review": {
+        "title": "Bereit für die Vorsorge",
+        "description": "Land/Profil: {country}\n\nPersonen: {people}\n\nHaustiere: {pets}\n\nVorsorgezeitraum: {days} Tage\n\nAusgewählte Startziele: {targets}\n\nSchließe die Einrichtung ab, um dein HomePrep-Profil und die ausgewählten persönlichen Ziele zu erstellen."
+      }
+    },
+    "abort": {
+      "already_configured": "HomePrep ist bereits konfiguriert."
+    }
+  }
+}
