@@ -1,7 +1,47 @@
 import "./homeprep-panel-v6.js?v=7";
 import { applyHomePrepV8 } from "./homeprep-panel-v8.js?v=1";
+import {
+  HOME_PREP_LANGUAGE_NAMES,
+  HOME_PREP_LANGUAGES,
+  getHomePrepLanguageOverride,
+  hpT,
+  setHomePrepLanguageOverride,
+} from "./homeprep-i18n.js?v=1";
 
 const HomePrepPanel = customElements.get("homeprep-panel");
+
+function localizeLiveDom(root, hass) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) {
+    const original = node.nodeValue || "";
+    const leading = original.match(/^\s*/)?.[0] || "";
+    const trailing = original.match(/\s*$/)?.[0] || "";
+    const core = original.trim();
+    if (!core) continue;
+    const translated = hpT(core, hass);
+    if (translated !== core) node.nodeValue = `${leading}${translated}${trailing}`;
+  }
+  root.querySelectorAll?.("[placeholder],[title],[aria-label]").forEach((el) => {
+    ["placeholder", "title", "aria-label"].forEach((attr) => {
+      if (!el.hasAttribute(attr)) return;
+      const value = el.getAttribute(attr);
+      const translated = hpT(value, hass);
+      if (translated !== value) el.setAttribute(attr, translated);
+    });
+  });
+}
+
+function languageOptions(hass) {
+  const selected = getHomePrepLanguageOverride();
+  return HOME_PREP_LANGUAGES.map((code) => {
+    const label = code === "auto"
+      ? hpT(HOME_PREP_LANGUAGE_NAMES.auto, hass)
+      : HOME_PREP_LANGUAGE_NAMES[code];
+    return `<option value="${code}" ${selected === code ? "selected" : ""}>${label}</option>`;
+  }).join("");
+}
 
 if (HomePrepPanel) {
   const oldHandleSubmit = HomePrepPanel.prototype.handleSubmit;
@@ -13,11 +53,11 @@ if (HomePrepPanel) {
 
     event.preventDefault();
     const button = form.querySelector('button[type="submit"]');
-    const previousText = button?.textContent || "Save notification settings";
+    const previousText = button?.textContent || hpT("Save notification settings", this._hass);
 
     if (button) {
       button.disabled = true;
-      button.textContent = "Saving…";
+      button.textContent = hpT("Saving…", this._hass);
     }
 
     this._notificationSaveState = "saving";
@@ -62,25 +102,41 @@ if (HomePrepPanel) {
     }
   };
 
+  const oldHandleChange = HomePrepPanel.prototype.handleChange;
+  HomePrepPanel.prototype.handleChange = async function handleChange(event) {
+    const target = event.target;
+    if (target instanceof HTMLSelectElement && target.name === "homeprep_language") {
+      setHomePrepLanguageOverride(target.value);
+      this.render();
+      return;
+    }
+    return oldHandleChange.call(this, event);
+  };
+
   const oldRenderSettings = HomePrepPanel.prototype.renderSettings;
   HomePrepPanel.prototype.renderSettings = function renderSettings() {
     let html = oldRenderSettings.call(this);
     const state = this._notificationSaveState;
 
     const feedback = state === "saved"
-      ? '<span class="notification-save-feedback saved"><ha-icon icon="mdi:check-circle"></ha-icon> Settings saved</span>'
+      ? `<span class="notification-save-feedback saved"><ha-icon icon="mdi:check-circle"></ha-icon> ${hpT("Settings saved", this._hass)}</span>`
       : state === "error"
-        ? '<span class="notification-save-feedback error"><ha-icon icon="mdi:alert-circle"></ha-icon> Could not save settings</span>'
+        ? `<span class="notification-save-feedback error"><ha-icon icon="mdi:alert-circle"></ha-icon> ${hpT("Could not save settings", this._hass)}</span>`
         : state === "saving"
-          ? '<span class="notification-save-feedback"><ha-icon icon="mdi:loading" class="spin"></ha-icon> Saving…</span>'
+          ? `<span class="notification-save-feedback"><ha-icon icon="mdi:loading" class="spin"></ha-icon> ${hpT("Saving…", this._hass)}</span>`
           : "";
 
     html = html.replace(
       '<button type="submit" class="primary">Save notification settings</button>',
-      `<button type="submit" class="primary" ${state === "saving" ? "disabled" : ""}>${state === "saving" ? "Saving…" : state === "saved" ? "Saved" : "Save notification settings"}</button>${feedback}`,
+      `<button type="submit" class="primary" ${state === "saving" ? "disabled" : ""}>${state === "saving" ? hpT("Saving…", this._hass) : state === "saved" ? hpT("Saved", this._hass) : hpT("Save notification settings", this._hass)}</button>${feedback}`,
     );
 
-    return html;
+    const languageCard = `<section class="panel-card form-card hp-language-card">
+      <div class="section-head"><h3><ha-icon icon="mdi:translate"></ha-icon> ${hpT("Language", this._hass)}</h3></div>
+      <label><span>${hpT("Language", this._hass)}</span><select name="homeprep_language">${languageOptions(this._hass)}</select></label>
+    </section>`;
+
+    return `${languageCard}${html}`;
   };
 
   const oldStyles = HomePrepPanel.prototype.styles;
@@ -93,6 +149,9 @@ if (HomePrepPanel) {
       .notification-actions button:disabled{opacity:.65;cursor:wait}
       .notification-save-feedback .spin{animation:hp-notification-spin .8s linear infinite}
       @keyframes hp-notification-spin{to{transform:rotate(360deg)}}
+      .hp-language-card{margin-bottom:16px}
+      .hp-language-card label{display:grid;gap:6px;max-width:420px}
+      .hp-language-card select{min-height:40px;border-radius:8px;padding:0 10px;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color)}
 
       /* Consistent HomePrep action buttons. Navigation controls stay neutral. */
       .row-actions button,
@@ -122,4 +181,11 @@ if (HomePrepPanel) {
   };
 
   applyHomePrepV8(HomePrepPanel);
+
+  const oldRender = HomePrepPanel.prototype.render;
+  HomePrepPanel.prototype.render = function render() {
+    const result = oldRender.call(this);
+    localizeLiveDom(this.shadowRoot || this, this._hass);
+    return result;
+  };
 }
