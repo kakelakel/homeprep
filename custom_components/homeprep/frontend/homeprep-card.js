@@ -87,16 +87,6 @@ class HomePrepMainBase extends HTMLElement {
     return this.t("Home is ready");
   }
 
-  taskAttentionCount() {
-    const s = this._taskSummary || {};
-    return (s.overdue || 0) + (s.due || 0) + (s.upcoming || 0) + (s.unscheduled || 0);
-  }
-
-  inventoryAttentionCount() {
-    const s = this._summary || {};
-    return (s.expired || 0) + (s.expiring_soon || 0) + (s.due_for_check || 0);
-  }
-
   baseCss() {
     return `
       ${window.HomePrepUI.baseStyles()}
@@ -119,6 +109,8 @@ class HomePrepMainBase extends HTMLElement {
         .mini-stats{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
         .mini-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border:1px solid var(--hp-border);border-radius:999px;font-size:9px;color:var(--hp-secondary)}
         .mini-chip strong{color:var(--hp-primary);font-size:10px}
+        .mini-chip.attention strong{color:var(--hp-attention)}
+        .mini-chip.critical strong{color:var(--hp-critical)}
         @media(max-width:520px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
       </style>
     `;
@@ -193,8 +185,9 @@ class HomePrepMiniCard extends HomePrepMainBase {
     const label = this.statusLabel(status);
     const inventoryCount = this._summary?.items ?? 0;
     const taskCount = this._taskSummary?.tasks ?? 0;
-    const inventoryAttention = this.inventoryAttentionCount();
-    const taskAttention = this.taskAttentionCount();
+    const overdue = this._taskSummary?.overdue ?? 0;
+    const due = this._taskSummary?.due ?? 0;
+    const upcoming = this._taskSummary?.upcoming ?? 0;
 
     this.innerHTML = this.shell(`
       <div class="wrap">
@@ -209,8 +202,9 @@ class HomePrepMiniCard extends HomePrepMainBase {
         <div class="mini-stats">
           <span class="mini-chip"><ha-icon icon="mdi:package-variant-closed"></ha-icon><strong>${this.esc(inventoryCount)}</strong>${this.esc(this.t("Inventory"))}</span>
           <span class="mini-chip"><ha-icon icon="mdi:clipboard-check-outline"></ha-icon><strong>${this.esc(taskCount)}</strong>${this.esc(this.t("Tasks"))}</span>
-          ${inventoryAttention ? `<span class="mini-chip"><strong>${this.esc(inventoryAttention)}</strong>${this.esc(this.t("Needs attention"))}</span>` : ""}
-          ${taskAttention ? `<span class="mini-chip"><strong>${this.esc(taskAttention)}</strong>${this.esc(this.t("Task attention"))}</span>` : ""}
+          ${overdue ? `<span class="mini-chip critical"><strong>${this.esc(overdue)}</strong>${this.esc(this.t("Overdue"))}</span>` : ""}
+          ${due ? `<span class="mini-chip attention"><strong>${this.esc(due)}</strong>${this.esc(this.t("Due today"))}</span>` : ""}
+          ${upcoming ? `<span class="mini-chip attention"><strong>${this.esc(upcoming)}</strong>${this.esc(this.t("Upcoming"))}</span>` : ""}
         </div>
       </div>
     `);
