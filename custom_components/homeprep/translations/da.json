@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Velkommen til HomePrep",
+        "description": "HomePrep guider dig gennem en hurtig opsætning, så husstandsprofilen og de første beredskabsmål er klar med det samme. Alt kan ændres senere fra HomePrep-panelet i sidebjælken."
+      },
+      "household": {
+        "title": "Husstand",
+        "description": "Fortæl HomePrep, hvem og hvad du forbereder dig til. Vælg Andet, hvis HomePrep endnu ikke har en officiel profil for dit land.",
+        "data": {
+          "country_code": "Land / vejledningsprofil",
+          "adults": "Voksne",
+          "children": "Børn",
+          "pets": "Kæledyr",
+          "preparedness_days": "Beredskabshorisont (dage)"
+        }
+      },
+      "targets": {
+        "title": "Startmål",
+        "description": "Vælg de anbefalinger fra {authority}, som HomePrep skal bruge som dine første personlige mål. Målene kan redigeres frit; kildevejledningen forbliver uændret.",
+        "data": {
+          "target_water": "Nødvand",
+          "target_food": "Fødevaredækning",
+          "target_cooking": "Alternativ madlavning",
+          "target_communication": "Krisekommunikation / radio",
+          "target_power": "Alternativ strøm / powerbanks",
+          "target_lighting": "Nødbelysning",
+          "target_warmth": "Varme uden normal opvarmning",
+          "target_first_aid": "Førstehjælp og medicin i hjemmet",
+          "target_hygiene": "Hygiejneberedskab",
+          "target_cash": "Alternative betalingsmuligheder",
+          "target_documents": "Vigtige kontakter offline",
+          "target_pets": "Beredskab til kæledyr"
+        }
+      },
+      "review": {
+        "title": "Klar til at forberede",
+        "description": "Land/profil: {country}\n\nPersoner: {people}\n\nKæledyr: {pets}\n\nBeredskabshorisont: {days} dage\n\nValgte startmål: {targets}\n\nAfslut opsætningen for at oprette din HomePrep-profil og de valgte personlige mål."
+      }
+    },
+    "abort": {
+      "already_configured": "HomePrep er allerede konfigureret."
+    }
+  }
+}
