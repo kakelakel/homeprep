@@ -1,4 +1,19 @@
 class HomePrepManageCard extends HTMLElement {
+  constructor() {
+    super();
+
+    this._items = [];
+    this._loading = false;
+    this._error = null;
+    this._editingItem = null;
+    this._formMode = null;
+
+    this.addEventListener(
+      "click",
+      (event) => this.handleClick(event)
+    );
+  }
+
   setConfig(config) {
     this.config = config || {};
   }
@@ -26,8 +41,74 @@ class HomePrepManageCard extends HTMLElement {
       .replaceAll("'", "&#039;");
   }
 
+  getClickedElement(event) {
+    const path = event.composedPath();
+
+    return path.find((element) => {
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+
+      return (
+        element.id === "refresh" ||
+        element.id === "add-item" ||
+        element.id === "cancel-editor" ||
+        element.id === "cancel-editor-bottom" ||
+        element.id === "save-editor" ||
+        element.dataset?.action
+      );
+    });
+  }
+
+  async handleClick(event) {
+    const target = this.getClickedElement(event);
+
+    if (!target) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (target.id === "refresh") {
+      await this.loadItems();
+      return;
+    }
+
+    if (target.id === "add-item") {
+      this.openAddForm();
+      return;
+    }
+
+    if (
+      target.id === "cancel-editor" ||
+      target.id === "cancel-editor-bottom"
+    ) {
+      this.closeForm();
+      return;
+    }
+
+    if (target.id === "save-editor") {
+      await this.saveForm();
+      return;
+    }
+
+    if (target.dataset.action === "edit") {
+      this.openEditForm(
+        target.dataset.id
+      );
+      return;
+    }
+
+    if (target.dataset.action === "delete") {
+      await this.deleteItem(
+        target.dataset.id
+      );
+    }
+  }
+
   async loadItems() {
-    if (!this._hass) {
+    if (!this._hass || this._loading) {
       return;
     }
 
@@ -70,11 +151,12 @@ class HomePrepManageCard extends HTMLElement {
     };
 
     this._formMode = "add";
+
     this.render();
   }
 
   openEditForm(itemId) {
-    const item = this._items?.find(
+    const item = this._items.find(
       (entry) => entry.id === itemId
     );
 
@@ -84,61 +166,65 @@ class HomePrepManageCard extends HTMLElement {
 
     this._editingItem = {
       ...item,
-      expires_at: item.expires_at ?? "",
-      last_checked: item.last_checked ?? "",
-      next_check_at: item.next_check_at ?? "",
-      notes: item.notes ?? "",
+      expires_at:
+        item.expires_at ?? "",
+      last_checked:
+        item.last_checked ?? "",
+      next_check_at:
+        item.next_check_at ?? "",
+      notes:
+        item.notes ?? "",
     };
 
     this._formMode = "edit";
+
     this.render();
   }
 
   closeForm() {
     this._editingItem = null;
     this._formMode = null;
+
     this.render();
   }
 
   readForm() {
-    const root = this;
-
     return {
       name:
-        root.querySelector("#hp-name")
+        this.querySelector("#hp-name")
           ?.value.trim() ?? "",
 
       category:
-        root.querySelector("#hp-category")
+        this.querySelector("#hp-category")
           ?.value.trim() ?? "",
 
       item_type:
-        root.querySelector("#hp-type")
+        this.querySelector("#hp-type")
           ?.value ?? "consumable",
 
       quantity: Number(
-        root.querySelector("#hp-quantity")
+        this.querySelector("#hp-quantity")
           ?.value ?? 0
       ),
 
       unit:
-        root.querySelector("#hp-unit")
+        this.querySelector("#hp-unit")
           ?.value.trim() ?? "",
 
       expires_at:
-        root.querySelector("#hp-expires")
-          ?.value ?? "",
+        this.querySelector("#hp-expires")
+          ?.value || "",
 
       last_checked:
-        root.querySelector("#hp-last-checked")
-          ?.value ?? "",
+        this.querySelector("#hp-last-checked")
+          ?.value || "",
 
       next_check_at:
-        root.querySelector("#hp-next-check")
-          ?.value ?? "",
+        this.querySelector("#hp-next-check")
+          ?.value || "",
 
       notes:
-        root.querySelector("#hp-notes")
+        this.querySelector("#hp-notes")
           ?.value.trim() ?? "",
     };
   }
@@ -147,26 +233,62 @@ class HomePrepManageCard extends HTMLElement {
     const data = this.readForm();
 
     if (!data.name) {
-      alert("Name is required.");
+      window.alert("Name is required.");
       return;
     }
 
     if (!data.category) {
-      alert("Category is required.");
+      window.alert(
+        "Category is required."
+      );
       return;
     }
 
     if (!data.unit) {
-      alert("Unit is required.");
+      window.alert("Unit is required.");
       return;
     }
 
     if (
-      Number.isNaN(data.quantity)
-      || data.quantity < 0
+      Number.isNaN(data.quantity) ||
+      data.quantity < 0
     ) {
-      alert("Quantity must be a valid number.");
+      window.alert(
+        "Quantity must be a valid number."
+      );
       return;
+    }
+
+    /*
+     * Optional HA action fields should simply
+     * be omitted when empty.
+     */
+    const serviceData = {
+      name: data.name,
+      category: data.category,
+      item_type: data.item_type,
+      quantity: data.quantity,
+      unit: data.unit,
+    };
+
+    if (data.expires_at) {
+      serviceData.expires_at =
+        data.expires_at;
+    }
+
+    if (data.last_checked) {
+      serviceData.last_checked =
+        data.last_checked;
+    }
+
+    if (data.next_check_at) {
+      serviceData.next_check_at =
+        data.next_check_at;
+    }
+
+    if (data.notes) {
+      serviceData.notes =
+        data.notes;
     }
 
     try {
@@ -174,18 +296,21 @@ class HomePrepManageCard extends HTMLElement {
         await this._hass.callService(
           "homeprep",
           "add_item",
-          data
+          serviceData
         );
-      } else if (
-        this._formMode === "edit"
-        && this._editingItem?.id
+      }
+
+      if (
+        this._formMode === "edit" &&
+        this._editingItem?.id
       ) {
         await this._hass.callService(
           "homeprep",
           "update_item",
           {
-            item_id: this._editingItem.id,
-            ...data,
+            item_id:
+              this._editingItem.id,
+            ...serviceData,
           }
         );
       }
@@ -200,14 +325,14 @@ class HomePrepManageCard extends HTMLElement {
         error
       );
 
-      alert(
+      window.alert(
         "HomePrep could not save the item."
       );
     }
   }
 
   async deleteItem(itemId) {
-    const item = this._items?.find(
+    const item = this._items.find(
       (entry) => entry.id === itemId
     );
 
@@ -215,9 +340,10 @@ class HomePrepManageCard extends HTMLElement {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Delete "${item.name}" from HomePrep?`
-    );
+    const confirmed =
+      window.confirm(
+        `Delete "${item.name}" from HomePrep?`
+      );
 
     if (!confirmed) {
       return;
@@ -239,10 +365,95 @@ class HomePrepManageCard extends HTMLElement {
         error
       );
 
-      alert(
+      window.alert(
         "HomePrep could not delete the item."
       );
     }
+  }
+
+  renderItem(item) {
+    const name = this.escapeHtml(
+      item.name || "Unnamed item"
+    );
+
+    const category = this.escapeHtml(
+      item.category || "Uncategorized"
+    );
+
+    const type =
+      item.item_type === "equipment"
+        ? "Equipment"
+        : "Consumable";
+
+    const quantity =
+      this.escapeHtml(
+        item.quantity ?? ""
+      );
+
+    const unit =
+      this.escapeHtml(
+        item.unit ?? ""
+      );
+
+    return `
+      <div class="item">
+        <div class="item-main">
+          <div class="item-icon">
+            <ha-icon
+              icon="${
+                item.item_type === "equipment"
+                  ? "mdi:tools"
+                  : "mdi:package-variant"
+              }"
+            ></ha-icon>
+          </div>
+
+          <div class="item-content">
+            <div class="item-name">
+              ${name}
+            </div>
+
+            <div class="item-meta">
+              ${category} • ${type}
+            </div>
+
+            <div class="item-quantity">
+              ${quantity} ${unit}
+            </div>
+          </div>
+        </div>
+
+        <div class="item-actions">
+          <button
+            type="button"
+            class="icon-button"
+            data-action="edit"
+            data-id="${this.escapeHtml(
+              item.id
+            )}"
+            title="Edit"
+          >
+            <ha-icon
+              icon="mdi:pencil"
+            ></ha-icon>
+          </button>
+
+          <button
+            type="button"
+            class="icon-button delete"
+            data-action="delete"
+            data-id="${this.escapeHtml(
+              item.id
+            )}"
+            title="Delete"
+          >
+            <ha-icon
+              icon="mdi:delete"
+            ></ha-icon>
+          </button>
+        </div>
+      </div>
+    `;
   }
 
   renderForm() {
@@ -250,7 +461,8 @@ class HomePrepManageCard extends HTMLElement {
       return "";
     }
 
-    const item = this._editingItem;
+    const item =
+      this._editingItem;
 
     const title =
       this._formMode === "add"
@@ -270,11 +482,14 @@ class HomePrepManageCard extends HTMLElement {
           </div>
 
           <button
+            type="button"
             id="cancel-editor"
             class="icon-button"
             title="Close"
           >
-            <ha-icon icon="mdi:close"></ha-icon>
+            <ha-icon
+              icon="mdi:close"
+            ></ha-icon>
           </button>
         </div>
 
@@ -339,8 +554,8 @@ class HomePrepManageCard extends HTMLElement {
             <input
               id="hp-quantity"
               type="number"
-              step="any"
               min="0"
+              step="any"
               value="${this.escapeHtml(
                 item.quantity ?? 1
               )}"
@@ -409,6 +624,7 @@ class HomePrepManageCard extends HTMLElement {
 
         <div class="editor-actions">
           <button
+            type="button"
             id="cancel-editor-bottom"
             class="secondary-button"
           >
@@ -416,176 +632,19 @@ class HomePrepManageCard extends HTMLElement {
           </button>
 
           <button
+            type="button"
             id="save-editor"
             class="primary-button"
           >
-            <ha-icon icon="mdi:content-save"></ha-icon>
+            <ha-icon
+              icon="mdi:content-save"
+            ></ha-icon>
+
             ${saveLabel}
           </button>
         </div>
       </div>
     `;
-  }
-
-  renderItem(item) {
-    const name = this.escapeHtml(
-      item.name || "Unnamed item"
-    );
-
-    const category = this.escapeHtml(
-      item.category || "Uncategorized"
-    );
-
-    const type =
-      item.item_type === "equipment"
-        ? "Equipment"
-        : "Consumable";
-
-    const quantity =
-      item.quantity !== undefined &&
-      item.quantity !== null
-        ? this.escapeHtml(item.quantity)
-        : "";
-
-    const unit = this.escapeHtml(
-      item.unit || ""
-    );
-
-    return `
-      <div class="item">
-        <div class="item-main">
-          <div class="item-icon">
-            <ha-icon
-              icon="${
-                item.item_type === "equipment"
-                  ? "mdi:tools"
-                  : "mdi:package-variant"
-              }"
-            ></ha-icon>
-          </div>
-
-          <div class="item-content">
-            <div class="item-name">
-              ${name}
-            </div>
-
-            <div class="item-meta">
-              ${category} • ${type}
-            </div>
-
-            <div class="item-quantity">
-              ${quantity} ${unit}
-            </div>
-          </div>
-        </div>
-
-        <div class="item-actions">
-          <button
-            class="icon-button"
-            data-action="edit"
-            data-id="${this.escapeHtml(
-              item.id
-            )}"
-            title="Edit"
-          >
-            <ha-icon icon="mdi:pencil"></ha-icon>
-          </button>
-
-          <button
-            class="icon-button delete"
-            data-action="delete"
-            data-id="${this.escapeHtml(
-              item.id
-            )}"
-            title="Delete"
-          >
-            <ha-icon icon="mdi:delete"></ha-icon>
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  attachEvents() {
-    const refreshButton =
-      this.querySelector("#refresh");
-
-    if (refreshButton) {
-      refreshButton.addEventListener(
-        "click",
-        () => this.loadItems()
-      );
-    }
-
-    const addButton =
-      this.querySelector("#add-item");
-
-    if (addButton) {
-      addButton.addEventListener(
-        "click",
-        () => this.openAddForm()
-      );
-    }
-
-    const cancelEditor =
-      this.querySelector(
-        "#cancel-editor"
-      );
-
-    if (cancelEditor) {
-      cancelEditor.addEventListener(
-        "click",
-        () => this.closeForm()
-      );
-    }
-
-    const cancelEditorBottom =
-      this.querySelector(
-        "#cancel-editor-bottom"
-      );
-
-    if (cancelEditorBottom) {
-      cancelEditorBottom.addEventListener(
-        "click",
-        () => this.closeForm()
-      );
-    }
-
-    const saveEditor =
-      this.querySelector(
-        "#save-editor"
-      );
-
-    if (saveEditor) {
-      saveEditor.addEventListener(
-        "click",
-        () => this.saveForm()
-      );
-    }
-
-    this.querySelectorAll(
-      "[data-action='edit']"
-    ).forEach((button) => {
-      button.addEventListener(
-        "click",
-        () =>
-          this.openEditForm(
-            button.dataset.id
-          )
-      );
-    });
-
-    this.querySelectorAll(
-      "[data-action='delete']"
-    ).forEach((button) => {
-      button.addEventListener(
-        "click",
-        () =>
-          this.deleteItem(
-            button.dataset.id
-          )
-      );
-    });
   }
 
   render() {
@@ -598,27 +657,16 @@ class HomePrepManageCard extends HTMLElement {
     if (this._loading) {
       content = `
         <div class="message">
-          <ha-icon icon="mdi:loading"></ha-icon>
           Loading inventory...
         </div>
       `;
     } else if (this._error) {
       content = `
         <div class="message error">
-          <ha-icon icon="mdi:alert-circle"></ha-icon>
-
-          <div>
-            <strong>
-              Could not load HomePrep inventory
-            </strong>
-
-            <div class="message-detail">
-              Check the HomePrep integration and reload the card.
-            </div>
-          </div>
+          Could not load HomePrep inventory.
         </div>
       `;
-    } else if (!this._items?.length) {
+    } else if (!this._items.length) {
       content = `
         <div class="empty">
           <ha-icon
@@ -638,8 +686,9 @@ class HomePrepManageCard extends HTMLElement {
       content = `
         <div class="inventory">
           ${this._items
-            .map((item) =>
-              this.renderItem(item)
+            .map(
+              (item) =>
+                this.renderItem(item)
             )
             .join("")}
         </div>
@@ -664,7 +713,6 @@ class HomePrepManageCard extends HTMLElement {
             width: 42px;
             height: 42px;
             object-fit: contain;
-            flex-shrink: 0;
           }
 
           .header-text {
@@ -675,19 +723,13 @@ class HomePrepManageCard extends HTMLElement {
           .title {
             font-size: 20px;
             font-weight: 700;
-            line-height: 1.1;
           }
 
           .subtitle {
             margin-top: 3px;
             font-size: 11px;
-            color: var(--secondary-text-color);
-          }
-
-          .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            color:
+              var(--secondary-text-color);
           }
 
           button,
@@ -697,60 +739,39 @@ class HomePrepManageCard extends HTMLElement {
             font: inherit;
           }
 
+          button {
+            -webkit-tap-highlight-color:
+              transparent;
+          }
+
           .icon-button {
             display: flex;
             align-items: center;
             justify-content: center;
             width: 36px;
             height: 36px;
-            padding: 0;
             border: 0;
             border-radius: 50%;
+            padding: 0;
             cursor: pointer;
-            color: var(--primary-text-color);
-            background: rgba(128, 128, 128, 0.10);
-          }
-
-          .icon-button:hover {
-            background: rgba(128, 128, 128, 0.18);
-          }
-
-          .icon-button ha-icon {
-            --mdc-icon-size: 20px;
-          }
-
-          .add-button,
-          .primary-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            border: 0;
-            border-radius: 10px;
-            cursor: pointer;
-            color: white;
-            background: #2196f3;
-            font-weight: 600;
+            pointer-events: auto;
+            color:
+              var(--primary-text-color);
+            background:
+              rgba(128,128,128,.10);
           }
 
           .add-button {
             width: 100%;
-            box-sizing: border-box;
+            padding: 10px 14px;
             margin-bottom: 14px;
-            padding: 10px 14px;
-          }
-
-          .primary-button {
-            padding: 10px 14px;
-          }
-
-          .secondary-button {
-            padding: 10px 14px;
-            border: 1px solid var(--divider-color);
+            border: 0;
             border-radius: 10px;
             cursor: pointer;
-            color: var(--primary-text-color);
-            background: transparent;
+            pointer-events: auto;
+            color: white;
+            background: #2196f3;
+            font-weight: 600;
           }
 
           .inventory {
@@ -761,12 +782,15 @@ class HomePrepManageCard extends HTMLElement {
 
           .item {
             display: flex;
+            justify-content:
+              space-between;
             align-items: center;
-            justify-content: space-between;
             gap: 10px;
             padding: 11px 10px;
+            border:
+              1px solid
+              var(--divider-color);
             border-radius: 12px;
-            border: 1px solid var(--divider-color);
           }
 
           .item-main {
@@ -778,18 +802,15 @@ class HomePrepManageCard extends HTMLElement {
 
           .item-icon {
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             width: 38px;
             height: 38px;
             border-radius: 50%;
             flex-shrink: 0;
             color: #42a5f5;
-            background: rgba(66, 165, 245, 0.12);
-          }
-
-          .item-icon ha-icon {
-            --mdc-icon-size: 21px;
+            background:
+              rgba(66,165,245,.12);
           }
 
           .item-content {
@@ -797,9 +818,6 @@ class HomePrepManageCard extends HTMLElement {
           }
 
           .item-name {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
             font-size: 13px;
             font-weight: 700;
           }
@@ -807,7 +825,8 @@ class HomePrepManageCard extends HTMLElement {
           .item-meta {
             margin-top: 2px;
             font-size: 10px;
-            color: var(--secondary-text-color);
+            color:
+              var(--secondary-text-color);
           }
 
           .item-quantity {
@@ -817,27 +836,34 @@ class HomePrepManageCard extends HTMLElement {
 
           .item-actions {
             display: flex;
-            align-items: center;
             gap: 4px;
             flex-shrink: 0;
           }
 
           .delete {
-            color: var(--error-color, #db4437);
+            color:
+              var(
+                --error-color,
+                #db4437
+              );
           }
 
           .editor {
             margin-bottom: 14px;
             padding: 14px;
+            border:
+              1px solid
+              var(--divider-color);
             border-radius: 12px;
-            border: 1px solid var(--divider-color);
-            background: rgba(128, 128, 128, 0.05);
+            background:
+              rgba(128,128,128,.05);
           }
 
           .editor-header {
             display: flex;
+            justify-content:
+              space-between;
             align-items: center;
-            justify-content: space-between;
             margin-bottom: 14px;
           }
 
@@ -848,7 +874,11 @@ class HomePrepManageCard extends HTMLElement {
 
           .form-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns:
+              repeat(
+                2,
+                minmax(0,1fr)
+              );
             gap: 10px;
           }
 
@@ -856,7 +886,6 @@ class HomePrepManageCard extends HTMLElement {
             display: flex;
             flex-direction: column;
             gap: 5px;
-            min-width: 0;
           }
 
           .field-wide {
@@ -865,7 +894,8 @@ class HomePrepManageCard extends HTMLElement {
 
           .field span {
             font-size: 10px;
-            color: var(--secondary-text-color);
+            color:
+              var(--secondary-text-color);
           }
 
           .field input,
@@ -874,18 +904,16 @@ class HomePrepManageCard extends HTMLElement {
             width: 100%;
             box-sizing: border-box;
             padding: 9px 10px;
-            border: 1px solid var(--divider-color);
+            border:
+              1px solid
+              var(--divider-color);
             border-radius: 8px;
-            outline: none;
-            color: var(--primary-text-color);
-            background: var(
-              --input-fill-color,
-              var(--card-background-color)
-            );
-          }
-
-          .field textarea {
-            resize: vertical;
+            color:
+              var(--primary-text-color);
+            background:
+              var(
+                --card-background-color
+              );
           }
 
           .editor-actions {
@@ -895,49 +923,58 @@ class HomePrepManageCard extends HTMLElement {
             margin-top: 14px;
           }
 
-          .message {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 18px;
-            border-radius: 12px;
-            background: rgba(128, 128, 128, 0.08);
+          .primary-button,
+          .secondary-button {
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            pointer-events: auto;
           }
 
-          .message-detail {
-            margin-top: 3px;
-            font-size: 11px;
-            color: var(--secondary-text-color);
+          .primary-button {
+            border: 0;
+            color: white;
+            background: #2196f3;
+          }
+
+          .secondary-button {
+            border:
+              1px solid
+              var(--divider-color);
+            color:
+              var(--primary-text-color);
+            background: transparent;
+          }
+
+          .message,
+          .empty {
+            padding: 24px;
+            text-align: center;
           }
 
           .error {
-            color: var(--error-color, #db4437);
-          }
-
-          .empty {
-            padding: 30px 16px;
-            text-align: center;
-            color: var(--secondary-text-color);
-          }
-
-          .empty ha-icon {
-            --mdc-icon-size: 38px;
-            color: #42a5f5;
+            color:
+              var(
+                --error-color,
+                #db4437
+              );
           }
 
           .empty-title {
-            margin-top: 10px;
-            font-size: 14px;
+            margin-top: 8px;
             font-weight: 700;
-            color: var(--primary-text-color);
           }
 
           .empty-detail {
             margin-top: 4px;
             font-size: 11px;
+            color:
+              var(--secondary-text-color);
           }
 
-          @media (max-width: 500px) {
+          @media (
+            max-width: 500px
+          ) {
             .form-grid {
               grid-template-columns: 1fr;
             }
@@ -966,25 +1003,24 @@ class HomePrepManageCard extends HTMLElement {
               </div>
             </div>
 
-            <div class="header-actions">
-              <button
-                id="refresh"
-                class="icon-button"
-                title="Refresh"
-              >
-                <ha-icon
-                  icon="mdi:refresh"
-                ></ha-icon>
-              </button>
-            </div>
+            <button
+              type="button"
+              id="refresh"
+              class="icon-button"
+              title="Refresh"
+            >
+              <ha-icon
+                icon="mdi:refresh"
+              ></ha-icon>
+            </button>
           </div>
 
           <button
+            type="button"
             id="add-item"
             class="add-button"
           >
-            <ha-icon icon="mdi:plus"></ha-icon>
-            Add item
+            + Add item
           </button>
 
           ${this.renderForm()}
@@ -993,21 +1029,20 @@ class HomePrepManageCard extends HTMLElement {
         </div>
       </ha-card>
     `;
-
-    this.attachEvents();
   }
 }
 
 
-if (!customElements.get(
-  "homeprep-manage-card"
-)) {
+if (
+  !customElements.get(
+    "homeprep-manage-card"
+  )
+) {
   customElements.define(
     "homeprep-manage-card",
     HomePrepManageCard
   );
 }
-
 
 window.customCards =
   window.customCards || [];
