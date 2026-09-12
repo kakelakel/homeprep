@@ -1,3 +1,5 @@
 {
-  "name": "HomePrep"
+  "name": "HomePrep",
+  "homeassistant": "2026.3.0",
+  "hide_default_branch": false
 }
