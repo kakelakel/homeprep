@@ -4,6 +4,23 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.6.1b1] - 2026-09-12
+
+### Added
+- First beta of HomePrep's multilingual frontend foundation.
+- Automatic language selection based on the active Home Assistant frontend language.
+- Optional HomePrep language override in the sidebar Settings view.
+- Initial support for English, Swedish, Norwegian Bokmål, Danish, Finnish, German and French.
+- Home Assistant setup-wizard translations for the supported languages.
+
+### Improved
+- English remains the canonical source language and fallback when a translated frontend string is unavailable.
+- Sidebar frontend cache versioning was bumped so updated frontend modules are fetched reliably after upgrades.
+
+### Notes
+- This is a beta release intended for opt-in testing through HACS prerelease updates before the stable 0.6.1 release.
+- Translation coverage is being expanded across the sidebar panel, Lovelace cards and visual editors during the 0.6.1 beta cycle.
+
 ## [0.6.0] - 2026-09-12
 
 ### Added
