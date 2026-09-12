@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Velkommen til HomePrep",
+        "description": "HomePrep veileder deg gjennom et raskt oppsett slik at husholdningsprofilen og de første beredskapsmålene er klare med en gang. Alt kan endres senere fra HomePrep-panelet i sidefeltet."
+      },
+      "household": {
+        "title": "Husholdning",
+        "description": "Fortell HomePrep hvem og hva du forbereder deg for. Velg Annet hvis HomePrep ennå ikke har en offisiell profil for landet ditt.",
+        "data": {
+          "country_code": "Land / veiledningsprofil",
+          "adults": "Voksne",
+          "children": "Barn",
+          "pets": "Kjæledyr",
+          "preparedness_days": "Beredskapshorisont (dager)"
+        }
+      },
+      "targets": {
+        "title": "Startmål",
+        "description": "Velg hvilke anbefalinger fra {authority} HomePrep skal bruke som dine første personlige mål. Målene kan redigeres fritt; kildeveiledningen forblir uendret.",
+        "data": {
+          "target_water": "Beredskapsvann",
+          "target_food": "Matdekning",
+          "target_cooking": "Alternativ matlaging",
+          "target_communication": "Krisekommunikasjon / radio",
+          "target_power": "Alternativ strøm / powerbanker",
+          "target_lighting": "Nødbelysning",
+          "target_warmth": "Varme uten normal oppvarming",
+          "target_first_aid": "Førstehjelp og husholdningsmedisin",
+          "target_hygiene": "Hygieneberedskap",
+          "target_cash": "Alternative betalingsmuligheter",
+          "target_documents": "Viktige kontakter offline",
+          "target_pets": "Beredskap for kjæledyr"
+        }
+      },
+      "review": {
+        "title": "Klar til å forberede",
+        "description": "Land/profil: {country}\n\nPersoner: {people}\n\nKjæledyr: {pets}\n\nBeredskapshorisont: {days} dager\n\nValgte startmål: {targets}\n\nFullfør oppsettet for å opprette HomePrep-profilen og de valgte personlige målene."
+      }
+    },
+    "abort": {
+      "already_configured": "HomePrep er allerede konfigurert."
+    }
+  }
+}
