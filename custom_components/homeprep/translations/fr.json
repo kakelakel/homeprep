@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bienvenue dans HomePrep",
+        "description": "HomePrep vous guide dans une configuration rapide afin que votre profil de foyer et vos premiers objectifs de préparation soient prêts immédiatement. Tout pourra être modifié plus tard depuis le panneau latéral HomePrep."
+      },
+      "household": {
+        "title": "Foyer",
+        "description": "Indiquez à HomePrep pour qui et pour quoi vous vous préparez. Choisissez Autre si HomePrep ne propose pas encore de profil officiel pour votre pays.",
+        "data": {
+          "country_code": "Pays / profil de recommandations",
+          "adults": "Adultes",
+          "children": "Enfants",
+          "pets": "Animaux",
+          "preparedness_days": "Horizon de préparation (jours)"
+        }
+      },
+      "targets": {
+        "title": "Objectifs de départ",
+        "description": "Choisissez les recommandations de {authority} que HomePrep doit adopter comme premiers objectifs personnels. Ces objectifs restent modifiables ; les recommandations sources ne sont pas modifiées.",
+        "data": {
+          "target_water": "Eau d'urgence",
+          "target_food": "Réserve alimentaire",
+          "target_cooking": "Cuisine alternative",
+          "target_communication": "Communication d'urgence / radio",
+          "target_power": "Énergie alternative / batteries externes",
+          "target_lighting": "Éclairage d'urgence",
+          "target_warmth": "Chaleur sans chauffage habituel",
+          "target_first_aid": "Premiers secours et pharmacie familiale",
+          "target_hygiene": "Préparation hygiénique",
+          "target_cash": "Moyens de paiement alternatifs",
+          "target_documents": "Contacts importants hors ligne",
+          "target_pets": "Réserves d'urgence pour animaux"
+        }
+      },
+      "review": {
+        "title": "Prêt à vous préparer",
+        "description": "Pays/profil : {country}\n\nPersonnes : {people}\n\nAnimaux : {pets}\n\nHorizon de préparation : {days} jours\n\nObjectifs de départ sélectionnés : {targets}\n\nTerminez la configuration pour créer votre profil HomePrep et les objectifs personnels sélectionnés."
+      }
+    },
+    "abort": {
+      "already_configured": "HomePrep est déjà configuré."
+    }
+  }
+}
