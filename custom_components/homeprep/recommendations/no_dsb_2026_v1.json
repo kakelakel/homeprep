@@ -4,7 +4,7 @@
   "authority": "Direktoratet for samfunnssikkerhet og beredskap (DSB)",
   "authority_url": "https://www.dsb.no/",
   "title": "Norway – self-preparedness",
-  "version": "2026.2",
+  "version": "2026.3",
   "reviewed_at": "2026-09-12",
   "default_duration_days": 7,
   "disclaimer": "Official guidance is translated into HomePrep planning primitives. Personal circumstances always take precedence.",
@@ -28,15 +28,9 @@
       "title": "Stored emergency water",
       "category": "water",
       "target_type": "quantity",
-      "matcher": {
-        "category": "water"
-      },
+      "matcher": {"category": "water"},
       "priority": "critical",
-      "rule": {
-        "kind": "quantity_per_person_total",
-        "value": 20,
-        "unit": "liter"
-      },
+      "rule": {"kind": "quantity_per_person_total", "value": 20, "unit": "liter"},
       "advisory_note": "DSB recommends storing around 20 litres of drinking water per person, intended to cover minimum needs for one week.",
       "household_adjustment_note": "The 20-litre recommendation is per person. Individual circumstances may justify a larger personal target.",
       "pet_adjustment_note": "Pet water is not included in this numeric recommendation; add a separate personal target when relevant."
@@ -46,164 +40,136 @@
       "title": "Food for one week",
       "category": "food",
       "target_type": "coverage",
-      "matcher": {
-        "category": "food"
-      },
+      "matcher": {"category": "food"},
       "priority": "critical",
-      "rule": {
-        "kind": "coverage_days",
-        "days": 7
-      }
+      "rule": {"kind": "coverage_days", "days": 7}
     },
     {
       "id": "alternative_cooking",
       "title": "Alternative cooking capability",
       "category": "cooking",
       "target_type": "capability",
-      "matcher": {
-        "category": "cooking",
-        "item_type": "equipment"
-      },
       "priority": "high",
-      "rule": {
-        "kind": "capability"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "cook_without_mains", "label": "I can prepare food without mains electricity", "description": "Confirm when your household has a usable alternative cooking method."}
+      ]
     },
     {
       "id": "warmth",
       "title": "Warmth without normal heating",
       "category": "shelter_warmth",
       "target_type": "capability",
-      "matcher": {
-        "category": "shelter_warmth"
-      },
       "priority": "high",
-      "rule": {
-        "kind": "capability"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "keep_warm", "label": "My household can stay warm if normal heating stops", "description": "Confirm when you have a practical plan and supplies for retaining warmth."}
+      ]
     },
     {
       "id": "lighting",
       "title": "Battery, crank or solar emergency lighting",
       "category": "lighting",
       "target_type": "presence",
-      "matcher": {
-        "category": "lighting"
-      },
       "priority": "high",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "presence"},
+      "requirements": [
+        {"id": "off_grid_light", "label": "Working emergency lighting is available without mains power"}
+      ]
     },
     {
       "id": "radio",
       "title": "DAB radio independent of mains power",
       "category": "communication",
       "target_type": "presence",
-      "matcher": {
-        "category": "communication"
-      },
       "priority": "high",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "presence"},
+      "requirements": [
+        {"id": "off_grid_radio", "label": "A working DAB radio can be used without mains power"}
+      ]
     },
     {
       "id": "medicine_first_aid",
       "title": "Medicines and first-aid equipment",
       "category": "first_aid",
-      "target_type": "presence",
-      "matcher": {
-        "category": "first_aid"
-      },
+      "target_type": "checklist",
       "priority": "high",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "checklist"},
+      "requirements": [
+        {"id": "first_aid", "label": "First-aid equipment is available"},
+        {"id": "necessary_medicine", "label": "Necessary medicines are available"}
+      ]
     },
     {
       "id": "regular_medicine",
       "title": "Extra regular medicine reserve",
       "category": "medicine",
       "target_type": "coverage",
-      "matcher": {
-        "category": "medicine"
-      },
+      "matcher": {"category": "medicine"},
       "priority": "critical",
       "conditional": true,
       "condition_note": "Relevant when someone uses regular medication.",
-      "rule": {
-        "kind": "coverage_days",
-        "days": 7
-      },
+      "rule": {"kind": "coverage_days", "days": 7},
       "advisory_note": "DSB advises at least a seven-day extra supply of medicines and medical equipment used regularly."
     },
     {
       "id": "hygiene",
       "title": "Personal hygiene supplies",
       "category": "hygiene",
-      "target_type": "presence",
-      "matcher": {
-        "category": "hygiene"
-      },
+      "target_type": "capability",
       "priority": "normal",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "hygiene_ready", "label": "Suitable personal hygiene supplies are ready for disruption"}
+      ]
     },
     {
       "id": "powerbanks",
       "title": "Batteries and charged power banks",
       "category": "power",
-      "target_type": "presence",
-      "matcher": {
-        "category": "power"
-      },
+      "target_type": "checklist",
       "priority": "high",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "checklist"},
+      "requirements": [
+        {"id": "powerbank", "label": "At least one charged power bank is available"},
+        {"id": "batteries", "label": "Spare batteries for essential equipment are available"}
+      ]
     },
     {
       "id": "cash",
       "title": "Cash and alternative payment cards",
       "category": "cash",
-      "target_type": "capability",
-      "matcher": {
-        "category": "cash"
-      },
+      "target_type": "checklist",
       "priority": "normal",
-      "rule": {
-        "kind": "capability"
-      }
+      "rule": {"kind": "checklist"},
+      "requirements": [
+        {"id": "cash", "label": "Cash is available for disruptions"},
+        {"id": "alternative_card", "label": "An alternative payment card or method is available"}
+      ]
     },
     {
       "id": "paper_contacts",
       "title": "Important phone numbers on paper",
       "category": "documents",
       "target_type": "presence",
-      "matcher": {
-        "category": "documents"
-      },
       "priority": "normal",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "presence"},
+      "requirements": [
+        {"id": "paper_contacts", "label": "Important phone numbers are written down and accessible offline"}
+      ]
     },
     {
       "id": "pet_supplies",
       "title": "Food and water for pets",
       "category": "pet_supplies",
-      "target_type": "presence",
-      "matcher": {
-        "category": "pet_supplies"
-      },
+      "target_type": "capability",
       "priority": "high",
       "conditional": true,
       "condition_note": "Relevant when the household has pets.",
-      "rule": {
-        "kind": "presence"
-      }
+      "rule": {"kind": "capability"},
+      "requirements": [
+        {"id": "pet_supplies", "label": "Emergency food, water and essential supplies are included for pets"}
+      ]
     }
   ]
 }
