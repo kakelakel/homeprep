@@ -65,6 +65,15 @@ DELETE_ITEM_SCHEMA = vol.Schema(
     }
 )
 
+async def async_setup(
+    hass: HomeAssistant,
+    config: dict,
+) -> bool:
+    """Set up HomePrep."""
+
+    async_register_websocket_api(hass)
+
+    return True
 
 async def async_setup_entry(
     hass: HomeAssistant,
