@@ -94,3 +94,7 @@
     };
   });
 })();
+
+import("./homeprep-lovelace-images.js?v=1").catch((error) => {
+  console.error("HomePrep Lovelace image support failed to load", error);
+});
