@@ -14,10 +14,15 @@ HomePrep uses semantic versioning while it is in active `0.x` development. Patch
 ### Improved
 - Guidance and adopted personal targets now present far less mixed English/Swedish content when HomePrep is set to Swedish.
 - Lovelace cards use the same extra localization pass as the sidebar panel.
+- The **HomePrep** summary card now combines Inventory and Tasks, including separate metrics for inventory attention and task status.
+- **HomePrep Mini** now provides a compact combined Inventory + Tasks summary and reflects whichever area needs the most attention.
+- Summary cards refresh HomePrep data automatically so task and inventory changes are reflected without a dashboard reload.
+- Public README and roadmap documentation were refreshed to match the current release, localization, HACS and Lovelace feature set.
 - Sidebar frontend cache versioning was bumped again so the new translation bundle is fetched after upgrade.
 
 ### Notes
-- This beta focuses on closing the largest remaining Swedish translation gaps identified during real UI testing. The same translation architecture remains in place for Norwegian Bokmål, Danish, Finnish, German and French.
+- This beta focuses on closing the largest remaining Swedish translation gaps identified during real UI testing and validating the revised HomePrep summary cards before stable 0.6.1.
+- The same translation architecture remains in place for Norwegian Bokmål, Danish, Finnish, German and French.
 
 ## [0.6.1b2] - 2026-09-12
 
