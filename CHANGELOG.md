@@ -4,6 +4,22 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.6.0] - 2026-09-12
+
+### Added
+- Optional image support for inventory items.
+- JPEG, PNG and WebP uploads up to 5 MB from the HomePrep sidebar editor.
+- Inventory thumbnails that replace category icons where a useful visual can be shown.
+- Linked inspection tasks can reuse the inventory item's thumbnail.
+- Separate image-file storage so binary image data is not embedded in HomePrep's inventory JSON.
+- Replace and remove controls for existing inventory images.
+
+### Improved
+- Linked inspection tasks now show that they are managed from Inventory and provide a direct **Manage item** action.
+
+### Fixed
+- Editing a linked inspection task now preserves its inspection type, linked inventory item and enabled state.
+
 ## [0.5.0] - 2026-09-12
 
 ### Added
