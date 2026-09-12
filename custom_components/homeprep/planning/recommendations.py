@@ -50,6 +50,8 @@ class RecommendationCatalog:
                 "default_duration_days": profile.get(
                     "default_duration_days"
                 ),
+                "unofficial": bool(profile.get("unofficial", False)),
+                "disclaimer": profile.get("disclaimer"),
             }
             for profile in self.profiles
         ]
