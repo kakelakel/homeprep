@@ -7,6 +7,7 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant
 
 from ..const import DOMAIN
+from ..media import async_register_media
 from .service import HomePrepNotificationService
 
 
@@ -63,3 +64,4 @@ def async_register_notification_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, websocket_get_notifications)
     websocket_api.async_register_command(hass, websocket_update_notifications)
     websocket_api.async_register_command(hass, websocket_test_notifications)
+    async_register_media(hass)
