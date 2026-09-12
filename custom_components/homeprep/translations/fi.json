@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tervetuloa HomePrepiin",
+        "description": "HomePrep opastaa sinut nopean käyttöönoton läpi, jotta kotitalousprofiili ja ensimmäiset varautumistavoitteet ovat heti valmiina. Kaikkea voi muuttaa myöhemmin HomePrep-sivupaneelista."
+      },
+      "household": {
+        "title": "Kotitalous",
+        "description": "Kerro HomePrepille, keitä ja mitä varten varaudut. Valitse Muu, jos HomePrepillä ei vielä ole virallista profiilia maallesi.",
+        "data": {
+          "country_code": "Maa / ohjeistusprofiili",
+          "adults": "Aikuiset",
+          "children": "Lapset",
+          "pets": "Lemmikit",
+          "preparedness_days": "Varautumisaika (päivää)"
+        }
+      },
+      "targets": {
+        "title": "Aloitustavoitteet",
+        "description": "Valitse {authority}-suositukset, jotka HomePrep ottaa ensimmäisiksi henkilökohtaisiksi tavoitteiksesi. Tavoitteita voi muokata vapaasti; lähdeohjeistus ei muutu.",
+        "data": {
+          "target_water": "Hätävesi",
+          "target_food": "Ruokavarautuminen",
+          "target_cooking": "Vaihtoehtoinen ruoanlaitto",
+          "target_communication": "Hätäviestintä / radio",
+          "target_power": "Vaihtoehtoinen virta / varavirtalähteet",
+          "target_lighting": "Hätävalaistus",
+          "target_warmth": "Lämpö ilman normaalia lämmitystä",
+          "target_first_aid": "Ensiapu ja kotilääkkeet",
+          "target_hygiene": "Hygieniavarautuminen",
+          "target_cash": "Vaihtoehtoiset maksutavat",
+          "target_documents": "Tärkeät yhteystiedot offline-tilassa",
+          "target_pets": "Lemmikkien varautuminen"
+        }
+      },
+      "review": {
+        "title": "Valmis varautumaan",
+        "description": "Maa/profiili: {country}\n\nHenkilöitä: {people}\n\nLemmikkejä: {pets}\n\nVarautumisaika: {days} päivää\n\nValitut aloitustavoitteet: {targets}\n\nViimeistele käyttöönotto luodaksesi HomePrep-profiilin ja valitut henkilökohtaiset tavoitteet."
+      }
+    },
+    "abort": {
+      "already_configured": "HomePrep on jo määritetty."
+    }
+  }
+}
