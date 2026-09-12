@@ -13,12 +13,7 @@ def calculate_recommendation(
     household: dict[str, Any],
     profile: dict[str, Any],
 ) -> dict[str, Any]:
-    """Resolve a recommendation for a household.
-
-    The calculation is intentionally transparent and conservative.
-    Unsupported or conditional guidance remains advisory instead of being
-    guessed into a numeric target.
-    """
+    """Resolve a recommendation transparently and conservatively."""
     result = deepcopy(recommendation)
     rule = recommendation.get("rule") or {}
     kind = rule.get("kind")
@@ -31,40 +26,81 @@ def calculate_recommendation(
 
     adults = int(household.get("adults") or 0)
     children = int(household.get("children") or 0)
+    pets = int(household.get("pets") or 0)
     people = adults + children
+
+    notes: list[str] = []
 
     result["calculated"] = {
         "preparedness_days": days,
         "people": people,
         "adults": adults,
         "children": children,
+        "pets": pets,
+        "calculation_notes": notes,
     }
 
-    if kind == "quantity_per_adult_per_day":
-        minimum = float(rule["minimum"]) * adults * days
-        maximum = (
-            float(rule["maximum"]) * adults * days
-            if rule.get("maximum") is not None
-            else minimum
+    if kind == "quantity_per_person_per_day":
+        minimum_rate = float(rule["minimum"])
+        target_rate = float(rule.get("target", minimum_rate))
+
+        result["calculated"].update(
+            {
+                "minimum_value": minimum_rate * people * days,
+                "target_value": target_rate * people * days,
+                "unit": rule["unit"],
+                "rate_basis": "person_per_day",
+                "minimum_rate": minimum_rate,
+                "target_rate": target_rate,
+            }
+        )
+
+        notes.append(
+            f"Calculated for {people} people over {days} days."
+        )
+
+    elif kind == "quantity_per_adult_per_day":
+        minimum_rate = float(rule["minimum"])
+        target_rate = float(
+            rule.get("maximum", rule.get("target", minimum_rate))
         )
 
         result["calculated"].update(
             {
-                "minimum_value": minimum,
-                "target_value": maximum,
+                "minimum_value": minimum_rate * adults * days,
+                "target_value": target_rate * adults * days,
                 "unit": rule["unit"],
+                "rate_basis": "adult_per_day",
+                "minimum_rate": minimum_rate,
+                "target_rate": target_rate,
             }
         )
+
+        notes.append(
+            f"Quantified source rate applies to {adults} adults over {days} days."
+        )
+
+        if children:
+            notes.append(
+                f"{children} children are in the household but are not included "
+                "in this numeric source rule."
+            )
 
     elif kind == "quantity_per_person_total":
-        value = float(rule["value"]) * people
+        per_person = float(rule["value"])
 
         result["calculated"].update(
             {
-                "minimum_value": value,
-                "target_value": value,
+                "minimum_value": per_person * people,
+                "target_value": per_person * people,
                 "unit": rule["unit"],
+                "rate_basis": "person_total",
+                "per_person_value": per_person,
             }
+        )
+
+        notes.append(
+            f"Calculated for {people} people."
         )
 
     elif kind == "coverage_days":
@@ -75,6 +111,7 @@ def calculate_recommendation(
                 "minimum_value": value,
                 "target_value": value,
                 "unit": "day",
+                "rate_basis": "coverage_days",
             }
         )
 
@@ -84,11 +121,21 @@ def calculate_recommendation(
                 "minimum_value": 1,
                 "target_value": 1,
                 "unit": None,
+                "rate_basis": kind,
             }
         )
 
     else:
         result["calculated"]["advisory_only"] = True
+        notes.append(
+            "This recommendation is advisory only and has no safe numeric conversion."
+        )
+
+    if pets and recommendation.get("pet_adjustment_note"):
+        notes.append(recommendation["pet_adjustment_note"])
+
+    if recommendation.get("household_adjustment_note"):
+        notes.append(recommendation["household_adjustment_note"])
 
     return result
 
@@ -106,6 +153,14 @@ def adopt_recommendation(
     )
 
     calculated = resolved.get("calculated") or {}
+    notes = []
+
+    if recommendation.get("advisory_note"):
+        notes.append(recommendation["advisory_note"])
+
+    notes.extend(
+        calculated.get("calculation_notes") or []
+    )
 
     return create_target(
         {
@@ -119,7 +174,7 @@ def adopt_recommendation(
             "minimum_value": calculated.get("minimum_value"),
             "target_value": calculated.get("target_value"),
             "priority": recommendation.get("priority", "normal"),
-            "notes": recommendation.get("advisory_note"),
+            "notes": "\n".join(notes) if notes else None,
             "origin": "recommendation",
             "source_profile_id": profile["id"],
             "source_recommendation_id": recommendation["id"],
