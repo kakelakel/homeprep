@@ -4,6 +4,18 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.5.0] - 2026-09-12
+
+### Added
+- Stable platform-neutral household identity for HomePrep data.
+- `household_id` metadata on inventory items, tasks and preparedness targets.
+- `deleted_at` tombstones for inventory, tasks and targets so future sync can distinguish deletion from missing data.
+- Consistent sync-oriented metadata foundations using stable IDs, timestamps, revisions and schema versions.
+
+### Improved
+- Existing stored data is normalized forward automatically while remaining local to Home Assistant.
+- Deleted records remain hidden from HomePrep UI/API while being retained internally for future synchronization support.
+
 ## [0.4.1] - 2026-09-12
 
 ### Improved
