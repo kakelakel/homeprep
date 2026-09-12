@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN, SERVICE_ADD_ITEM, SERVICE_DELETE_ITEM, SERVICE_UPDATE_ITEM
+from .core.identity import HomePrepIdentity
 from .core.service import HomePrepService
 from .core.taxonomy import CATEGORIES, ITEM_TYPES, UNITS
 from .notifications.service import HomePrepNotificationService
@@ -30,6 +31,7 @@ from .websocket import async_register_websocket_api
 PLATFORMS = ["sensor"]
 PLANNING_SERVICE_KEY = "planning_service"
 TASK_SERVICE_KEY = "task_service"
+IDENTITY_KEY = "identity"
 
 FRONTEND_PATH = Path(__file__).parent / "frontend"
 FRONTEND_URL = "/api/homeprep/frontend"
@@ -206,19 +208,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend.add_extra_js_url(hass, UNIT_SUGGESTIONS_URL)
     await _async_register_panel(hass)
 
-    repository = HAStorageRepository(hass)
-    service = HomePrepService(hass, repository)
-    await service.async_load()
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = service
+    identity = HomePrepIdentity(hass)
+    await identity.async_load()
+    household_id = identity.household_id
+    hass.data.setdefault(DOMAIN, {})[IDENTITY_KEY] = identity
 
-    planning_repository = HAPlanningRepository(hass)
-    planning_service = HomePrepPlanningService(planning_repository, RecommendationCatalog(), service)
+    repository = HAStorageRepository(hass, household_id)
+    service = HomePrepService(hass, repository, household_id)
+    await service.async_load()
+    hass.data[DOMAIN][entry.entry_id] = service
+
+    planning_repository = HAPlanningRepository(hass, household_id)
+    planning_service = HomePrepPlanningService(
+        planning_repository,
+        RecommendationCatalog(),
+        service,
+        household_id,
+    )
     await planning_service.async_load()
     hass.data[DOMAIN][PLANNING_SERVICE_KEY] = planning_service
     await _async_apply_setup_wizard(hass, entry, planning_service)
 
-    task_repository = HATaskRepository(hass)
-    task_service = HomePrepTaskService(task_repository, service)
+    task_repository = HATaskRepository(hass, household_id)
+    task_service = HomePrepTaskService(task_repository, service, household_id)
     await task_service.async_load()
     hass.data[DOMAIN][TASK_SERVICE_KEY] = task_service
 
@@ -287,6 +299,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(PLANNING_SERVICE_KEY, None)
         hass.data[DOMAIN].pop(TASK_SERVICE_KEY, None)
         hass.data[DOMAIN].pop(NOTIFICATION_SERVICE_KEY, None)
+        hass.data[DOMAIN].pop(IDENTITY_KEY, None)
         if not hass.data[DOMAIN]:
             hass.data.pop(DOMAIN)
 
