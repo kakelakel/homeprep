@@ -3,6 +3,10 @@
 from typing import Any
 
 
+# ---------------------------------------------------------------------------
+# Categories
+# ---------------------------------------------------------------------------
+
 CATEGORIES: dict[str, str] = {
     "food": "Food",
     "water": "Water",
@@ -23,190 +27,523 @@ CATEGORIES: dict[str, str] = {
 }
 
 
+CATEGORY_GROUPS: dict[str, str] = {
+    "food": "Essentials",
+    "water": "Essentials",
+    "cooking": "Essentials",
+    "shelter_warmth": "Essentials",
+
+    "medicine": "Health",
+    "first_aid": "Health",
+    "hygiene": "Health",
+
+    "fire_safety": "Safety",
+
+    "lighting": "Utilities",
+    "power": "Utilities",
+    "communication": "Utilities",
+
+    "tools": "Household",
+    "pet_supplies": "Household",
+
+    "documents": "Administration",
+    "cash": "Administration",
+
+    "other": "Other",
+}
+
+
+# ---------------------------------------------------------------------------
+# Item types
+# ---------------------------------------------------------------------------
+
 ITEM_TYPES: dict[str, str] = {
     "consumable": "Consumable",
     "equipment": "Equipment",
 }
 
 
+# ---------------------------------------------------------------------------
+# Units
+#
+# system:
+#   neutral       = not tied to a measurement system
+#   metric        = SI / metric
+#   customary     = shared customary units used in both US and UK contexts
+#   us_customary  = US-specific units
+#   imperial      = UK Imperial-specific units
+# ---------------------------------------------------------------------------
+
 UNITS: dict[str, dict[str, str | None]] = {
-    # General counts
+    # -----------------------------------------------------------------------
+    # Count
+    # -----------------------------------------------------------------------
+
     "piece": {
         "label": "Piece",
         "symbol": "pcs",
+        "group": "Count",
+        "system": "neutral",
     },
     "pair": {
         "label": "Pair",
         "symbol": None,
+        "group": "Count",
+        "system": "neutral",
     },
     "set": {
         "label": "Set",
         "symbol": None,
+        "group": "Count",
+        "system": "neutral",
+    },
+    "dozen": {
+        "label": "Dozen",
+        "symbol": "doz",
+        "group": "Count",
+        "system": "neutral",
     },
 
+    # -----------------------------------------------------------------------
     # Packaging
+    # -----------------------------------------------------------------------
+
     "pack": {
         "label": "Pack",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "box": {
         "label": "Box",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "carton": {
         "label": "Carton",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "crate": {
         "label": "Crate",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "bag": {
         "label": "Bag",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "sachet": {
         "label": "Sachet",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "bottle": {
         "label": "Bottle",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "can": {
         "label": "Can",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "jar": {
         "label": "Jar",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "tube": {
         "label": "Tube",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "roll": {
         "label": "Roll",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "sheet": {
         "label": "Sheet",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "bucket": {
         "label": "Bucket",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
     "canister": {
         "label": "Canister",
         "symbol": None,
+        "group": "Packaging",
+        "system": "neutral",
     },
 
+    # -----------------------------------------------------------------------
     # Medicine / first aid
+    # -----------------------------------------------------------------------
+
     "blister_pack": {
         "label": "Blister pack",
         "symbol": None,
+        "group": "Medicine",
+        "system": "neutral",
     },
     "tablet": {
         "label": "Tablet",
         "symbol": None,
+        "group": "Medicine",
+        "system": "neutral",
     },
     "capsule": {
         "label": "Capsule",
         "symbol": None,
+        "group": "Medicine",
+        "system": "neutral",
     },
     "dose": {
         "label": "Dose",
         "symbol": None,
+        "group": "Medicine",
+        "system": "neutral",
     },
     "ampoule": {
         "label": "Ampoule",
         "symbol": None,
+        "group": "Medicine",
+        "system": "neutral",
     },
     "vial": {
         "label": "Vial",
         "symbol": None,
+        "group": "Medicine",
+        "system": "neutral",
     },
 
+    # -----------------------------------------------------------------------
     # Food
+    # -----------------------------------------------------------------------
+
     "portion": {
         "label": "Portion",
         "symbol": None,
+        "group": "Food",
+        "system": "neutral",
     },
     "meal": {
         "label": "Meal",
         "symbol": None,
+        "group": "Food",
+        "system": "neutral",
     },
     "serving": {
         "label": "Serving",
         "symbol": None,
+        "group": "Food",
+        "system": "neutral",
     },
 
-    # Volume
+    # -----------------------------------------------------------------------
+    # Metric volume
+    # -----------------------------------------------------------------------
+
     "milliliter": {
         "label": "Milliliter",
         "symbol": "ml",
+        "group": "Volume",
+        "system": "metric",
     },
     "centiliter": {
         "label": "Centiliter",
         "symbol": "cl",
+        "group": "Volume",
+        "system": "metric",
     },
     "deciliter": {
         "label": "Deciliter",
         "symbol": "dl",
+        "group": "Volume",
+        "system": "metric",
     },
     "liter": {
         "label": "Liter",
         "symbol": "L",
+        "group": "Volume",
+        "system": "metric",
     },
     "cubic_meter": {
         "label": "Cubic meter",
         "symbol": "m³",
+        "group": "Volume",
+        "system": "metric",
     },
 
-    # Mass
+    # -----------------------------------------------------------------------
+    # US customary volume
+    # -----------------------------------------------------------------------
+
+    "fluid_ounce_us": {
+        "label": "US fluid ounce",
+        "symbol": "fl oz",
+        "group": "Volume",
+        "system": "us_customary",
+    },
+    "cup_us": {
+        "label": "US cup",
+        "symbol": "cup",
+        "group": "Volume",
+        "system": "us_customary",
+    },
+    "pint_us": {
+        "label": "US pint",
+        "symbol": "pt",
+        "group": "Volume",
+        "system": "us_customary",
+    },
+    "quart_us": {
+        "label": "US quart",
+        "symbol": "qt",
+        "group": "Volume",
+        "system": "us_customary",
+    },
+    "gallon_us": {
+        "label": "US gallon",
+        "symbol": "gal",
+        "group": "Volume",
+        "system": "us_customary",
+    },
+
+    # -----------------------------------------------------------------------
+    # Imperial volume
+    # -----------------------------------------------------------------------
+
+    "fluid_ounce_imperial": {
+        "label": "Imperial fluid ounce",
+        "symbol": "fl oz",
+        "group": "Volume",
+        "system": "imperial",
+    },
+    "pint_imperial": {
+        "label": "Imperial pint",
+        "symbol": "pt",
+        "group": "Volume",
+        "system": "imperial",
+    },
+    "quart_imperial": {
+        "label": "Imperial quart",
+        "symbol": "qt",
+        "group": "Volume",
+        "system": "imperial",
+    },
+    "gallon_imperial": {
+        "label": "Imperial gallon",
+        "symbol": "gal",
+        "group": "Volume",
+        "system": "imperial",
+    },
+
+    # -----------------------------------------------------------------------
+    # Metric mass
+    # -----------------------------------------------------------------------
+
+    "milligram": {
+        "label": "Milligram",
+        "symbol": "mg",
+        "group": "Mass",
+        "system": "metric",
+    },
     "gram": {
         "label": "Gram",
         "symbol": "g",
+        "group": "Mass",
+        "system": "metric",
     },
     "kilogram": {
         "label": "Kilogram",
         "symbol": "kg",
+        "group": "Mass",
+        "system": "metric",
     },
 
-    # Length
+    # -----------------------------------------------------------------------
+    # Customary / Imperial mass
+    # -----------------------------------------------------------------------
+
+    "ounce": {
+        "label": "Ounce",
+        "symbol": "oz",
+        "group": "Mass",
+        "system": "customary",
+    },
+    "pound": {
+        "label": "Pound",
+        "symbol": "lb",
+        "group": "Mass",
+        "system": "customary",
+    },
+    "stone": {
+        "label": "Stone",
+        "symbol": "st",
+        "group": "Mass",
+        "system": "imperial",
+    },
+
+    # -----------------------------------------------------------------------
+    # Metric length
+    # -----------------------------------------------------------------------
+
+    "millimeter": {
+        "label": "Millimeter",
+        "symbol": "mm",
+        "group": "Length",
+        "system": "metric",
+    },
     "centimeter": {
         "label": "Centimeter",
         "symbol": "cm",
+        "group": "Length",
+        "system": "metric",
     },
     "meter": {
         "label": "Meter",
         "symbol": "m",
+        "group": "Length",
+        "system": "metric",
+    },
+    "kilometer": {
+        "label": "Kilometer",
+        "symbol": "km",
+        "group": "Length",
+        "system": "metric",
     },
 
-    # Area
+    # -----------------------------------------------------------------------
+    # Customary length
+    # -----------------------------------------------------------------------
+
+    "inch": {
+        "label": "Inch",
+        "symbol": "in",
+        "group": "Length",
+        "system": "customary",
+    },
+    "foot": {
+        "label": "Foot",
+        "symbol": "ft",
+        "group": "Length",
+        "system": "customary",
+    },
+    "yard": {
+        "label": "Yard",
+        "symbol": "yd",
+        "group": "Length",
+        "system": "customary",
+    },
+    "mile": {
+        "label": "Mile",
+        "symbol": "mi",
+        "group": "Length",
+        "system": "customary",
+    },
+
+    # -----------------------------------------------------------------------
+    # Metric area
+    # -----------------------------------------------------------------------
+
     "square_meter": {
         "label": "Square meter",
         "symbol": "m²",
+        "group": "Area",
+        "system": "metric",
     },
 
+    # -----------------------------------------------------------------------
+    # Customary area
+    # -----------------------------------------------------------------------
+
+    "square_inch": {
+        "label": "Square inch",
+        "symbol": "in²",
+        "group": "Area",
+        "system": "customary",
+    },
+    "square_foot": {
+        "label": "Square foot",
+        "symbol": "ft²",
+        "group": "Area",
+        "system": "customary",
+    },
+    "square_yard": {
+        "label": "Square yard",
+        "symbol": "yd²",
+        "group": "Area",
+        "system": "customary",
+    },
+
+    # -----------------------------------------------------------------------
+    # Customary cubic volume
+    # -----------------------------------------------------------------------
+
+    "cubic_inch": {
+        "label": "Cubic inch",
+        "symbol": "in³",
+        "group": "Volume",
+        "system": "customary",
+    },
+    "cubic_foot": {
+        "label": "Cubic foot",
+        "symbol": "ft³",
+        "group": "Volume",
+        "system": "customary",
+    },
+
+    # -----------------------------------------------------------------------
     # Energy
+    # -----------------------------------------------------------------------
+
     "watt_hour": {
         "label": "Watt-hour",
         "symbol": "Wh",
+        "group": "Energy",
+        "system": "neutral",
     },
     "kilowatt_hour": {
         "label": "Kilowatt-hour",
         "symbol": "kWh",
+        "group": "Energy",
+        "system": "neutral",
     },
 
-    # Generic fallback
+    # -----------------------------------------------------------------------
+    # Other
+    # -----------------------------------------------------------------------
+
     "other": {
         "label": "Other",
         "symbol": None,
+        "group": "Other",
+        "system": "neutral",
     },
 }
 
+
+# ---------------------------------------------------------------------------
+# Legacy aliases
+# ---------------------------------------------------------------------------
 
 CATEGORY_ALIASES: dict[str, str] = {
     "food": "food",
@@ -283,13 +620,21 @@ ITEM_TYPE_ALIASES: dict[str, str] = {
 
 
 UNIT_ALIASES: dict[str, str] = {
-    # Piece
+    # Count
     "piece": "piece",
     "pieces": "piece",
     "pcs": "piece",
     "pc": "piece",
     "st": "piece",
     "styck": "piece",
+
+    "pair": "pair",
+    "par": "pair",
+
+    "set": "set",
+
+    "dozen": "dozen",
+    "doz": "dozen",
 
     # Packaging
     "pack": "pack",
@@ -358,12 +703,14 @@ UNIT_ALIASES: dict[str, str] = {
 
     # Food
     "portion": "portion",
+
     "meal": "meal",
     "måltid": "meal",
     "maltid": "meal",
+
     "serving": "serving",
 
-    # Volume
+    # Metric volume
     "ml": "milliliter",
     "milliliter": "milliliter",
 
@@ -384,25 +731,108 @@ UNIT_ALIASES: dict[str, str] = {
     "cubic meter": "cubic_meter",
     "cubic_meter": "cubic_meter",
 
-    # Mass
+    # US volume
+    "fluid_ounce_us": "fluid_ounce_us",
+    "us fluid ounce": "fluid_ounce_us",
+
+    "cup_us": "cup_us",
+    "us cup": "cup_us",
+
+    "pint_us": "pint_us",
+    "us pint": "pint_us",
+
+    "quart_us": "quart_us",
+    "us quart": "quart_us",
+
+    "gallon_us": "gallon_us",
+    "us gallon": "gallon_us",
+
+    # Imperial volume
+    "fluid_ounce_imperial": "fluid_ounce_imperial",
+    "imperial fluid ounce": "fluid_ounce_imperial",
+
+    "pint_imperial": "pint_imperial",
+    "imperial pint": "pint_imperial",
+
+    "quart_imperial": "quart_imperial",
+    "imperial quart": "quart_imperial",
+
+    "gallon_imperial": "gallon_imperial",
+    "imperial gallon": "gallon_imperial",
+
+    # Metric mass
+    "mg": "milligram",
+    "milligram": "milligram",
+
     "g": "gram",
     "gram": "gram",
 
     "kg": "kilogram",
     "kilogram": "kilogram",
 
-    # Length
+    # Customary mass
+    "oz": "ounce",
+    "ounce": "ounce",
+
+    "lb": "pound",
+    "lbs": "pound",
+    "pound": "pound",
+
+    "stone": "stone",
+
+    # Metric length
+    "mm": "millimeter",
+    "millimeter": "millimeter",
+
     "cm": "centimeter",
     "centimeter": "centimeter",
 
     "m": "meter",
     "meter": "meter",
 
+    "km": "kilometer",
+    "kilometer": "kilometer",
+
+    # Customary length
+    "in": "inch",
+    "inch": "inch",
+
+    "ft": "foot",
+    "foot": "foot",
+    "feet": "foot",
+
+    "yd": "yard",
+    "yard": "yard",
+
+    "mi": "mile",
+    "mile": "mile",
+
     # Area
     "m2": "square_meter",
     "m²": "square_meter",
     "square meter": "square_meter",
     "square_meter": "square_meter",
+
+    "in2": "square_inch",
+    "in²": "square_inch",
+    "square inch": "square_inch",
+
+    "ft2": "square_foot",
+    "ft²": "square_foot",
+    "square foot": "square_foot",
+
+    "yd2": "square_yard",
+    "yd²": "square_yard",
+    "square yard": "square_yard",
+
+    # Cubic customary
+    "in3": "cubic_inch",
+    "in³": "cubic_inch",
+    "cubic inch": "cubic_inch",
+
+    "ft3": "cubic_foot",
+    "ft³": "cubic_foot",
+    "cubic foot": "cubic_foot",
 
     # Energy
     "wh": "watt_hour",
@@ -420,6 +850,10 @@ UNIT_ALIASES: dict[str, str] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Normalization and validation
+# ---------------------------------------------------------------------------
+
 def _key(value: Any) -> str:
     """Normalize a taxonomy lookup value."""
 
@@ -432,7 +866,9 @@ def _key(value: Any) -> str:
 def normalize_category(value: Any) -> str:
     """Normalize a category value."""
 
-    raw = str(value or "").strip()
+    raw = str(
+        value or ""
+    ).strip()
 
     if raw in CATEGORIES:
         return raw
@@ -446,7 +882,9 @@ def normalize_category(value: Any) -> str:
 def normalize_item_type(value: Any) -> str:
     """Normalize an item type value."""
 
-    raw = str(value or "").strip()
+    raw = str(
+        value or ""
+    ).strip()
 
     if raw in ITEM_TYPES:
         return raw
@@ -460,7 +898,9 @@ def normalize_item_type(value: Any) -> str:
 def normalize_unit(value: Any) -> str:
     """Normalize a unit value."""
 
-    raw = str(value or "").strip()
+    raw = str(
+        value or ""
+    ).strip()
 
     if raw in UNITS:
         return raw
@@ -474,7 +914,9 @@ def normalize_unit(value: Any) -> str:
 def validate_category(value: Any) -> str:
     """Return a valid canonical category."""
 
-    normalized = normalize_category(value)
+    normalized = normalize_category(
+        value
+    )
 
     if normalized not in CATEGORIES:
         raise ValueError(
@@ -487,7 +929,9 @@ def validate_category(value: Any) -> str:
 def validate_item_type(value: Any) -> str:
     """Return a valid canonical item type."""
 
-    normalized = normalize_item_type(value)
+    normalized = normalize_item_type(
+        value
+    )
 
     if normalized not in ITEM_TYPES:
         raise ValueError(
@@ -500,7 +944,9 @@ def validate_item_type(value: Any) -> str:
 def validate_unit(value: Any) -> str:
     """Return a valid canonical unit."""
 
-    normalized = normalize_unit(value)
+    normalized = normalize_unit(
+        value
+    )
 
     if normalized not in UNITS:
         raise ValueError(
@@ -510,33 +956,45 @@ def validate_unit(value: Any) -> str:
     return normalized
 
 
+# ---------------------------------------------------------------------------
+# Frontend taxonomy
+# ---------------------------------------------------------------------------
+
 def get_taxonomy() -> dict[str, Any]:
     """Return taxonomy data for frontend clients."""
 
     return {
         "categories": [
             {
-                "id": item_id,
+                "id": category_id,
                 "label": label,
+                "group": CATEGORY_GROUPS.get(
+                    category_id,
+                    "Other",
+                ),
             }
-            for item_id, label
+            for category_id, label
             in CATEGORIES.items()
         ],
+
         "item_types": [
             {
-                "id": item_id,
+                "id": item_type_id,
                 "label": label,
             }
-            for item_id, label
+            for item_type_id, label
             in ITEM_TYPES.items()
         ],
+
         "units": [
             {
-                "id": item_id,
+                "id": unit_id,
                 "label": data["label"],
                 "symbol": data["symbol"],
+                "group": data["group"],
+                "system": data["system"],
             }
-            for item_id, data
+            for unit_id, data
             in UNITS.items()
         ],
     }
