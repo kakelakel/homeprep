@@ -3,10 +3,6 @@
 from typing import Any
 
 
-# ---------------------------------------------------------------------------
-# Categories
-# ---------------------------------------------------------------------------
-
 CATEGORIES: dict[str, str] = {
     "food": "Food",
     "water": "Water",
@@ -53,9 +49,191 @@ CATEGORY_GROUPS: dict[str, str] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Item types
-# ---------------------------------------------------------------------------
+CATEGORY_SMART: dict[str, dict[str, Any]] = {
+    "food": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "pack",
+            "can",
+            "jar",
+            "bag",
+            "portion",
+            "meal",
+            "serving",
+            "gram",
+            "kilogram",
+        ],
+    },
+
+    "water": {
+        "default_unit": "liter",
+        "preferred_units": [
+            "liter",
+            "milliliter",
+            "canister",
+            "bottle",
+            "gallon_us",
+            "gallon_imperial",
+        ],
+    },
+
+    "medicine": {
+        "default_unit": "tablet",
+        "preferred_units": [
+            "tablet",
+            "blister_pack",
+            "capsule",
+            "dose",
+            "bottle",
+            "milliliter",
+            "ampoule",
+            "vial",
+        ],
+    },
+
+    "first_aid": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "pack",
+            "box",
+            "roll",
+            "sheet",
+            "bottle",
+            "tube",
+        ],
+    },
+
+    "hygiene": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "pack",
+            "roll",
+            "bottle",
+            "tube",
+            "milliliter",
+            "liter",
+        ],
+    },
+
+    "lighting": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "pack",
+            "set",
+        ],
+    },
+
+    "power": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "pack",
+            "set",
+            "watt_hour",
+            "kilowatt_hour",
+        ],
+    },
+
+    "communication": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "set",
+            "pack",
+        ],
+    },
+
+    "fire_safety": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "set",
+            "pack",
+            "kilogram",
+            "liter",
+        ],
+    },
+
+    "tools": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "set",
+            "pair",
+            "pack",
+        ],
+    },
+
+    "shelter_warmth": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "set",
+            "pair",
+            "pack",
+            "meter",
+            "square_meter",
+            "foot",
+            "square_foot",
+        ],
+    },
+
+    "cooking": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "set",
+            "pack",
+            "bottle",
+            "canister",
+            "liter",
+            "kilogram",
+        ],
+    },
+
+    "documents": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "set",
+            "sheet",
+        ],
+    },
+
+    "cash": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+        ],
+    },
+
+    "pet_supplies": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "pack",
+            "bag",
+            "can",
+            "bottle",
+            "liter",
+            "kilogram",
+        ],
+    },
+
+    "other": {
+        "default_unit": "piece",
+        "preferred_units": [
+            "piece",
+            "pack",
+            "set",
+        ],
+    },
+}
+
 
 ITEM_TYPES: dict[str, str] = {
     "consumable": "Consumable",
@@ -63,22 +241,8 @@ ITEM_TYPES: dict[str, str] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Units
-#
-# system:
-#   neutral       = not tied to a measurement system
-#   metric        = SI / metric
-#   customary     = shared customary units used in both US and UK contexts
-#   us_customary  = US-specific units
-#   imperial      = UK Imperial-specific units
-# ---------------------------------------------------------------------------
-
 UNITS: dict[str, dict[str, str | None]] = {
-    # -----------------------------------------------------------------------
     # Count
-    # -----------------------------------------------------------------------
-
     "piece": {
         "label": "Piece",
         "symbol": "pcs",
@@ -104,10 +268,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "neutral",
     },
 
-    # -----------------------------------------------------------------------
     # Packaging
-    # -----------------------------------------------------------------------
-
     "pack": {
         "label": "Pack",
         "symbol": None,
@@ -193,10 +354,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "neutral",
     },
 
-    # -----------------------------------------------------------------------
-    # Medicine / first aid
-    # -----------------------------------------------------------------------
-
+    # Medicine
     "blister_pack": {
         "label": "Blister pack",
         "symbol": None,
@@ -234,10 +392,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "neutral",
     },
 
-    # -----------------------------------------------------------------------
     # Food
-    # -----------------------------------------------------------------------
-
     "portion": {
         "label": "Portion",
         "symbol": None,
@@ -257,10 +412,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "neutral",
     },
 
-    # -----------------------------------------------------------------------
     # Metric volume
-    # -----------------------------------------------------------------------
-
     "milliliter": {
         "label": "Milliliter",
         "symbol": "ml",
@@ -292,10 +444,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "metric",
     },
 
-    # -----------------------------------------------------------------------
     # US customary volume
-    # -----------------------------------------------------------------------
-
     "fluid_ounce_us": {
         "label": "US fluid ounce",
         "symbol": "fl oz",
@@ -327,10 +476,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "us_customary",
     },
 
-    # -----------------------------------------------------------------------
     # Imperial volume
-    # -----------------------------------------------------------------------
-
     "fluid_ounce_imperial": {
         "label": "Imperial fluid ounce",
         "symbol": "fl oz",
@@ -356,10 +502,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "imperial",
     },
 
-    # -----------------------------------------------------------------------
     # Metric mass
-    # -----------------------------------------------------------------------
-
     "milligram": {
         "label": "Milligram",
         "symbol": "mg",
@@ -379,10 +522,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "metric",
     },
 
-    # -----------------------------------------------------------------------
-    # Customary / Imperial mass
-    # -----------------------------------------------------------------------
-
+    # Customary mass
     "ounce": {
         "label": "Ounce",
         "symbol": "oz",
@@ -402,10 +542,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "imperial",
     },
 
-    # -----------------------------------------------------------------------
     # Metric length
-    # -----------------------------------------------------------------------
-
     "millimeter": {
         "label": "Millimeter",
         "symbol": "mm",
@@ -431,10 +568,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "metric",
     },
 
-    # -----------------------------------------------------------------------
     # Customary length
-    # -----------------------------------------------------------------------
-
     "inch": {
         "label": "Inch",
         "symbol": "in",
@@ -460,21 +594,13 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "customary",
     },
 
-    # -----------------------------------------------------------------------
-    # Metric area
-    # -----------------------------------------------------------------------
-
+    # Area
     "square_meter": {
         "label": "Square meter",
         "symbol": "m²",
         "group": "Area",
         "system": "metric",
     },
-
-    # -----------------------------------------------------------------------
-    # Customary area
-    # -----------------------------------------------------------------------
-
     "square_inch": {
         "label": "Square inch",
         "symbol": "in²",
@@ -494,10 +620,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "customary",
     },
 
-    # -----------------------------------------------------------------------
-    # Customary cubic volume
-    # -----------------------------------------------------------------------
-
+    # Cubic customary
     "cubic_inch": {
         "label": "Cubic inch",
         "symbol": "in³",
@@ -511,10 +634,7 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "customary",
     },
 
-    # -----------------------------------------------------------------------
     # Energy
-    # -----------------------------------------------------------------------
-
     "watt_hour": {
         "label": "Watt-hour",
         "symbol": "Wh",
@@ -528,10 +648,6 @@ UNITS: dict[str, dict[str, str | None]] = {
         "system": "neutral",
     },
 
-    # -----------------------------------------------------------------------
-    # Other
-    # -----------------------------------------------------------------------
-
     "other": {
         "label": "Other",
         "symbol": None,
@@ -541,10 +657,6 @@ UNITS: dict[str, dict[str, str | None]] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Legacy aliases
-# ---------------------------------------------------------------------------
-
 CATEGORY_ALIASES: dict[str, str] = {
     "food": "food",
     "mat": "food",
@@ -552,7 +664,6 @@ CATEGORY_ALIASES: dict[str, str] = {
     "water": "water",
     "vatten": "water",
     "drink": "water",
-    "dryck": "water",
 
     "medicine": "medicine",
     "medicin": "medicine",
@@ -620,7 +731,6 @@ ITEM_TYPE_ALIASES: dict[str, str] = {
 
 
 UNIT_ALIASES: dict[str, str] = {
-    # Count
     "piece": "piece",
     "pieces": "piece",
     "pcs": "piece",
@@ -636,7 +746,6 @@ UNIT_ALIASES: dict[str, str] = {
     "dozen": "dozen",
     "doz": "dozen",
 
-    # Packaging
     "pack": "pack",
     "package": "pack",
     "paket": "pack",
@@ -650,21 +759,15 @@ UNIT_ALIASES: dict[str, str] = {
     "carton": "carton",
     "kartong": "carton",
 
-    "crate": "crate",
-
     "bag": "bag",
     "påse": "bag",
     "pase": "bag",
-
-    "sachet": "sachet",
 
     "bottle": "bottle",
     "flaska": "bottle",
 
     "can": "can",
     "burk": "can",
-
-    "jar": "jar",
 
     "tube": "tube",
     "tub": "tube",
@@ -681,11 +784,9 @@ UNIT_ALIASES: dict[str, str] = {
     "canister": "canister",
     "dunk": "canister",
 
-    # Medicine
     "blister pack": "blister_pack",
     "blister_pack": "blister_pack",
     "tablettkarta": "blister_pack",
-    "blister": "blister_pack",
 
     "tablet": "tablet",
     "tablett": "tablet",
@@ -696,21 +797,10 @@ UNIT_ALIASES: dict[str, str] = {
     "dose": "dose",
     "dos": "dose",
 
-    "ampoule": "ampoule",
-    "ampull": "ampoule",
-
-    "vial": "vial",
-
-    # Food
     "portion": "portion",
-
     "meal": "meal",
-    "måltid": "meal",
-    "maltid": "meal",
-
     "serving": "serving",
 
-    # Metric volume
     "ml": "milliliter",
     "milliliter": "milliliter",
 
@@ -728,39 +818,7 @@ UNIT_ALIASES: dict[str, str] = {
     "m³": "cubic_meter",
     "kubik": "cubic_meter",
     "kubikmeter": "cubic_meter",
-    "cubic meter": "cubic_meter",
-    "cubic_meter": "cubic_meter",
 
-    # US volume
-    "fluid_ounce_us": "fluid_ounce_us",
-    "us fluid ounce": "fluid_ounce_us",
-
-    "cup_us": "cup_us",
-    "us cup": "cup_us",
-
-    "pint_us": "pint_us",
-    "us pint": "pint_us",
-
-    "quart_us": "quart_us",
-    "us quart": "quart_us",
-
-    "gallon_us": "gallon_us",
-    "us gallon": "gallon_us",
-
-    # Imperial volume
-    "fluid_ounce_imperial": "fluid_ounce_imperial",
-    "imperial fluid ounce": "fluid_ounce_imperial",
-
-    "pint_imperial": "pint_imperial",
-    "imperial pint": "pint_imperial",
-
-    "quart_imperial": "quart_imperial",
-    "imperial quart": "quart_imperial",
-
-    "gallon_imperial": "gallon_imperial",
-    "imperial gallon": "gallon_imperial",
-
-    # Metric mass
     "mg": "milligram",
     "milligram": "milligram",
 
@@ -770,7 +828,6 @@ UNIT_ALIASES: dict[str, str] = {
     "kg": "kilogram",
     "kilogram": "kilogram",
 
-    # Customary mass
     "oz": "ounce",
     "ounce": "ounce",
 
@@ -780,7 +837,6 @@ UNIT_ALIASES: dict[str, str] = {
 
     "stone": "stone",
 
-    # Metric length
     "mm": "millimeter",
     "millimeter": "millimeter",
 
@@ -793,7 +849,6 @@ UNIT_ALIASES: dict[str, str] = {
     "km": "kilometer",
     "kilometer": "kilometer",
 
-    # Customary length
     "in": "inch",
     "inch": "inch",
 
@@ -807,52 +862,17 @@ UNIT_ALIASES: dict[str, str] = {
     "mi": "mile",
     "mile": "mile",
 
-    # Area
-    "m2": "square_meter",
-    "m²": "square_meter",
-    "square meter": "square_meter",
-    "square_meter": "square_meter",
-
-    "in2": "square_inch",
-    "in²": "square_inch",
-    "square inch": "square_inch",
-
-    "ft2": "square_foot",
-    "ft²": "square_foot",
-    "square foot": "square_foot",
-
-    "yd2": "square_yard",
-    "yd²": "square_yard",
-    "square yard": "square_yard",
-
-    # Cubic customary
-    "in3": "cubic_inch",
-    "in³": "cubic_inch",
-    "cubic inch": "cubic_inch",
-
-    "ft3": "cubic_foot",
-    "ft³": "cubic_foot",
-    "cubic foot": "cubic_foot",
-
-    # Energy
     "wh": "watt_hour",
     "watt-hour": "watt_hour",
-    "watt_hour": "watt_hour",
 
     "kwh": "kilowatt_hour",
     "kilowatt-hour": "kilowatt_hour",
-    "kilowatt_hour": "kilowatt_hour",
 
-    # Generic
     "other": "other",
     "övrigt": "other",
     "ovrigt": "other",
 }
 
-
-# ---------------------------------------------------------------------------
-# Normalization and validation
-# ---------------------------------------------------------------------------
 
 def _key(value: Any) -> str:
     """Normalize a taxonomy lookup value."""
@@ -864,11 +884,9 @@ def _key(value: Any) -> str:
 
 
 def normalize_category(value: Any) -> str:
-    """Normalize a category value."""
+    """Normalize category."""
 
-    raw = str(
-        value or ""
-    ).strip()
+    raw = str(value or "").strip()
 
     if raw in CATEGORIES:
         return raw
@@ -880,11 +898,9 @@ def normalize_category(value: Any) -> str:
 
 
 def normalize_item_type(value: Any) -> str:
-    """Normalize an item type value."""
+    """Normalize item type."""
 
-    raw = str(
-        value or ""
-    ).strip()
+    raw = str(value or "").strip()
 
     if raw in ITEM_TYPES:
         return raw
@@ -896,11 +912,9 @@ def normalize_item_type(value: Any) -> str:
 
 
 def normalize_unit(value: Any) -> str:
-    """Normalize a unit value."""
+    """Normalize unit."""
 
-    raw = str(
-        value or ""
-    ).strip()
+    raw = str(value or "").strip()
 
     if raw in UNITS:
         return raw
@@ -912,11 +926,9 @@ def normalize_unit(value: Any) -> str:
 
 
 def validate_category(value: Any) -> str:
-    """Return a valid canonical category."""
+    """Validate category."""
 
-    normalized = normalize_category(
-        value
-    )
+    normalized = normalize_category(value)
 
     if normalized not in CATEGORIES:
         raise ValueError(
@@ -927,11 +939,9 @@ def validate_category(value: Any) -> str:
 
 
 def validate_item_type(value: Any) -> str:
-    """Return a valid canonical item type."""
+    """Validate item type."""
 
-    normalized = normalize_item_type(
-        value
-    )
+    normalized = normalize_item_type(value)
 
     if normalized not in ITEM_TYPES:
         raise ValueError(
@@ -942,11 +952,9 @@ def validate_item_type(value: Any) -> str:
 
 
 def validate_unit(value: Any) -> str:
-    """Return a valid canonical unit."""
+    """Validate unit."""
 
-    normalized = normalize_unit(
-        value
-    )
+    normalized = normalize_unit(value)
 
     if normalized not in UNITS:
         raise ValueError(
@@ -956,12 +964,8 @@ def validate_unit(value: Any) -> str:
     return normalized
 
 
-# ---------------------------------------------------------------------------
-# Frontend taxonomy
-# ---------------------------------------------------------------------------
-
 def get_taxonomy() -> dict[str, Any]:
-    """Return taxonomy data for frontend clients."""
+    """Return taxonomy for frontend clients."""
 
     return {
         "categories": [
@@ -971,6 +975,23 @@ def get_taxonomy() -> dict[str, Any]:
                 "group": CATEGORY_GROUPS.get(
                     category_id,
                     "Other",
+                ),
+                "default_unit": (
+                    CATEGORY_SMART.get(
+                        category_id,
+                        {},
+                    ).get(
+                        "default_unit"
+                    )
+                ),
+                "preferred_units": (
+                    CATEGORY_SMART.get(
+                        category_id,
+                        {},
+                    ).get(
+                        "preferred_units",
+                        [],
+                    )
                 ),
             }
             for category_id, label
