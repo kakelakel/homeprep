@@ -26,6 +26,7 @@
 HomePrep turns household preparedness into something you can actually maintain over time:
 
 - **Inventory** — track food, water, medicine, equipment and other preparedness supplies.
+- **Inventory images** — attach an optional image to an item and use thumbnails where HomePrep has room to show them.
 - **Expiry awareness** — see what is expiring soon or has already expired.
 - **Recurring checks** — schedule inspections for fire extinguishers, water storage, batteries and other equipment.
 - **Tasks** — create recurring or standalone preparedness tasks with due dates and reminders.
@@ -33,7 +34,7 @@ HomePrep turns household preparedness into something you can actually maintain o
 - **Guidance profiles** — adopt curated preparedness recommendations as editable personal targets.
 - **Notifications** — send selected inventory and task alerts through Home Assistant notification targets, including the Companion App.
 - **Sidebar app** — manage HomePrep without building a dashboard first.
-- **Lovelace cards** — optional native HomePrep cards for your own dashboards.
+- **Lovelace cards** — configurable HomePrep cards with visual editors and extensive appearance controls.
 
 HomePrep stores its operational data locally in Home Assistant.
 
@@ -55,6 +56,21 @@ The sidebar app includes:
 - Notification configuration
 
 The Overview highlights items and tasks that need attention without requiring a separate dashboard.
+
+## Inventory images
+
+Inventory items can optionally have their own image. This is useful when you want to recognize the exact fire extinguisher, medicine package, water container, radio, powerbank or other preparedness item at a glance.
+
+Current image support includes:
+
+- one optional image per inventory item
+- JPEG, PNG and WebP files
+- replace or remove an existing image
+- thumbnails in the HomePrep Inventory view
+- thumbnails on linked inspection tasks where available
+- automatic fallback to the normal HomePrep category icon when an item has no image
+
+Images are stored locally by HomePrep and the inventory record only keeps image metadata/reference information rather than embedding the full image into Home Assistant storage JSON.
 
 ## Setup wizard
 
@@ -96,6 +112,45 @@ HomePrep ships its own configurable Lovelace cards and does **not** require Card
 
 Current cards cover status, inventory, categories/groups, attention items, inventory management and recurring tasks.
 
+Most HomePrep cards use a common visual editor and appearance system, so they can be adapted to very different dashboards without writing custom CSS.
+
+### Appearance controls
+
+Depending on the card, the editor can expose controls for:
+
+- appearance preset
+- accent color
+- background color
+- primary and secondary text colors
+- border color
+- OK, attention and critical status colors
+- corner radius
+- compact / comfortable / spacious density
+- no shadow / soft shadow / glow
+- border on/off
+
+Included presets currently cover styles such as:
+
+- Home Assistant theme
+- HomePrep
+- Minimal
+- Transparent
+- Dark
+- Light
+- High Contrast
+- Cyber Cyan
+- Amber Tactical
+- Red Alert
+- Forest
+- Arctic
+- Retro Terminal
+- Midnight Blue
+- Desert
+- Purple Haze
+- Monochrome
+
+Presets are starting points rather than locked themes. You can select one and then override individual colors and appearance options from the card editor.
+
 <p>
   <img width="300" alt="HomePrep Lovelace example" src="https://github.com/user-attachments/assets/57357c8f-73b0-4ea7-94df-9c71ac21586d" />
   <img width="300" alt="HomePrep Lovelace example" src="https://github.com/user-attachments/assets/48710544-30f4-4d37-976e-69e5cf9e859d" />
@@ -104,6 +159,14 @@ Current cards cover status, inventory, categories/groups, attention items, inven
   <img width="300" alt="HomePrep Lovelace example" src="https://github.com/user-attachments/assets/24f00ae6-615d-4d65-a36f-fc5ce90f0aeb" />
   <img width="300" alt="HomePrep Lovelace example" src="https://github.com/user-attachments/assets/7d447eee-f52d-4b16-8602-fd6c7a41a2c4" />
 </p>
+
+## Roadmap
+
+HomePrep has a public roadmap for features and ideas we want to explore next.
+
+See **[ROADMAP.md](ROADMAP.md)** for the current direction, near-term ideas and longer-term possibilities.
+
+The roadmap is intentionally flexible: it is a place to collect useful directions, not a promise that every idea will ship exactly as written.
 
 ## Installation with HACS
 
@@ -119,7 +182,7 @@ HomePrep currently installs as a **custom HACS repository**.
 
 Minimum supported Home Assistant version: **2026.3.0**.
 
-When HomePrep begins publishing GitHub Releases, HACS will use those releases as the stable update channel.
+Once HomePrep publishes GitHub Releases, HACS will use those releases as the stable update channel.
 
 ## Updating
 
@@ -133,7 +196,9 @@ See [CHANGELOG.md](CHANGELOG.md) for user-facing changes.
 
 ## Data and privacy
 
-HomePrep stores inventory, tasks, household planning and notification settings locally through Home Assistant's storage system. The integration does not require a HomePrep cloud account.
+HomePrep stores inventory, tasks, household planning, image references and notification settings locally through Home Assistant. Inventory image files are also kept locally by HomePrep.
+
+The integration does not require a HomePrep cloud account.
 
 Notification delivery uses notification services already configured in your Home Assistant instance.
 
@@ -142,6 +207,8 @@ Notification delivery uses notification services already configured in your Home
 HomePrep is actively developed and currently targets people who are comfortable testing an evolving Home Assistant custom integration.
 
 Bug reports and feature requests are welcome through [GitHub Issues](https://github.com/kakelakel/homeprep/issues).
+
+If you have an idea for future development, take a look at [ROADMAP.md](ROADMAP.md) first — and feel free to suggest additions.
 
 ## License
 
