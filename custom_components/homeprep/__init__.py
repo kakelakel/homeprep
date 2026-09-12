@@ -41,7 +41,7 @@ UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=1"
 
 PANEL_URL_PATH = "homeprep"
 PANEL_WEB_COMPONENT = "homeprep-panel"
-PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel-v5.js?v=5"
+PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel-v5.js?v=6"
 
 INSPECTION_FIELDS = {
     "inspection_enabled",
@@ -212,9 +212,13 @@ async def _async_apply_setup_wizard(
 
 
 async def _async_register_panel(hass: HomeAssistant) -> None:
-    """Register the HomePrep sidebar application once."""
+    """Register or refresh the HomePrep sidebar application."""
     if frontend.async_panel_exists(hass, PANEL_URL_PATH):
-        return
+        frontend.async_remove_panel(
+            hass,
+            PANEL_URL_PATH,
+            warn_if_unknown=False,
+        )
 
     await panel_custom.async_register_panel(
         hass,
