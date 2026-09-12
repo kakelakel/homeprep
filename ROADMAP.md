@@ -47,15 +47,28 @@ Ideas may move, change shape, or be dropped as HomePrep evolves and real-world f
 - More flexible dashboards and preparedness summaries.
 - Additional accessibility and frontend localization work.
 
-## Longer-term exploration
+## Longer-term product direction
 
-These are ideas we want to keep the data model ready for, but they are not committed features yet:
+These are larger product tracks HomePrep should stay technically ready for. They are intended directions, but no release dates are promised.
 
-- A standalone HomePrep companion app.
-- Optional multi-device / household synchronization.
-- Optional HomePrep cloud services while keeping local-first use possible.
-- Shared household access across multiple people.
-- Offline-first synchronization for mobile use.
+### Standalone HomePrep app
+- Build a standalone HomePrep application that can be used without Home Assistant.
+- Keep the app local-first, with useful offline capability.
+- Reuse the same core HomePrep concepts for inventory, tasks, targets, guidance and household preparedness.
+- Support shared household use across multiple people and devices.
+
+### HomePrep cloud service
+- Build an optional HomePrep cloud service for synchronization between Home Assistant and standalone HomePrep clients.
+- Support secure multi-device and multi-user household synchronization.
+- Synchronize inventory, tasks, targets, household settings and other platform-neutral HomePrep data.
+- Keep Home Assistant-specific settings, such as local notification targets, local to the Home Assistant installation.
+- Preserve local-first operation so a HomePrep cloud account is not required for basic Home Assistant use.
+- Support offline-first synchronization and safe conflict/deletion handling as the product matures.
+
+### Platform expansion
+- Make Home Assistant one HomePrep client rather than the definition of HomePrep itself.
+- Allow future clients to share a common HomePrep household while retaining platform-specific integrations and presentation.
+- Explore secure APIs and integrations for other smart-home or preparedness platforms over time.
 
 ## Ideas welcome
 
