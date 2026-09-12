@@ -1,975 +1,340 @@
-class HomePrepApiCard extends HTMLElement {
-  set hass(hass) {
-    const firstLoad = !this._hass;
-
-    this._hass = hass;
-
-    if (firstLoad) {
-      this.loadSummary();
-    }
-  }
-
-  connectedCallback() {
-    if (!this._refreshTimer) {
-      this._refreshTimer = setInterval(
-        () => this.loadSummary(),
-        30000
-      );
-    }
-  }
-
-  disconnectedCallback() {
-    if (this._refreshTimer) {
-      clearInterval(this._refreshTimer);
-      this._refreshTimer = null;
-    }
-  }
-
-  async loadSummary() {
-    if (!this._hass || this._loading) {
-      return;
-    }
-
-    this._loading = true;
-
-    try {
-      this._summary =
-        await this._hass.callWS({
-          type: "homeprep/summary",
-        });
-
-      this._error = null;
-    } catch (error) {
-      console.error(
-        "HomePrep: Failed to load summary",
-        error
-      );
-
-      this._error = error;
-    }
-
-    this._loading = false;
-
-    this.render();
-  }
-
-  escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-}
-
-
-class HomePrepCard extends HomePrepApiCard {
-  setConfig(config) {
-    this.config = {
-      show_actions: true,
-      ...config,
-    };
-  }
-
-  getCardSize() {
-    return this.config?.show_actions
-      ? 6
-      : 4;
-  }
-
-  getStatusData() {
-    const status =
-      this._summary?.status
-      ?? "unknown";
-
-    if (status === "critical") {
-      return {
-        label: "Action required",
-        detail:
-          "One or more items require your attention",
-        color:
-          "var(--error-color, #db4437)",
-        background:
-          "rgba(219, 68, 55, 0.12)",
-        icon: "mdi:shield-alert",
-      };
-    }
-
-    if (status === "attention") {
-      return {
-        label: "Requires attention",
-        detail:
-          "Some items should be checked soon",
-        color:
-          "var(--warning-color, #ff9800)",
-        background:
-          "rgba(255, 152, 0, 0.12)",
-        icon: "mdi:alert",
-      };
-    }
-
-    if (status === "ok") {
-      return {
-        label: "Home is ready",
-        detail:
-          "Nothing requires attention right now",
-        color:
-          "var(--success-color, #43a047)",
-        background:
-          "rgba(67, 160, 71, 0.12)",
-        icon: "mdi:shield-check",
-      };
-    }
-
-    return {
-      label: "Status unknown",
-      detail:
-        "HomePrep could not read the current status",
-      color:
-        "var(--secondary-text-color)",
-      background:
-        "rgba(128, 128, 128, 0.12)",
-      icon: "mdi:help-circle",
-    };
-  }
-
-  plural(
-    value,
-    singular,
-    plural
-  ) {
-    return Number(value) === 1
-      ? singular
-      : plural;
-  }
-
-  getActionItems() {
-    const expired =
-      this._summary
-        ?.expired_items
-      ?? [];
-
-    const due =
-      this._summary
-        ?.due_for_check_items
-      ?? [];
-
-    const expiring =
-      this._summary
-        ?.expiring_soon_items
-      ?? [];
-
-    const items = new Map();
-
-    const getItem = (item) => {
-      const key =
-        item.id
-        ?? `${item.name}-${Math.random()}`;
-
-      if (!items.has(key)) {
-        items.set(
-          key,
-          {
-            id: key,
-            name:
-              item.name
-              ?? "Unnamed item",
-            alerts: [],
-            priority: 0,
-            icon: "mdi:alert",
-            color:
-              "var(--warning-color, #ff9800)",
-            background:
-              "rgba(255, 152, 0, 0.12)",
-          }
-        );
-      }
-
-      return items.get(key);
-    };
-
-    expired.forEach((item) => {
-      const target =
-        getItem(item);
-
-      const days = Number(
-        item.days_overdue ?? 0
-      );
-
-      target.priority = 3;
-      target.icon =
-        "mdi:calendar-remove";
-
-      target.color =
-        "var(--error-color, #db4437)";
-
-      target.background =
-        "rgba(219, 68, 55, 0.12)";
-
-      target.alerts.push(
-        days <= 0
-          ? "Expired"
-          : `Expired ${days} ${this.plural(
-              days,
-              "day",
-              "days"
-            )} ago`
-      );
-    });
-
-    due.forEach((item) => {
-      const target =
-        getItem(item);
-
-      const days = Number(
-        item.days_overdue ?? 0
-      );
-
-      if (target.priority < 3) {
-        target.priority = 3;
-
-        target.icon =
-          "mdi:clipboard-alert";
-
-        target.color =
-          "var(--error-color, #db4437)";
-
-        target.background =
-          "rgba(219, 68, 55, 0.12)";
-      }
-
-      target.alerts.push(
-        days === 0
-          ? "Check due today"
-          : `Check overdue by ${days} ${this.plural(
-              days,
-              "day",
-              "days"
-            )}`
-      );
-    });
-
-    expiring.forEach((item) => {
-      const target =
-        getItem(item);
-
-      const days = Number(
-        item.days_remaining ?? 0
-      );
-
-      if (target.priority < 2) {
-        target.priority = 2;
-
-        target.icon =
-          "mdi:calendar-alert";
-
-        target.color =
-          "var(--warning-color, #ff9800)";
-
-        target.background =
-          "rgba(255, 152, 0, 0.12)";
-      }
-
-      target.alerts.push(
-        days === 0
-          ? "Expires today"
-          : `Expires in ${days} ${this.plural(
-              days,
-              "day",
-              "days"
-            )}`
-      );
-    });
-
-    return [...items.values()].sort(
-      (a, b) =>
-        b.priority
-        - a.priority
-        || a.name.localeCompare(
-          b.name
-        )
+class HomePrepMainBase extends HTMLElement {
+  static getConfigElement() {
+    return document.createElement(
+      "homeprep-card-editor"
     );
   }
 
-  renderActionSection() {
-    if (
-      !this.config?.show_actions
-    ) {
-      return "";
-    }
-
-    const actions =
-      this.getActionItems();
-
-    if (!actions.length) {
-      return "";
-    }
-
-    const rows = actions
-      .map((item) => {
-        const name =
-          this.escapeHtml(
-            item.name
-          );
-
-        const details =
-          item.alerts
-            .map((alert) =>
-              this.escapeHtml(
-                alert
-              )
-            )
-            .join(" • ");
-
-        return `
-          <div class="action-row">
-            <div
-              class="action-icon"
-              style="
-                color:${item.color};
-                background:${item.background};
-              "
-            >
-              <ha-icon
-                icon="${item.icon}"
-              ></ha-icon>
-            </div>
-
-            <div class="action-content">
-              <div class="action-name">
-                ${name}
-              </div>
-
-              <div class="action-detail">
-                ${details}
-              </div>
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-
-    return `
-      <div class="actions">
-        <div class="actions-header">
-          <div class="actions-title">
-            Requires attention
-          </div>
-
-          <div class="actions-count">
-            ${actions.length}
-          </div>
-        </div>
-
-        <div class="action-list">
-          ${rows}
-        </div>
-      </div>
-    `;
+  static getStubConfig() {
+    return {};
   }
-
-  render() {
-    if (!this._hass) {
-      return;
-    }
-
-    const status =
-      this.getStatusData();
-
-    const summary =
-      this._summary ?? {};
-
-    const items =
-      summary.items ?? 0;
-
-    const expired =
-      summary.expired ?? 0;
-
-    const expiringSoon =
-      summary.expiring_soon ?? 0;
-
-    const dueForCheck =
-      summary.due_for_check ?? 0;
-
-    this.innerHTML = `
-      <ha-card>
-        <style>
-          .homeprep {
-            padding: 16px;
-          }
-
-          .header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 14px;
-          }
-
-          .logo {
-            width: 44px;
-            height: 44px;
-            object-fit: contain;
-            flex-shrink: 0;
-          }
-
-          .brand {
-            min-width: 0;
-          }
-
-          .brand-title {
-            font-size: 20px;
-            font-weight: 700;
-            line-height: 1.1;
-          }
-
-          .brand-tagline {
-            margin-top: 4px;
-            font-size: 9px;
-            letter-spacing: 1px;
-            color:
-              var(--secondary-text-color);
-          }
-
-          .status {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 13px 14px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            background:
-              ${status.background};
-          }
-
-          .status-icon {
-            color: ${status.color};
-          }
-
-          .status-icon ha-icon {
-            --mdc-icon-size: 28px;
-          }
-
-          .status-title {
-            color: ${status.color};
-            font-size: 15px;
-            font-weight: 700;
-          }
-
-          .status-detail {
-            margin-top: 2px;
-            font-size: 12px;
-            color:
-              var(--secondary-text-color);
-          }
-
-          .grid {
-            display: grid;
-            grid-template-columns:
-              repeat(
-                2,
-                minmax(0, 1fr)
-              );
-            gap: 10px;
-          }
-
-          .metric {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-height: 62px;
-            padding: 12px;
-            border-radius: 12px;
-            background:
-              var(
-                --ha-card-background,
-                var(
-                  --card-background-color
-                )
-              );
-            border:
-              1px solid
-              var(--divider-color);
-          }
-
-          .metric-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            flex-shrink: 0;
-          }
-
-          .metric-icon ha-icon {
-            --mdc-icon-size: 22px;
-          }
-
-          .metric-value {
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1;
-          }
-
-          .metric-label {
-            margin-top: 4px;
-            font-size: 11px;
-            color:
-              var(--secondary-text-color);
-          }
-
-          .blue {
-            color: #42a5f5;
-            background:
-              rgba(
-                66,
-                165,
-                245,
-                0.12
-              );
-          }
-
-          .red {
-            color:
-              var(
-                --error-color,
-                #db4437
-              );
-            background:
-              rgba(
-                219,
-                68,
-                55,
-                0.12
-              );
-          }
-
-          .orange {
-            color:
-              var(
-                --warning-color,
-                #ff9800
-              );
-            background:
-              rgba(
-                255,
-                152,
-                0,
-                0.12
-              );
-          }
-
-          .amber {
-            color: #f9a825;
-            background:
-              rgba(
-                249,
-                168,
-                37,
-                0.12
-              );
-          }
-
-          .actions {
-            margin-top: 14px;
-            padding-top: 14px;
-            border-top:
-              1px solid
-              var(--divider-color);
-          }
-
-          .actions-header {
-            display: flex;
-            align-items: center;
-            justify-content:
-              space-between;
-            margin-bottom: 9px;
-          }
-
-          .actions-title {
-            font-size: 13px;
-            font-weight: 700;
-          }
-
-          .actions-count {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 22px;
-            height: 22px;
-            padding: 0 6px;
-            border-radius: 11px;
-            box-sizing: border-box;
-            font-size: 11px;
-            font-weight: 700;
-            background:
-              rgba(
-                128,
-                128,
-                128,
-                0.14
-              );
-          }
-
-          .action-list {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-          }
-
-          .action-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 10px;
-            border-radius: 10px;
-            background:
-              rgba(
-                128,
-                128,
-                128,
-                0.06
-              );
-          }
-
-          .action-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            flex-shrink: 0;
-          }
-
-          .action-icon ha-icon {
-            --mdc-icon-size: 19px;
-          }
-
-          .action-name {
-            font-size: 12px;
-            font-weight: 700;
-          }
-
-          .action-detail {
-            margin-top: 3px;
-            font-size: 10px;
-            color:
-              var(--secondary-text-color);
-          }
-        </style>
-
-        <div class="homeprep">
-          <div class="header">
-            <img
-              class="logo"
-              src="/api/homeprep/frontend/icon.png"
-              alt="HomePrep"
-            >
-
-            <div class="brand">
-              <div class="brand-title">
-                HomePrep
-              </div>
-
-              <div class="brand-tagline">
-                PREPARE • MONITOR • BE READY
-              </div>
-            </div>
-          </div>
-
-          <div class="status">
-            <div class="status-icon">
-              <ha-icon
-                icon="${status.icon}"
-              ></ha-icon>
-            </div>
-
-            <div>
-              <div class="status-title">
-                ${status.label}
-              </div>
-
-              <div class="status-detail">
-                ${status.detail}
-              </div>
-            </div>
-          </div>
-
-          <div class="grid">
-            <div class="metric">
-              <div
-                class="metric-icon blue"
-              >
-                <ha-icon
-                  icon="mdi:package-variant"
-                ></ha-icon>
-              </div>
-
-              <div>
-                <div class="metric-value">
-                  ${items}
-                </div>
-
-                <div class="metric-label">
-                  Inventory
-                </div>
-              </div>
-            </div>
-
-            <div class="metric">
-              <div
-                class="metric-icon red"
-              >
-                <ha-icon
-                  icon="mdi:calendar-remove"
-                ></ha-icon>
-              </div>
-
-              <div>
-                <div class="metric-value">
-                  ${expired}
-                </div>
-
-                <div class="metric-label">
-                  Expired
-                </div>
-              </div>
-            </div>
-
-            <div class="metric">
-              <div
-                class="metric-icon orange"
-              >
-                <ha-icon
-                  icon="mdi:calendar-alert"
-                ></ha-icon>
-              </div>
-
-              <div>
-                <div class="metric-value">
-                  ${expiringSoon}
-                </div>
-
-                <div class="metric-label">
-                  Expiring soon
-                </div>
-              </div>
-            </div>
-
-            <div class="metric">
-              <div
-                class="metric-icon amber"
-              >
-                <ha-icon
-                  icon="mdi:clipboard-alert"
-                ></ha-icon>
-              </div>
-
-              <div>
-                <div class="metric-value">
-                  ${dueForCheck}
-                </div>
-
-                <div class="metric-label">
-                  Check required
-                </div>
-              </div>
-            </div>
-          </div>
-
-          ${this.renderActionSection()}
-        </div>
-      </ha-card>
-    `;
-  }
-}
-
-
-class HomePrepMiniCard
-  extends HomePrepApiCard {
 
   setConfig(config) {
     this.config = config || {};
   }
 
-  getCardSize() {
-    return 1;
+  set hass(hass) {
+    const first = !this._hass;
+    this._hass = hass;
+
+    if (first) {
+      this.load();
+    }
   }
 
-  getStatusData() {
-    const status =
-      this._summary?.status
-      ?? "unknown";
+  async load() {
+    if (!this._hass) return;
 
-    if (status === "critical") {
-      return {
-        label: "Requires attention",
-        color:
-          "var(--error-color, #db4437)",
-        background:
-          "rgba(219, 68, 55, 0.12)",
-        icon: "mdi:alert-circle",
-      };
+    try {
+      this._summary =
+        await this._hass.callWS({
+          type: "homeprep/summary"
+        });
+    } catch (error) {
+      this._summary = null;
     }
 
-    if (status === "attention") {
-      return {
-        label: "Requires attention",
-        color:
-          "var(--warning-color, #ff9800)",
-        background:
-          "rgba(255, 152, 0, 0.12)",
-        icon: "mdi:alert",
-      };
-    }
-
-    if (status === "ok") {
-      return {
-        label: "OK",
-        color:
-          "var(--success-color, #43a047)",
-        background:
-          "rgba(67, 160, 71, 0.12)",
-        icon: "mdi:check-circle",
-      };
-    }
-
-    return {
-      label: "Unknown",
-      color:
-        "var(--secondary-text-color)",
-      background:
-        "rgba(128, 128, 128, 0.12)",
-      icon: "mdi:help-circle",
-    };
+    this.render();
   }
 
-  render() {
-    if (!this._hass) {
-      return;
-    }
+  esc(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
 
-    const status =
-      this.getStatusData();
+  baseCss() {
+    return `
+      ${window.HomePrepUI.baseStyles()}
+      <style>
+        .wrap {
+          padding: var(--hp-pad);
+        }
 
-    this.innerHTML = `
-      <ha-card>
-        <style>
-          .mini {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-          }
+        .head {
+          display:flex;
+          align-items:center;
+          gap:10px;
+        }
 
-          .logo {
-            width: 34px;
-            height: 34px;
-            object-fit: contain;
-            flex-shrink: 0;
-          }
+        .logo {
+          width:40px;
+          height:40px;
+        }
 
-          .text {
-            flex: 1;
-            min-width: 0;
-          }
+        .title {
+          font-size:16px;
+          font-weight:700;
+        }
 
-          .title {
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.1;
-          }
+        .sub {
+          margin-top:2px;
+          font-size:9px;
+          color:var(--hp-secondary);
+        }
 
-          .status {
-            margin-top: 2px;
-            font-size: 11px;
-            font-weight: 600;
-            color:
-              ${status.color};
-          }
+        .status {
+          margin-top:10px;
+          padding:10px;
+          border-radius:
+            calc(
+              var(--hp-radius) - 4px
+            );
+          font-size:12px;
+          font-weight:700;
+        }
 
-          .status-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background:
-              ${status.background};
-            color:
-              ${status.color};
-            flex-shrink: 0;
-          }
+        .status.ok {
+          color:var(--hp-ok);
+          background:
+            color-mix(
+              in srgb,
+              var(--hp-ok) 12%,
+              transparent
+            );
+        }
 
-          .status-icon ha-icon {
-            --mdc-icon-size: 19px;
-          }
-        </style>
+        .status.attention {
+          color:var(--hp-attention);
+          background:
+            color-mix(
+              in srgb,
+              var(--hp-attention) 12%,
+              transparent
+            );
+        }
 
-        <div class="mini">
-          <img
-            class="logo"
-            src="/api/homeprep/frontend/icon.png"
-            alt="HomePrep"
-          >
+        .status.critical {
+          color:var(--hp-critical);
+          background:
+            color-mix(
+              in srgb,
+              var(--hp-critical) 12%,
+              transparent
+            );
+        }
 
-          <div class="text">
-            <div class="title">
-              HomePrep
-            </div>
+        .metrics {
+          display:grid;
+          grid-template-columns:
+            repeat(2,minmax(0,1fr));
+          gap:8px;
+          margin-top:8px;
+        }
 
-            <div class="status">
-              ${status.label}
-            </div>
-          </div>
+        .metric {
+          padding:9px;
+          border:
+            1px solid
+            var(--hp-border);
+          border-radius:
+            calc(
+              var(--hp-radius) - 5px
+            );
+        }
 
-          <div class="status-icon">
-            <ha-icon
-              icon="${status.icon}"
-            ></ha-icon>
-          </div>
-        </div>
+        .metric strong {
+          display:block;
+          font-size:18px;
+        }
+
+        .metric span {
+          font-size:9px;
+          color:var(--hp-secondary);
+        }
+      </style>
+    `;
+  }
+
+  shell(content) {
+    return `
+      <ha-card
+        style="${window.HomePrepUI.styleVars(
+          this.config
+        )}"
+      >
+        ${this.baseCss()}
+        ${content}
       </ha-card>
     `;
   }
 }
 
 
-if (!customElements.get(
-  "homeprep-card"
-)) {
-  customElements.define(
+class HomePrepCard extends HomePrepMainBase {
+  render() {
+    if (!this._hass) return;
+
+    const s =
+      this._summary;
+
+    if (!s) {
+      this.innerHTML =
+        this.shell(`
+          <div class="wrap">
+            HomePrep unavailable
+          </div>
+        `);
+      return;
+    }
+
+    const status =
+      s.status || "ok";
+
+    const label =
+      status === "critical"
+        ? "Action required"
+        : status === "attention"
+          ? "Requires attention"
+          : "Home is ready";
+
+    this.innerHTML =
+      this.shell(`
+        <div class="wrap">
+          <div class="head">
+            <img
+              class="logo"
+              src="/api/homeprep/frontend/icon.png"
+            >
+
+            <div>
+              <div class="title">
+                ${this.esc(
+                  this.config?.title
+                  || "HomePrep"
+                )}
+              </div>
+
+              <div class="sub">
+                PREPARE • MONITOR • BE READY
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="status ${status}"
+          >
+            ${this.esc(label)}
+          </div>
+
+          <div class="metrics">
+            ${[
+              ["Inventory", s.items],
+              ["Expired", s.expired],
+              [
+                "Expiring soon",
+                s.expiring_soon
+              ],
+              [
+                "Check required",
+                s.due_for_check
+              ]
+            ]
+              .map(
+                ([labelText, value]) => `
+                  <div class="metric">
+                    <strong>
+                      ${value ?? 0}
+                    </strong>
+                    <span>
+                      ${this.esc(
+                        labelText
+                      )}
+                    </span>
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+      `);
+  }
+}
+
+
+class HomePrepMiniCard extends HomePrepMainBase {
+  render() {
+    if (!this._hass) return;
+
+    const s =
+      this._summary;
+
+    const status =
+      s?.status || "ok";
+
+    const label =
+      !s
+        ? "Unknown"
+        : status === "critical"
+          ? "Requires attention"
+          : status === "attention"
+            ? "Attention"
+            : "OK";
+
+    this.innerHTML =
+      this.shell(`
+        <div class="wrap">
+          <div class="head">
+            <img
+              class="logo"
+              src="/api/homeprep/frontend/icon.png"
+            >
+
+            <div style="flex:1">
+              <div class="title">
+                ${this.esc(
+                  this.config?.title
+                  || "HomePrep"
+                )}
+              </div>
+
+              <div class="sub">
+                ${this.esc(label)}
+              </div>
+            </div>
+
+            <div
+              class="status ${status}"
+              style="margin-top:0;padding:7px 9px"
+            >
+              ${this.esc(label)}
+            </div>
+          </div>
+        </div>
+      `);
+  }
+}
+
+
+[
+  [
     "homeprep-card",
-    HomePrepCard
-  );
-}
-
-if (!customElements.get(
-  "homeprep-mini-card"
-)) {
-  customElements.define(
+    HomePrepCard,
+    "HomePrep"
+  ],
+  [
     "homeprep-mini-card",
-    HomePrepMiniCard
-  );
-}
+    HomePrepMiniCard,
+    "HomePrep Mini"
+  ]
+].forEach(
+  ([tag, cls, name]) => {
+    if (!customElements.get(tag)) {
+      customElements.define(
+        tag,
+        cls
+      );
+    }
 
+    window.customCards =
+      window.customCards || [];
 
-window.customCards =
-  window.customCards || [];
-
-window.customCards.push({
-  type: "homeprep-card",
-  name: "HomePrep",
-  description:
-    "HomePrep preparedness overview",
-});
-
-window.customCards.push({
-  type: "homeprep-mini-card",
-  name: "HomePrep Mini",
-  description:
-    "Compact HomePrep status card",
-});
+    window.customCards.push({
+      type: tag,
+      name,
+      description:
+        `${name} card`
+    });
+  }
+);
