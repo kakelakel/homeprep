@@ -54,10 +54,7 @@ def calculate_recommendation(
                 "target_rate": target_rate,
             }
         )
-
-        notes.append(
-            f"Calculated for {people} people over {days} days."
-        )
+        notes.append(f"Calculated for {people} people over {days} days.")
 
     elif kind == "quantity_per_adult_per_day":
         minimum_rate = float(rule["minimum"])
@@ -75,11 +72,9 @@ def calculate_recommendation(
                 "target_rate": target_rate,
             }
         )
-
         notes.append(
             f"Quantified source rate applies to {adults} adults over {days} days."
         )
-
         if children:
             notes.append(
                 f"{children} children are in the household but are not included "
@@ -98,14 +93,10 @@ def calculate_recommendation(
                 "per_person_value": per_person,
             }
         )
-
-        notes.append(
-            f"Calculated for {people} people."
-        )
+        notes.append(f"Calculated for {people} people.")
 
     elif kind == "coverage_days":
         value = int(rule.get("days") or days)
-
         result["calculated"].update(
             {
                 "minimum_value": value,
@@ -115,13 +106,15 @@ def calculate_recommendation(
             }
         )
 
-    elif kind in {"presence", "capability"}:
+    elif kind in {"presence", "capability", "checklist"}:
+        requirements = list(recommendation.get("requirements") or [])
         result["calculated"].update(
             {
-                "minimum_value": 1,
-                "target_value": 1,
-                "unit": None,
-                "rate_basis": kind,
+                "requirements": requirements,
+                "requirement_count": len(
+                    [item for item in requirements if item.get("required", True)]
+                ),
+                "rate_basis": "readiness_requirements",
             }
         )
 
@@ -145,7 +138,7 @@ def adopt_recommendation(
     household: dict[str, Any],
     profile: dict[str, Any],
 ) -> dict[str, Any]:
-    """Create an independent personal target from official guidance."""
+    """Create an independent personal target from guidance."""
     resolved = calculate_recommendation(
         recommendation,
         household,
@@ -158,21 +151,22 @@ def adopt_recommendation(
     if recommendation.get("advisory_note"):
         notes.append(recommendation["advisory_note"])
 
-    notes.extend(
-        calculated.get("calculation_notes") or []
-    )
+    notes.extend(calculated.get("calculation_notes") or [])
 
     return create_target(
         {
             "name": recommendation["title"],
             "category": recommendation.get("category"),
             "target_type": recommendation["target_type"],
-            "matcher": recommendation.get("matcher") or {
-                "category": recommendation.get("category")
-            },
+            "matcher": recommendation.get("matcher") or {},
             "unit": calculated.get("unit"),
             "minimum_value": calculated.get("minimum_value"),
             "target_value": calculated.get("target_value"),
+            "requirements": (
+                calculated.get("requirements")
+                or recommendation.get("requirements")
+                or []
+            ),
             "priority": recommendation.get("priority", "normal"),
             "notes": "\n".join(notes) if notes else None,
             "origin": "recommendation",
