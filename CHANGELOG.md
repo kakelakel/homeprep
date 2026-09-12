@@ -4,6 +4,18 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.6.1b4] - 2026-09-12
+
+### Improved
+- Final Swedish UI polish for remaining mixed-language strings in Tasks, Inventory and Personal targets.
+- Composite metadata such as category, target type, guidance origin and linked-task state now translates cleanly instead of leaving partial English fragments.
+- Additional Swedish translations for older adopted target titles and readiness text retained from earlier guidance versions.
+- Singular/plural handling was tightened for inventory counts and simple quantity labels.
+- Lovelace receives the same final Swedish localization pass as the sidebar panel.
+
+### Notes
+- This beta is intended as the final translation-polish check before stable `0.6.1`.
+
 ## [0.6.1b3] - 2026-09-12
 
 ### Added
@@ -103,7 +115,7 @@ HomePrep uses semantic versioning while it is in active `0.x` development. Patch
 - Task notifications for reminders, due-today events and overdue tasks.
 - Configurable expiry warning window.
 - Test notification action in HomePrep settings.
-- Notification deduplication to avoid repeatedly sending the same event.
+- Notification deduplication to avoid repeatedly sending the same notification.
 
 ## [0.3.3] - 2026-09-12
 
