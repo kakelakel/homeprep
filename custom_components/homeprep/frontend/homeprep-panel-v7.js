@@ -8,6 +8,7 @@ import {
   setHomePrepLanguageOverride,
 } from "./homeprep-i18n.js?v=3";
 import { localizeHomePrepElementExtra } from "./homeprep-i18n-extra.js?v=1";
+import { localizeHomePrepElementPolishSv } from "./homeprep-i18n-polish-sv.js?v=1";
 
 const HomePrepPanel = customElements.get("homeprep-panel");
 
@@ -33,6 +34,7 @@ function localizeLiveDom(root, hass) {
     });
   });
   localizeHomePrepElementExtra(root, hass);
+  localizeHomePrepElementPolishSv(root, hass);
 }
 
 function languageOptions(hass) {
