@@ -396,14 +396,29 @@ class HomePrepUniversalEditor extends HTMLElement {
 
     this._taxonomyLoaded = false;
 
+    /*
+     * IMPORTANT:
+     * We do NOT emit config-changed on every text-input
+     * keystroke. Home Assistant may then rebuild the editor,
+     * which causes the active input to lose focus.
+     *
+     * Text/number fields are committed on "change".
+     * Selects, checkboxes and color pickers also commit on change.
+     */
     this.addEventListener(
       "change",
-      (event) => this.handleInput(event)
+      (event) =>
+        this.handleChange(event)
     );
 
+    /*
+     * Input is only used for local UI synchronization.
+     * It does not rebuild the editor or emit config-changed.
+     */
     this.addEventListener(
       "input",
-      (event) => this.handleInput(event)
+      (event) =>
+        this.handleInput(event)
     );
   }
 
@@ -467,12 +482,20 @@ class HomePrepUniversalEditor extends HTMLElement {
     );
   }
 
-  setValue(path, value) {
-    const next = structuredClone(
-      this._config || {}
-    );
+  updateConfigValue(
+    path,
+    value
+  ) {
+    const next =
+      structuredClone(
+        this._config || {}
+      );
 
-    if (path.startsWith("appearance.")) {
+    if (
+      path.startsWith(
+        "appearance."
+      )
+    ) {
       const key =
         path.substring(
           "appearance.".length
@@ -488,12 +511,14 @@ class HomePrepUniversalEditor extends HTMLElement {
       ) {
         delete next.appearance[key];
       } else {
-        next.appearance[key] = value;
+        next.appearance[key] =
+          value;
       }
 
       if (
-        Object.keys(next.appearance)
-          .length === 0
+        Object.keys(
+          next.appearance
+        ).length === 0
       ) {
         delete next.appearance;
       }
@@ -509,41 +534,182 @@ class HomePrepUniversalEditor extends HTMLElement {
     }
 
     this._config = next;
+  }
+
+  commitValue(
+    path,
+    value,
+    rerender = false
+  ) {
+    this.updateConfigValue(
+      path,
+      value
+    );
+
     this.fireConfigChanged();
-    this.render();
+
+    /*
+     * Do not rebuild the editor for ordinary text/number/color
+     * fields. That preserves keyboard focus.
+     *
+     * We only rebuild when a control changes which options/content
+     * are visible (e.g. category/group/preset/toggles).
+     */
+    if (rerender) {
+      this.render();
+    }
   }
 
   handleInput(event) {
-    const target = event.target;
+    const target =
+      event.target;
+
+    if (!target) return;
+
+    /*
+     * Keep color palette + text field visually in sync locally,
+     * without committing the HA card config yet.
+     */
+    if (
+      target.matches(
+        'input[type="color"][data-color-key]'
+      )
+    ) {
+      const key =
+        target.dataset.colorKey;
+
+      const textInput =
+        this.querySelector(
+          `input[data-color-text="${key}"]`
+        );
+
+      if (textInput) {
+        textInput.value =
+          target.value.toUpperCase();
+      }
+
+      return;
+    }
+
+    if (
+      target.matches(
+        'input[data-color-text]'
+      )
+    ) {
+      const value =
+        target.value.trim();
+
+      if (
+        this.isHexColor(value)
+      ) {
+        const key =
+          target.dataset.colorText;
+
+        const picker =
+          this.querySelector(
+            `input[type="color"][data-color-key="${key}"]`
+          );
+
+        if (picker) {
+          picker.value =
+            this.normalizeHex(value);
+        }
+      }
+    }
+  }
+
+  handleChange(event) {
+    const target =
+      event.target;
 
     if (
       !target ||
-      !target.dataset?.path
+      !target.dataset
     ) {
+      return;
+    }
+
+    /*
+     * Native color palette.
+     */
+    if (
+      target.matches(
+        'input[type="color"][data-color-key]'
+      )
+    ) {
+      const key =
+        target.dataset.colorKey;
+
+      const value =
+        target.value.toUpperCase();
+
+      const textInput =
+        this.querySelector(
+          `input[data-color-text="${key}"]`
+        );
+
+      if (textInput) {
+        textInput.value =
+          value;
+      }
+
+      this.commitValue(
+        `appearance.${key}`,
+        value,
+        false
+      );
+
       return;
     }
 
     const path =
       target.dataset.path;
 
+    if (!path) return;
+
     let value;
 
     if (
       target.type === "checkbox"
     ) {
-      value = target.checked;
+      value =
+        target.checked;
     } else if (
       target.type === "number"
     ) {
       value =
         target.value === ""
           ? ""
-          : Number(target.value);
+          : Number(
+              target.value
+            );
     } else {
-      value = target.value;
+      value =
+        target.value;
     }
 
-    this.setValue(path, value);
+    /*
+     * Only controls that materially change editor structure
+     * require an immediate re-render.
+     */
+    const rerenderPaths =
+      new Set([
+        "category",
+        "group",
+        "show_items",
+        "inventory_collapsed",
+        "show_actions",
+        "appearance.preset",
+        "appearance.density",
+        "appearance.shadow",
+        "appearance.border"
+      ]);
+
+    this.commitValue(
+      path,
+      value,
+      rerenderPaths.has(path)
+    );
   }
 
   esc(value) {
@@ -554,14 +720,46 @@ class HomePrepUniversalEditor extends HTMLElement {
       .replaceAll('"', "&quot;");
   }
 
-  selected(value, expected) {
+  selected(
+    value,
+    expected
+  ) {
     return value === expected
       ? "selected"
       : "";
   }
 
   checked(value) {
-    return value ? "checked" : "";
+    return value
+      ? "checked"
+      : "";
+  }
+
+  isHexColor(value) {
+    return /^#[0-9a-fA-F]{6}$/.test(
+      value
+    );
+  }
+
+  normalizeHex(value) {
+    return value.toUpperCase();
+  }
+
+  pickerValue(
+    configured,
+    fallback = "#2196F3"
+  ) {
+    if (
+      this.isHexColor(
+        configured || ""
+      )
+    ) {
+      return this.normalizeHex(
+        configured
+      );
+    }
+
+    return fallback;
   }
 
   getGroups() {
@@ -584,11 +782,13 @@ class HomePrepUniversalEditor extends HTMLElement {
     const titleField = `
       <label class="field">
         <span>Title</span>
+
         <input
           data-path="title"
           type="text"
           value="${this.esc(
-            this._config.title || ""
+            this._config.title
+            || ""
           )}"
           placeholder="Default title"
         >
@@ -604,7 +804,10 @@ class HomePrepUniversalEditor extends HTMLElement {
 
         <label class="field">
           <span>Category</span>
-          <select data-path="category">
+
+          <select
+            data-path="category"
+          >
             ${this._taxonomy.categories
               .map(
                 (category) => `
@@ -636,7 +839,10 @@ class HomePrepUniversalEditor extends HTMLElement {
               !== false
             )}
           >
-          <span>Show items</span>
+
+          <span>
+            Show items
+          </span>
         </label>
       `;
     }
@@ -650,12 +856,17 @@ class HomePrepUniversalEditor extends HTMLElement {
 
         <label class="field">
           <span>Category group</span>
-          <select data-path="group">
+
+          <select
+            data-path="group"
+          >
             ${this.getGroups()
               .map(
                 (group) => `
                   <option
-                    value="${this.esc(group)}"
+                    value="${this.esc(
+                      group
+                    )}"
                     ${this.selected(
                       this._config.group,
                       group
@@ -678,7 +889,10 @@ class HomePrepUniversalEditor extends HTMLElement {
               === true
             )}
           >
-          <span>Show actual items</span>
+
+          <span>
+            Show actual items
+          </span>
         </label>
       `;
     }
@@ -687,34 +901,27 @@ class HomePrepUniversalEditor extends HTMLElement {
       type ===
       "custom:homeprep-attention-card"
     ) {
-      const include =
-        Array.isArray(
-          this._config.include
-        )
-          ? this._config.include
-          : ["critical", "attention"];
-
       return `
         ${titleField}
 
         <label class="field">
           <span>Maximum items</span>
+
           <input
             data-path="max_items"
             type="number"
             min="1"
             max="100"
             value="${this.esc(
-              this._config.max_items ?? 12
+              this._config.max_items
+              ?? 12
             )}"
           >
         </label>
 
         <div class="hint">
           Critical and Attention are
-          both shown by default.
-          Fine-grained status filters
-          stay available in YAML for now.
+          shown by default.
         </div>
       `;
     }
@@ -728,7 +935,10 @@ class HomePrepUniversalEditor extends HTMLElement {
 
         <label class="field">
           <span>Category filter</span>
-          <select data-path="category">
+
+          <select
+            data-path="category"
+          >
             <option value="">
               All categories
             </option>
@@ -757,7 +967,10 @@ class HomePrepUniversalEditor extends HTMLElement {
 
         <label class="field">
           <span>Group filter</span>
-          <select data-path="group">
+
+          <select
+            data-path="group"
+          >
             <option value="">
               All groups
             </option>
@@ -766,7 +979,9 @@ class HomePrepUniversalEditor extends HTMLElement {
               .map(
                 (group) => `
                   <option
-                    value="${this.esc(group)}"
+                    value="${this.esc(
+                      group
+                    )}"
                     ${this.selected(
                       this._config.group,
                       group
@@ -794,12 +1009,15 @@ class HomePrepUniversalEditor extends HTMLElement {
             data-path="inventory_collapsed"
             type="checkbox"
             ${this.checked(
-              this._config.inventory_collapsed
+              this._config
+                .inventory_collapsed
               === true
             )}
           >
+
           <span>
-            Inventory collapsed by default
+            Inventory collapsed
+            by default
           </span>
         </label>
       `;
@@ -821,16 +1039,12 @@ class HomePrepUniversalEditor extends HTMLElement {
               !== false
             )}
           >
-          <span>Show attention items</span>
+
+          <span>
+            Show attention items
+          </span>
         </label>
       `;
-    }
-
-    if (
-      type ===
-      "custom:homeprep-mini-card"
-    ) {
-      return titleField;
     }
 
     return titleField;
@@ -838,7 +1052,8 @@ class HomePrepUniversalEditor extends HTMLElement {
 
   renderAppearance() {
     const a =
-      this._config.appearance || {};
+      this._config.appearance
+      || {};
 
     const presets =
       window.HomePrepUI.PRESETS;
@@ -850,16 +1065,20 @@ class HomePrepUniversalEditor extends HTMLElement {
 
       <label class="field">
         <span>Preset</span>
+
         <select
           data-path="appearance.preset"
         >
-          ${Object.entries(presets)
+          ${Object.entries(
+            presets
+          )
             .map(
               ([id, preset]) => `
                 <option
                   value="${this.esc(id)}"
                   ${this.selected(
-                    a.preset || "theme",
+                    a.preset
+                    || "theme",
                     id
                   )}
                 >
@@ -874,60 +1093,69 @@ class HomePrepUniversalEditor extends HTMLElement {
       </label>
 
       <div class="subheading">
-        Custom overrides
+        Custom color overrides
       </div>
 
-      ${this.colorTextField(
+      ${this.colorField(
         "Accent / icon color",
         "accent_color",
-        a
+        a,
+        "#2196F3"
       )}
 
-      ${this.colorTextField(
+      ${this.colorField(
         "Background color",
         "background_color",
-        a
+        a,
+        "#202124"
       )}
 
-      ${this.colorTextField(
+      ${this.colorField(
         "Primary text color",
         "primary_text_color",
-        a
+        a,
+        "#FFFFFF"
       )}
 
-      ${this.colorTextField(
+      ${this.colorField(
         "Secondary text color",
         "secondary_text_color",
-        a
+        a,
+        "#A0A0A0"
       )}
 
-      ${this.colorTextField(
+      ${this.colorField(
         "Border color",
         "border_color",
-        a
+        a,
+        "#404040"
       )}
 
-      ${this.colorTextField(
+      ${this.colorField(
         "OK color",
         "ok_color",
-        a
+        a,
+        "#4CAF50"
       )}
 
-      ${this.colorTextField(
+      ${this.colorField(
         "Attention color",
         "attention_color",
-        a
+        a,
+        "#FF9800"
       )}
 
-      ${this.colorTextField(
+      ${this.colorField(
         "Critical color",
         "critical_color",
-        a
+        a,
+        "#F44336"
       )}
 
       <div class="two-col">
         <label class="field">
           <span>Border radius</span>
+
           <input
             data-path="appearance.radius"
             type="number"
@@ -942,12 +1170,14 @@ class HomePrepUniversalEditor extends HTMLElement {
 
         <label class="field">
           <span>Density</span>
+
           <select
             data-path="appearance.density"
           >
             <option value="">
               Preset
             </option>
+
             <option
               value="compact"
               ${this.selected(
@@ -957,6 +1187,7 @@ class HomePrepUniversalEditor extends HTMLElement {
             >
               Compact
             </option>
+
             <option
               value="comfortable"
               ${this.selected(
@@ -966,6 +1197,7 @@ class HomePrepUniversalEditor extends HTMLElement {
             >
               Comfortable
             </option>
+
             <option
               value="spacious"
               ${this.selected(
@@ -982,12 +1214,14 @@ class HomePrepUniversalEditor extends HTMLElement {
       <div class="two-col">
         <label class="field">
           <span>Shadow</span>
+
           <select
             data-path="appearance.shadow"
           >
             <option value="">
               Preset
             </option>
+
             <option
               value="none"
               ${this.selected(
@@ -997,6 +1231,7 @@ class HomePrepUniversalEditor extends HTMLElement {
             >
               None
             </option>
+
             <option
               value="soft"
               ${this.selected(
@@ -1006,6 +1241,7 @@ class HomePrepUniversalEditor extends HTMLElement {
             >
               Soft
             </option>
+
             <option
               value="glow"
               ${this.selected(
@@ -1018,7 +1254,9 @@ class HomePrepUniversalEditor extends HTMLElement {
           </select>
         </label>
 
-        <label class="toggle compact-toggle">
+        <label
+          class="toggle compact-toggle"
+        >
           <input
             data-path="appearance.border"
             type="checkbox"
@@ -1026,36 +1264,71 @@ class HomePrepUniversalEditor extends HTMLElement {
               a.border !== false
             )}
           >
-          <span>Show border</span>
+
+          <span>
+            Show border
+          </span>
         </label>
       </div>
 
       <div class="hint">
-        Presets provide defaults.
-        Any value above overrides
-        only that part of the preset.
-        CSS variables and rgba(...)
-        are supported.
+        Use the color palette for a
+        normal HEX color, or type HEX,
+        rgba(...), or a Home Assistant
+        CSS variable manually.
       </div>
     `;
   }
 
-  colorTextField(
+  colorField(
     label,
     key,
-    appearance
+    appearance,
+    fallback
   ) {
+    const configured =
+      appearance[key] || "";
+
+    const picker =
+      this.pickerValue(
+        configured,
+        fallback
+      );
+
     return `
       <label class="field">
-        <span>${this.esc(label)}</span>
-        <input
-          data-path="appearance.${this.esc(key)}"
-          type="text"
-          value="${this.esc(
-            appearance[key] || ""
-          )}"
-          placeholder="Preset / HA theme"
-        >
+        <span>
+          ${this.esc(label)}
+        </span>
+
+        <div class="color-row">
+          <input
+            class="color-picker"
+            type="color"
+            data-color-key="${this.esc(
+              key
+            )}"
+            value="${this.esc(
+              picker
+            )}"
+            title="Choose color"
+          >
+
+          <input
+            class="color-text"
+            type="text"
+            data-path="appearance.${this.esc(
+              key
+            )}"
+            data-color-text="${this.esc(
+              key
+            )}"
+            value="${this.esc(
+              configured
+            )}"
+            placeholder="Preset / #RRGGBB / rgba(...)"
+          >
+        </div>
       </label>
     `;
   }
@@ -1116,6 +1389,25 @@ class HomePrepUniversalEditor extends HTMLElement {
           font: inherit;
         }
 
+        .color-row {
+          display: grid;
+          grid-template-columns:
+            48px minmax(0,1fr);
+          gap: 8px;
+          align-items: center;
+        }
+
+        .color-picker {
+          width: 48px;
+          height: 40px;
+          padding: 3px;
+          cursor: pointer;
+        }
+
+        .color-text {
+          min-width: 0;
+        }
+
         .toggle {
           display: flex;
           align-items: center;
@@ -1149,6 +1441,15 @@ class HomePrepUniversalEditor extends HTMLElement {
             var(--secondary-text-color);
           background:
             rgba(128,128,128,.08);
+        }
+
+        @media (
+          max-width: 500px
+        ) {
+          .two-col {
+            grid-template-columns:
+              1fr;
+          }
         }
       </style>
 
