@@ -14,7 +14,7 @@ from .taxonomy import (
 )
 
 
-ITEM_SCHEMA_VERSION = 2
+ITEM_SCHEMA_VERSION = 3
 
 
 def utcnow_iso() -> str:
@@ -43,6 +43,10 @@ def create_item(
         "last_checked": data.get("last_checked"),
         "next_check_at": data.get("next_check_at"),
         "notes": data.get("notes"),
+        "image_id": data.get("image_id"),
+        "image_token": data.get("image_token"),
+        "image_content_type": data.get("image_content_type"),
+        "image_filename": data.get("image_filename"),
         "created_at": data.get("created_at", now),
         "updated_at": data.get("updated_at", now),
         "deleted_at": data.get("deleted_at"),
@@ -65,6 +69,10 @@ def normalize_item(
     normalized["unit"] = normalize_unit(normalized.get("unit", "piece"))
     normalized.setdefault("id", str(uuid4()))
     normalized["household_id"] = str(normalized.get("household_id") or household_id or "")
+    normalized.setdefault("image_id", None)
+    normalized.setdefault("image_token", None)
+    normalized.setdefault("image_content_type", None)
+    normalized.setdefault("image_filename", None)
     normalized.setdefault("created_at", normalized.get("updated_at", now))
     normalized.setdefault("updated_at", normalized["created_at"])
     normalized.setdefault("deleted_at", None)
