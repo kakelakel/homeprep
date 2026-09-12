@@ -14,6 +14,7 @@ from .const import DOMAIN
 COUNTRY_PROFILES = {
     "SE": "se-msb-2026-v1",
     "NO": "no-dsb-2026-v1",
+    "OTHER": "homeprep-general-v1",
 }
 
 TARGET_MAP = {
@@ -45,6 +46,26 @@ TARGET_MAP = {
         "target_documents": "paper_contacts",
         "target_pets": "pet_supplies",
     },
+    "OTHER": {
+        "target_water": "water",
+        "target_food": "food_coverage",
+        "target_cooking": "alternative_cooking",
+        "target_communication": "communication",
+        "target_power": "phone_power",
+        "target_lighting": "lighting",
+        "target_warmth": "warmth",
+        "target_first_aid": "first_aid",
+        "target_hygiene": "hygiene",
+        "target_cash": "payment",
+        "target_documents": "contacts",
+        "target_pets": "pet_supplies",
+    },
+}
+
+AUTHORITY_LABELS = {
+    "SE": "MSB (Sweden)",
+    "NO": "DSB (Norway)",
+    "OTHER": "HomePrep general baseline (not official guidance)",
 }
 
 
@@ -92,16 +113,25 @@ class HomePrepConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="household",
             data_schema=vol.Schema(
                 {
-                    vol.Required("country_code", default="SE"):
-                        vol.In({"SE": "Sweden", "NO": "Norway"}),
-                    vol.Required("adults", default=1):
-                        vol.All(vol.Coerce(int), vol.Range(min=0, max=20)),
-                    vol.Required("children", default=0):
-                        vol.All(vol.Coerce(int), vol.Range(min=0, max=20)),
-                    vol.Required("pets", default=0):
-                        vol.All(vol.Coerce(int), vol.Range(min=0, max=20)),
-                    vol.Required("preparedness_days", default=7):
-                        vol.All(vol.Coerce(int), vol.Range(min=1, max=30)),
+                    vol.Required("country_code", default="SE"): vol.In(
+                        {
+                            "SE": "Sweden",
+                            "NO": "Norway",
+                            "OTHER": "Other / no official HomePrep profile yet",
+                        }
+                    ),
+                    vol.Required("adults", default=1): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=20)
+                    ),
+                    vol.Required("children", default=0): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=20)
+                    ),
+                    vol.Required("pets", default=0): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=20)
+                    ),
+                    vol.Required("preparedness_days", default=7): vol.All(
+                        vol.Coerce(int), vol.Range(min=1, max=30)
+                    ),
                 }
             ),
         )
@@ -112,7 +142,7 @@ class HomePrepConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Choose initial personal targets."""
         country = self._household.get("country_code", "SE")
-        mapping = TARGET_MAP[country]
+        mapping = TARGET_MAP.get(country, TARGET_MAP["OTHER"])
 
         if user_input is not None:
             self._selected_target_ids = [
@@ -143,7 +173,10 @@ class HomePrepConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="targets",
             data_schema=vol.Schema(fields),
             description_placeholders={
-                "authority": "MSB" if country == "SE" else "DSB",
+                "authority": AUTHORITY_LABELS.get(
+                    country,
+                    AUTHORITY_LABELS["OTHER"],
+                ),
             },
         )
 
@@ -160,7 +193,10 @@ class HomePrepConfigFlow(ConfigFlow, domain=DOMAIN):
                     "setup_applied": False,
                     "setup": {
                         "household": self._household,
-                        "profile_id": COUNTRY_PROFILES[country],
+                        "profile_id": COUNTRY_PROFILES.get(
+                            country,
+                            COUNTRY_PROFILES["OTHER"],
+                        ),
                         "target_ids": self._selected_target_ids,
                     },
                 },
