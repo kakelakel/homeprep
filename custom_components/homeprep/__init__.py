@@ -17,6 +17,7 @@ from .const import (
 )
 from .core.service import HomePrepService
 from .repositories.ha_storage import HAStorageRepository
+from .websocket import async_register_websocket_api
 
 
 PLATFORMS = ["sensor"]
