@@ -3,7 +3,6 @@ class HomePrepManageCard extends HTMLElement {
     super();
 
     this._items = [];
-
     this._taxonomy = {
       categories: [],
       item_types: [],
@@ -15,24 +14,23 @@ class HomePrepManageCard extends HTMLElement {
     this._editingItem = null;
     this._formMode = null;
 
-    this.addEventListener(
-      "click",
-      (event) => this.handleClick(event)
-    );
+    this._inventoryCollapsed = false;
+    this._collapsedCategories = new Set();
 
-    this.addEventListener(
-      "change",
-      (event) => this.handleChange(event)
-    );
+    this.addEventListener("click", (event) => this.handleClick(event));
+    this.addEventListener("change", (event) => this.handleChange(event));
   }
 
   setConfig(config) {
     this.config = config || {};
+
+    if (typeof this.config.inventory_collapsed === "boolean") {
+      this._inventoryCollapsed = this.config.inventory_collapsed;
+    }
   }
 
   set hass(hass) {
     const firstLoad = !this._hass;
-
     this._hass = hass;
 
     if (firstLoad) {
@@ -41,7 +39,7 @@ class HomePrepManageCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 8;
+    return 12;
   }
 
   escapeHtml(value) {
@@ -53,28 +51,100 @@ class HomePrepManageCard extends HTMLElement {
       .replaceAll("'", "&#039;");
   }
 
-  getClickedElement(event) {
-    return event
-      .composedPath()
-      .find((element) => {
-        if (!(element instanceof HTMLElement)) {
-          return false;
-        }
+  parseDate(value) {
+    if (!value) return null;
 
-        return (
-          element.id === "refresh" ||
-          element.id === "add-item" ||
-          element.id === "cancel-editor" ||
-          element.id === "cancel-editor-bottom" ||
-          element.id === "save-editor" ||
-          element.dataset?.action
-        );
-      });
+    const date = new Date(`${value}T00:00:00`);
+
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date;
+  }
+
+  today() {
+    const now = new Date();
+
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+  }
+
+  daysBetween(a, b) {
+    return Math.round(
+      (b.getTime() - a.getTime())
+      / 86400000
+    );
+  }
+
+  getItemStatus(item) {
+    const today = this.today();
+    const expires = this.parseDate(item.expires_at);
+    const nextCheck = this.parseDate(item.next_check_at);
+
+    if (expires && expires < today) {
+      return {
+        level: "critical",
+        label: "Expired",
+        detail: `${Math.abs(this.daysBetween(today, expires))} d overdue`,
+      };
+    }
+
+    if (nextCheck && nextCheck <= today) {
+      return {
+        level: "critical",
+        label: "Check due",
+        detail:
+          nextCheck < today
+            ? `${Math.abs(this.daysBetween(today, nextCheck))} d overdue`
+            : "Due today",
+      };
+    }
+
+    if (expires) {
+      const days = this.daysBetween(today, expires);
+
+      if (days >= 0 && days <= 30) {
+        return {
+          level: "attention",
+          label: "Expiring",
+          detail: `${days} d`,
+        };
+      }
+    }
+
+    return {
+      level: "ok",
+      label: "OK",
+      detail: "",
+    };
+  }
+
+  getClickedElement(event) {
+    return event.composedPath().find((element) => {
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+
+      return (
+        element.id === "refresh" ||
+        element.id === "add-item" ||
+        element.id === "cancel-editor" ||
+        element.id === "cancel-editor-bottom" ||
+        element.id === "save-editor" ||
+        element.id === "toggle-inventory" ||
+        element.id === "expand-all" ||
+        element.id === "collapse-all" ||
+        element.dataset?.action
+      );
+    });
   }
 
   async handleClick(event) {
-    const target =
-      this.getClickedElement(event);
+    const target = this.getClickedElement(event);
 
     if (!target) {
       return;
@@ -106,23 +176,53 @@ class HomePrepManageCard extends HTMLElement {
       return;
     }
 
-    if (target.dataset.action === "edit") {
-      this.openEditForm(
-        target.dataset.id
+    if (target.id === "toggle-inventory") {
+      this._inventoryCollapsed = !this._inventoryCollapsed;
+      this.render();
+      return;
+    }
+
+    if (target.id === "expand-all") {
+      this._collapsedCategories.clear();
+      this._inventoryCollapsed = false;
+      this.render();
+      return;
+    }
+
+    if (target.id === "collapse-all") {
+      this._taxonomy.categories.forEach(
+        (category) =>
+          this._collapsedCategories.add(category.id)
       );
+      this.render();
+      return;
+    }
+
+    if (target.dataset.action === "toggle-category") {
+      const categoryId = target.dataset.category;
+
+      if (this._collapsedCategories.has(categoryId)) {
+        this._collapsedCategories.delete(categoryId);
+      } else {
+        this._collapsedCategories.add(categoryId);
+      }
+
+      this.render();
+      return;
+    }
+
+    if (target.dataset.action === "edit") {
+      this.openEditForm(target.dataset.id);
       return;
     }
 
     if (target.dataset.action === "delete") {
-      await this.deleteItem(
-        target.dataset.id
-      );
+      await this.deleteItem(target.dataset.id);
     }
   }
 
   handleChange(event) {
-    const target =
-      event.target;
+    const target = event.target;
 
     if (!(target instanceof HTMLSelectElement)) {
       return;
@@ -141,10 +241,7 @@ class HomePrepManageCard extends HTMLElement {
     const typeSelect =
       this.querySelector("#hp-type");
 
-    if (
-      !categorySelect ||
-      !typeSelect
-    ) {
+    if (!categorySelect || !typeSelect) {
       return;
     }
 
@@ -153,8 +250,7 @@ class HomePrepManageCard extends HTMLElement {
         this.querySelector("#hp-unit");
 
       if (unitSelect) {
-        const currentUnit =
-          unitSelect.value;
+        const currentUnit = unitSelect.value;
 
         unitSelect.innerHTML =
           this.renderUnitOptions(
@@ -162,8 +258,7 @@ class HomePrepManageCard extends HTMLElement {
             currentUnit
           );
 
-        unitSelect.value =
-          currentUnit;
+        unitSelect.value = currentUnit;
       }
     }
 
@@ -180,25 +275,20 @@ class HomePrepManageCard extends HTMLElement {
 
     this._loading = true;
     this._error = null;
-
     this.render();
 
     try {
-      const [
-        itemsResult,
-        taxonomyResult,
-      ] = await Promise.all([
-        this._hass.callWS({
-          type: "homeprep/items",
-        }),
+      const [itemsResult, taxonomyResult] =
+        await Promise.all([
+          this._hass.callWS({
+            type: "homeprep/items",
+          }),
+          this._hass.callWS({
+            type: "homeprep/taxonomy",
+          }),
+        ]);
 
-        this._hass.callWS({
-          type: "homeprep/taxonomy",
-        }),
-      ]);
-
-      this._items =
-        itemsResult.items ?? [];
+      this._items = itemsResult.items ?? [];
 
       this._taxonomy = {
         categories:
@@ -219,15 +309,13 @@ class HomePrepManageCard extends HTMLElement {
     }
 
     this._loading = false;
-
     this.render();
   }
 
   getCategory(categoryId) {
     return (
       this._taxonomy.categories.find(
-        (entry) =>
-          entry.id === categoryId
+        (entry) => entry.id === categoryId
       ) ?? null
     );
   }
@@ -250,8 +338,7 @@ class HomePrepManageCard extends HTMLElement {
   getItemTypeLabel(itemTypeId) {
     return (
       this._taxonomy.item_types.find(
-        (entry) =>
-          entry.id === itemTypeId
+        (entry) => entry.id === itemTypeId
       )?.label
       ?? itemTypeId
       ?? "Unknown"
@@ -261,36 +348,25 @@ class HomePrepManageCard extends HTMLElement {
   getUnit(unitId) {
     return (
       this._taxonomy.units.find(
-        (entry) =>
-          entry.id === unitId
+        (entry) => entry.id === unitId
       ) ?? null
     );
   }
 
   getUnitDisplay(unitId) {
-    const unit =
-      this.getUnit(unitId);
+    const unit = this.getUnit(unitId);
 
     if (!unit) {
       return unitId ?? "";
     }
 
-    return (
-      unit.symbol ||
-      unit.label
-    );
+    return unit.symbol || unit.label;
   }
 
-  getSmartState(
-    categoryId,
-    itemType
-  ) {
-    const category =
-      this.getCategory(categoryId);
-
+  getSmartState(categoryId, itemType) {
+    const category = this.getCategory(categoryId);
     const profile =
-      category?.form_profile
-      ?? "balanced";
+      category?.form_profile ?? "balanced";
 
     let expirationRecommended = false;
     let inspectionRecommended = false;
@@ -319,7 +395,8 @@ class HomePrepManageCard extends HTMLElement {
       inspectionRecommended = true;
     }
 
-    let message = "";
+    let message =
+      "Use the lifecycle fields that make sense for this item.";
 
     if (
       expirationRecommended &&
@@ -333,9 +410,6 @@ class HomePrepManageCard extends HTMLElement {
     } else if (inspectionRecommended) {
       message =
         "Regular inspection tracking is especially useful for this item.";
-    } else {
-      message =
-        "Use the lifecycle fields that make sense for this item.";
     }
 
     return {
@@ -346,30 +420,18 @@ class HomePrepManageCard extends HTMLElement {
     };
   }
 
-  updateSmartForm(
-    categoryId,
-    itemType
-  ) {
+  updateSmartForm(categoryId, itemType) {
     const state =
-      this.getSmartState(
-        categoryId,
-        itemType
-      );
+      this.getSmartState(categoryId, itemType);
 
     const icon =
-      this.querySelector(
-        "#smart-category-icon"
-      );
+      this.querySelector("#smart-category-icon");
 
     const title =
-      this.querySelector(
-        "#smart-category-title"
-      );
+      this.querySelector("#smart-category-title");
 
     const message =
-      this.querySelector(
-        "#smart-category-message"
-      );
+      this.querySelector("#smart-category-message");
 
     if (icon) {
       icon.setAttribute(
@@ -381,13 +443,11 @@ class HomePrepManageCard extends HTMLElement {
 
     if (title) {
       title.textContent =
-        state.category?.label
-        ?? "HomePrep";
+        state.category?.label ?? "HomePrep";
     }
 
     if (message) {
-      message.textContent =
-        state.message;
+      message.textContent = state.message;
     }
 
     this.setFieldRecommended(
@@ -406,14 +466,9 @@ class HomePrepManageCard extends HTMLElement {
     );
   }
 
-  setFieldRecommended(
-    fieldId,
-    recommended
-  ) {
+  setFieldRecommended(fieldId, recommended) {
     const field =
-      this.querySelector(
-        `#${fieldId}`
-      );
+      this.querySelector(`#${fieldId}`);
 
     if (!field) {
       return;
@@ -425,15 +480,11 @@ class HomePrepManageCard extends HTMLElement {
     );
 
     const badge =
-      field.querySelector(
-        ".recommended-badge"
-      );
+      field.querySelector(".recommended-badge");
 
     if (badge) {
       badge.style.display =
-        recommended
-          ? "inline-flex"
-          : "none";
+        recommended ? "inline-flex" : "none";
     }
   }
 
@@ -444,11 +495,9 @@ class HomePrepManageCard extends HTMLElement {
     this._editingItem = {
       name: "",
       category:
-        firstCategory?.id
-        ?? "other",
+        firstCategory?.id ?? "other",
       item_type:
-        this._taxonomy.item_types[0]
-          ?.id
+        this._taxonomy.item_types[0]?.id
         ?? "consumable",
       quantity: 1,
       unit:
@@ -461,15 +510,13 @@ class HomePrepManageCard extends HTMLElement {
     };
 
     this._formMode = "add";
-
     this.render();
   }
 
   openEditForm(itemId) {
     const item =
       this._items.find(
-        (entry) =>
-          entry.id === itemId
+        (entry) => entry.id === itemId
       );
 
     if (!item) {
@@ -478,95 +525,61 @@ class HomePrepManageCard extends HTMLElement {
 
     this._editingItem = {
       ...item,
-      expires_at:
-        item.expires_at ?? "",
-      last_checked:
-        item.last_checked ?? "",
+      expires_at: item.expires_at ?? "",
+      last_checked: item.last_checked ?? "",
       next_check_at:
         item.next_check_at ?? "",
-      notes:
-        item.notes ?? "",
+      notes: item.notes ?? "",
     };
 
     this._formMode = "edit";
-
     this.render();
   }
 
   closeForm() {
     this._editingItem = null;
     this._formMode = null;
-
     this.render();
   }
 
   readForm() {
     return {
       name:
-        this.querySelector(
-          "#hp-name"
-        )?.value.trim()
-        ?? "",
-
+        this.querySelector("#hp-name")
+          ?.value.trim() ?? "",
       category:
-        this.querySelector(
-          "#hp-category"
-        )?.value
-        ?? "other",
-
+        this.querySelector("#hp-category")
+          ?.value ?? "other",
       item_type:
-        this.querySelector(
-          "#hp-type"
-        )?.value
-        ?? "consumable",
-
+        this.querySelector("#hp-type")
+          ?.value ?? "consumable",
       quantity: Number(
-        this.querySelector(
-          "#hp-quantity"
-        )?.value
-        ?? 0
+        this.querySelector("#hp-quantity")
+          ?.value ?? 0
       ),
-
       unit:
-        this.querySelector(
-          "#hp-unit"
-        )?.value
-        ?? "piece",
-
+        this.querySelector("#hp-unit")
+          ?.value ?? "piece",
       expires_at:
-        this.querySelector(
-          "#hp-expires"
-        )?.value
-        || "",
-
+        this.querySelector("#hp-expires")
+          ?.value || "",
       last_checked:
-        this.querySelector(
-          "#hp-last-checked"
-        )?.value
-        || "",
-
+        this.querySelector("#hp-last-checked")
+          ?.value || "",
       next_check_at:
-        this.querySelector(
-          "#hp-next-check"
-        )?.value
-        || "",
-
+        this.querySelector("#hp-next-check")
+          ?.value || "",
       notes:
-        this.querySelector(
-          "#hp-notes"
-        )?.value.trim()
-        ?? "",
+        this.querySelector("#hp-notes")
+          ?.value.trim() ?? "",
     };
   }
 
   async saveForm() {
-    const data =
-      this.readForm();
+    const data = this.readForm();
 
     if (!data.name) {
-      window.alert(
-        "Name is required."
-      );
+      window.alert("Name is required.");
       return;
     }
 
@@ -604,8 +617,7 @@ class HomePrepManageCard extends HTMLElement {
     }
 
     if (data.notes) {
-      serviceData.notes =
-        data.notes;
+      serviceData.notes = data.notes;
     }
 
     try {
@@ -651,8 +663,7 @@ class HomePrepManageCard extends HTMLElement {
   async deleteItem(itemId) {
     const item =
       this._items.find(
-        (entry) =>
-          entry.id === itemId
+        (entry) => entry.id === itemId
       );
 
     if (!item) {
@@ -667,44 +678,45 @@ class HomePrepManageCard extends HTMLElement {
       return;
     }
 
-    await this._hass.callService(
-      "homeprep",
-      "delete_item",
-      {
-        item_id: itemId,
-      }
-    );
+    try {
+      await this._hass.callService(
+        "homeprep",
+        "delete_item",
+        {
+          item_id: itemId,
+        }
+      );
 
-    await this.loadData();
+      await this.loadData();
+    } catch (error) {
+      console.error(
+        "HomePrep: Failed to delete item",
+        error
+      );
+
+      window.alert(
+        "HomePrep could not delete the item."
+      );
+    }
   }
 
   groupEntries(entries) {
-    const groups =
-      new Map();
+    const groups = new Map();
 
     entries.forEach((entry) => {
-      const group =
-        entry.group
-        || "Other";
+      const group = entry.group || "Other";
 
       if (!groups.has(group)) {
-        groups.set(
-          group,
-          []
-        );
+        groups.set(group, []);
       }
 
-      groups
-        .get(group)
-        .push(entry);
+      groups.get(group).push(entry);
     });
 
     return groups;
   }
 
-  renderCategoryOptions(
-    selectedId
-  ) {
+  renderCategoryOptions(selectedId) {
     const groups =
       this.groupEntries(
         this._taxonomy.categories
@@ -714,25 +726,19 @@ class HomePrepManageCard extends HTMLElement {
       .map(
         ([groupName, entries]) => `
           <optgroup
-            label="${this.escapeHtml(
-              groupName
-            )}"
+            label="${this.escapeHtml(groupName)}"
           >
             ${entries
               .map((entry) => `
                 <option
-                  value="${this.escapeHtml(
-                    entry.id
-                  )}"
+                  value="${this.escapeHtml(entry.id)}"
                   ${
                     entry.id === selectedId
                       ? "selected"
                       : ""
                   }
                 >
-                  ${this.escapeHtml(
-                    entry.label
-                  )}
+                  ${this.escapeHtml(entry.label)}
                 </option>
               `)
               .join("")}
@@ -742,90 +748,65 @@ class HomePrepManageCard extends HTMLElement {
       .join("");
   }
 
-  renderItemTypeOptions(
-    selectedId
-  ) {
+  renderItemTypeOptions(selectedId) {
     return this._taxonomy.item_types
       .map((entry) => `
         <option
-          value="${this.escapeHtml(
-            entry.id
-          )}"
+          value="${this.escapeHtml(entry.id)}"
           ${
             entry.id === selectedId
               ? "selected"
               : ""
           }
         >
-          ${this.escapeHtml(
-            entry.label
-          )}
+          ${this.escapeHtml(entry.label)}
         </option>
       `)
       .join("");
   }
 
-  renderUnitOption(
-    unit,
-    selectedId
-  ) {
-    let label =
-      unit.label;
+  renderUnitOption(unit, selectedId) {
+    let label = unit.label;
 
     if (unit.symbol) {
-      label +=
-        ` (${unit.symbol})`;
+      label += ` (${unit.symbol})`;
     }
 
     return `
       <option
-        value="${this.escapeHtml(
-          unit.id
-        )}"
+        value="${this.escapeHtml(unit.id)}"
         ${
           unit.id === selectedId
             ? "selected"
             : ""
         }
       >
-        ${this.escapeHtml(
-          label
-        )}
+        ${this.escapeHtml(label)}
       </option>
     `;
   }
 
-  renderUnitOptions(
-    categoryId,
-    selectedId
-  ) {
+  renderUnitOptions(categoryId, selectedId) {
     const category =
       this.getCategory(categoryId);
 
     const preferredIds =
-      category?.preferred_units
-      ?? [];
+      category?.preferred_units ?? [];
 
     const recommended =
       preferredIds
-        .map((id) =>
-          this.getUnit(id)
-        )
+        .map((id) => this.getUnit(id))
         .filter(Boolean);
 
     const recommendedIds =
       new Set(
-        recommended.map(
-          (unit) => unit.id
-        )
+        recommended.map((unit) => unit.id)
       );
 
     const remaining =
       this._taxonomy.units.filter(
         (unit) =>
-          !recommendedIds.has(
-            unit.id
-          )
+          !recommendedIds.has(unit.id)
       );
 
     let html = "";
@@ -834,8 +815,7 @@ class HomePrepManageCard extends HTMLElement {
       html += `
         <optgroup
           label="Recommended for ${this.escapeHtml(
-            category?.label
-            ?? "category"
+            category?.label ?? "category"
           )}"
         >
           ${recommended
@@ -851,17 +831,13 @@ class HomePrepManageCard extends HTMLElement {
     }
 
     const groups =
-      this.groupEntries(
-        remaining
-      );
+      this.groupEntries(remaining);
 
     html += [...groups.entries()]
       .map(
         ([groupName, entries]) => `
           <optgroup
-            label="${this.escapeHtml(
-              groupName
-            )}"
+            label="${this.escapeHtml(groupName)}"
           >
             ${entries
               .map((unit) =>
@@ -880,6 +856,9 @@ class HomePrepManageCard extends HTMLElement {
   }
 
   renderItem(item) {
+    const status =
+      this.getItemStatus(item);
+
     return `
       <div class="item">
         <div class="item-main">
@@ -895,26 +874,16 @@ class HomePrepManageCard extends HTMLElement {
 
           <div class="item-content">
             <div class="item-name">
-              ${this.escapeHtml(
-                item.name
-              )}
+              ${this.escapeHtml(item.name)}
             </div>
 
             <div class="item-meta">
-              ${this.escapeHtml(
-                this.getCategoryLabel(
-                  item.category
-                )
-              )}
-              •
               ${this.escapeHtml(
                 this.getItemTypeLabel(
                   item.item_type
                 )
               )}
-            </div>
-
-            <div class="item-quantity">
+              •
               ${this.escapeHtml(
                 item.quantity
               )}
@@ -927,33 +896,166 @@ class HomePrepManageCard extends HTMLElement {
           </div>
         </div>
 
+        <div class="item-status status-${status.level}">
+          <span>${this.escapeHtml(status.label)}</span>
+          ${
+            status.detail
+              ? `<small>${this.escapeHtml(status.detail)}</small>`
+              : ""
+          }
+        </div>
+
         <div class="item-actions">
           <button
             type="button"
             class="icon-button"
             data-action="edit"
-            data-id="${this.escapeHtml(
-              item.id
-            )}"
+            data-id="${this.escapeHtml(item.id)}"
+            title="Edit"
           >
-            <ha-icon
-              icon="mdi:pencil"
-            ></ha-icon>
+            <ha-icon icon="mdi:pencil"></ha-icon>
           </button>
 
           <button
             type="button"
             class="icon-button delete"
             data-action="delete"
-            data-id="${this.escapeHtml(
-              item.id
-            )}"
+            data-id="${this.escapeHtml(item.id)}"
+            title="Delete"
           >
-            <ha-icon
-              icon="mdi:delete"
-            ></ha-icon>
+            <ha-icon icon="mdi:delete"></ha-icon>
           </button>
         </div>
+      </div>
+    `;
+  }
+
+  renderInventory() {
+    if (this._inventoryCollapsed) {
+      return "";
+    }
+
+    const categoryBlocks =
+      this._taxonomy.categories
+        .map((category) => {
+          const items =
+            this._items.filter(
+              (item) =>
+                item.category === category.id
+            );
+
+          if (!items.length) {
+            return "";
+          }
+
+          const collapsed =
+            this._collapsedCategories.has(
+              category.id
+            );
+
+          const attention =
+            items.filter(
+              (item) =>
+                this.getItemStatus(item).level
+                !== "ok"
+            ).length;
+
+          return `
+            <section class="category-section">
+              <button
+                type="button"
+                class="category-header"
+                data-action="toggle-category"
+                data-category="${this.escapeHtml(
+                  category.id
+                )}"
+              >
+                <div class="category-heading">
+                  <div class="category-icon">
+                    <ha-icon
+                      icon="${this.escapeHtml(
+                        category.icon
+                        ?? "mdi:package-variant"
+                      )}"
+                    ></ha-icon>
+                  </div>
+
+                  <div>
+                    <div class="category-title">
+                      ${this.escapeHtml(
+                        category.label
+                      )}
+                    </div>
+
+                    <div class="category-subtitle">
+                      ${items.length}
+                      ${items.length === 1 ? "item" : "items"}
+                      ${
+                        attention
+                          ? ` • ${attention} require attention`
+                          : " • All OK"
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <ha-icon
+                  icon="${
+                    collapsed
+                      ? "mdi:chevron-down"
+                      : "mdi:chevron-up"
+                  }"
+                ></ha-icon>
+              </button>
+
+              ${
+                collapsed
+                  ? ""
+                  : `
+                    <div class="category-items">
+                      ${items
+                        .map(
+                          (item) =>
+                            this.renderItem(item)
+                        )
+                        .join("")}
+                    </div>
+                  `
+              }
+            </section>
+          `;
+        })
+        .join("");
+
+    if (!categoryBlocks.trim()) {
+      return `
+        <div class="empty">
+          No items yet
+        </div>
+      `;
+    }
+
+    return `
+      <div class="inventory-controls">
+        <button
+          type="button"
+          id="expand-all"
+          class="small-button"
+        >
+          Expand all
+        </button>
+
+        <button
+          type="button"
+          id="collapse-all"
+          class="small-button"
+        >
+          Collapse all
+        </button>
+      </div>
+
+      <div class="inventory">
+        ${categoryBlocks}
       </div>
     `;
   }
@@ -974,7 +1076,6 @@ class HomePrepManageCard extends HTMLElement {
 
     return `
       <div class="editor">
-
         <div class="editor-header">
           <div class="editor-title">
             ${
@@ -989,9 +1090,7 @@ class HomePrepManageCard extends HTMLElement {
             class="icon-button"
             type="button"
           >
-            <ha-icon
-              icon="mdi:close"
-            ></ha-icon>
+            <ha-icon icon="mdi:close"></ha-icon>
           </button>
         </div>
 
@@ -1029,7 +1128,6 @@ class HomePrepManageCard extends HTMLElement {
         </div>
 
         <div class="form-grid">
-
           <label class="field field-wide">
             <span>Name</span>
 
@@ -1112,8 +1210,7 @@ class HomePrepManageCard extends HTMLElement {
               id="hp-expires"
               type="date"
               value="${this.escapeHtml(
-                item.expires_at
-                ?? ""
+                item.expires_at ?? ""
               )}"
             >
           </label>
@@ -1144,8 +1241,7 @@ class HomePrepManageCard extends HTMLElement {
               id="hp-last-checked"
               type="date"
               value="${this.escapeHtml(
-                item.last_checked
-                ?? ""
+                item.last_checked ?? ""
               )}"
             >
           </label>
@@ -1176,8 +1272,7 @@ class HomePrepManageCard extends HTMLElement {
               id="hp-next-check"
               type="date"
               value="${this.escapeHtml(
-                item.next_check_at
-                ?? ""
+                item.next_check_at ?? ""
               )}"
             >
           </label>
@@ -1189,11 +1284,9 @@ class HomePrepManageCard extends HTMLElement {
               id="hp-notes"
               rows="3"
             >${this.escapeHtml(
-              item.notes
-              ?? ""
+              item.notes ?? ""
             )}</textarea>
           </label>
-
         </div>
 
         <div class="editor-actions">
@@ -1213,7 +1306,6 @@ class HomePrepManageCard extends HTMLElement {
             Save
           </button>
         </div>
-
       </div>
     `;
   }
@@ -1223,37 +1315,22 @@ class HomePrepManageCard extends HTMLElement {
       return;
     }
 
-    let content = "";
+    let body = "";
 
     if (this._loading) {
-      content = `
+      body = `
         <div class="message">
           Loading inventory...
         </div>
       `;
     } else if (this._error) {
-      content = `
+      body = `
         <div class="message error">
           Could not load HomePrep inventory.
         </div>
       `;
-    } else if (!this._items.length) {
-      content = `
-        <div class="empty">
-          No items yet
-        </div>
-      `;
     } else {
-      content = `
-        <div class="inventory">
-          ${this._items
-            .map(
-              (item) =>
-                this.renderItem(item)
-            )
-            .join("")}
-        </div>
-      `;
+      body = this.renderInventory();
     }
 
     this.innerHTML = `
@@ -1277,6 +1354,7 @@ class HomePrepManageCard extends HTMLElement {
 
           .header-text {
             flex: 1;
+            min-width: 0;
           }
 
           .title {
@@ -1306,6 +1384,7 @@ class HomePrepManageCard extends HTMLElement {
             height: 36px;
             border: 0;
             border-radius: 50%;
+            padding: 0;
             cursor: pointer;
             color:
               var(--primary-text-color);
@@ -1316,7 +1395,7 @@ class HomePrepManageCard extends HTMLElement {
           .add-button {
             width: 100%;
             padding: 10px;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             border: 0;
             border-radius: 10px;
             cursor: pointer;
@@ -1325,58 +1404,190 @@ class HomePrepManageCard extends HTMLElement {
             font-weight: 600;
           }
 
+          .inventory-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 9px 11px;
+            margin-bottom: 14px;
+            border: 1px solid
+              var(--divider-color);
+            border-radius: 10px;
+            cursor: pointer;
+            color:
+              var(--primary-text-color);
+            background:
+              rgba(128,128,128,.05);
+          }
+
+          .inventory-controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 9px;
+          }
+
+          .small-button {
+            padding: 6px 9px;
+            border: 1px solid
+              var(--divider-color);
+            border-radius: 8px;
+            cursor: pointer;
+            color:
+              var(--secondary-text-color);
+            background: transparent;
+            font-size: 10px;
+          }
+
           .inventory {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 9px;
           }
 
-          .item {
+          .category-section {
+            overflow: hidden;
+            border: 1px solid
+              var(--divider-color);
+            border-radius: 12px;
+          }
+
+          .category-header {
+            width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 10px;
-            padding: 11px 10px;
-            border:
-              1px solid
+            padding: 11px;
+            border: 0;
+            cursor: pointer;
+            color:
+              var(--primary-text-color);
+            background:
+              rgba(128,128,128,.04);
+            text-align: left;
+          }
+
+          .category-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+
+          .category-icon,
+          .item-icon,
+          .smart-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: #2196f3;
+            background:
+              rgba(33,150,243,.12);
+          }
+
+          .category-icon {
+            width: 36px;
+            height: 36px;
+          }
+
+          .category-title {
+            font-size: 13px;
+            font-weight: 700;
+          }
+
+          .category-subtitle {
+            margin-top: 2px;
+            font-size: 9px;
+            color:
+              var(--secondary-text-color);
+          }
+
+          .category-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            border-top: 1px solid
               var(--divider-color);
-            border-radius: 12px;
+          }
+
+          .item {
+            display: grid;
+            grid-template-columns:
+              minmax(0, 1fr)
+              auto
+              auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+          }
+
+          .item + .item {
+            border-top: 1px solid
+              var(--divider-color);
           }
 
           .item-main {
             display: flex;
             align-items: center;
             gap: 10px;
+            min-width: 0;
           }
 
           .item-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 38px;
-            height: 38px;
+            width: 34px;
+            height: 34px;
             flex-shrink: 0;
-            border-radius: 50%;
-            color: #42a5f5;
-            background:
-              rgba(66,165,245,.12);
+          }
+
+          .item-content {
+            min-width: 0;
           }
 
           .item-name {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
           }
 
           .item-meta {
             margin-top: 2px;
-            font-size: 10px;
+            font-size: 9px;
             color:
               var(--secondary-text-color);
           }
 
-          .item-quantity {
-            margin-top: 3px;
-            font-size: 11px;
+          .item-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 1px;
+            min-width: 62px;
+            font-size: 9px;
+            font-weight: 700;
+          }
+
+          .item-status small {
+            font-size: 8px;
+            font-weight: 400;
+            color:
+              var(--secondary-text-color);
+          }
+
+          .status-ok {
+            color:
+              var(--success-color,#4caf50);
+          }
+
+          .status-attention {
+            color:
+              var(--warning-color,#ff9800);
+          }
+
+          .status-critical {
+            color:
+              var(--error-color,#f44336);
           }
 
           .item-actions {
@@ -1392,8 +1603,7 @@ class HomePrepManageCard extends HTMLElement {
           .editor {
             margin-bottom: 14px;
             padding: 14px;
-            border:
-              1px solid
+            border: 1px solid
               var(--divider-color);
             border-radius: 12px;
             background:
@@ -1424,16 +1634,9 @@ class HomePrepManageCard extends HTMLElement {
           }
 
           .smart-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             width: 34px;
             height: 34px;
             flex-shrink: 0;
-            border-radius: 50%;
-            color: #2196f3;
-            background:
-              rgba(33,150,243,.14);
           }
 
           .smart-title {
@@ -1461,9 +1664,6 @@ class HomePrepManageCard extends HTMLElement {
             gap: 5px;
             padding: 7px;
             border-radius: 9px;
-            transition:
-              background .2s ease,
-              box-shadow .2s ease;
           }
 
           .field-wide {
@@ -1503,8 +1703,7 @@ class HomePrepManageCard extends HTMLElement {
             width: 100%;
             box-sizing: border-box;
             padding: 9px 10px;
-            border:
-              1px solid
+            border: 1px solid
               var(--divider-color);
             border-radius: 8px;
             color:
@@ -1534,8 +1733,7 @@ class HomePrepManageCard extends HTMLElement {
           }
 
           .secondary-button {
-            border:
-              1px solid
+            border: 1px solid
               var(--divider-color);
             color:
               var(--primary-text-color);
@@ -1553,7 +1751,7 @@ class HomePrepManageCard extends HTMLElement {
               var(--error-color,#db4437);
           }
 
-          @media (max-width: 500px) {
+          @media (max-width: 600px) {
             .form-grid {
               grid-template-columns: 1fr;
             }
@@ -1561,11 +1759,27 @@ class HomePrepManageCard extends HTMLElement {
             .field-wide {
               grid-column: auto;
             }
+
+            .item {
+              grid-template-columns:
+                minmax(0, 1fr)
+                auto;
+            }
+
+            .item-status {
+              grid-column: 1;
+              align-items: flex-start;
+              padding-left: 44px;
+            }
+
+            .item-actions {
+              grid-column: 2;
+              grid-row: 1 / span 2;
+            }
           }
         </style>
 
         <div class="homeprep-manage">
-
           <div class="header">
             <img
               class="logo"
@@ -1587,10 +1801,9 @@ class HomePrepManageCard extends HTMLElement {
               id="refresh"
               class="icon-button"
               type="button"
+              title="Refresh"
             >
-              <ha-icon
-                icon="mdi:refresh"
-              ></ha-icon>
+              <ha-icon icon="mdi:refresh"></ha-icon>
             </button>
           </div>
 
@@ -1604,8 +1817,32 @@ class HomePrepManageCard extends HTMLElement {
 
           ${this.renderForm()}
 
-          ${content}
+          <button
+            id="toggle-inventory"
+            class="inventory-toggle"
+            type="button"
+          >
+            <span>
+              Inventory
+              •
+              ${this._items.length}
+              ${
+                this._items.length === 1
+                  ? "item"
+                  : "items"
+              }
+            </span>
 
+            <ha-icon
+              icon="${
+                this._inventoryCollapsed
+                  ? "mdi:chevron-down"
+                  : "mdi:chevron-up"
+              }"
+            ></ha-icon>
+          </button>
+
+          ${body}
         </div>
       </ha-card>
     `;
@@ -1613,24 +1850,19 @@ class HomePrepManageCard extends HTMLElement {
 }
 
 
-if (
-  !customElements.get(
-    "homeprep-manage-card"
-  )
-) {
+if (!customElements.get("homeprep-manage-card")) {
   customElements.define(
     "homeprep-manage-card",
     HomePrepManageCard
   );
 }
 
-
 window.customCards =
   window.customCards || [];
 
 window.customCards.push({
   type: "homeprep-manage-card",
-  name: "HomePrep Inventory",
+  name: "HomePrep Inventory Manager",
   description:
-    "Manage your HomePrep preparedness inventory",
+    "Add, edit and manage the complete HomePrep inventory",
 });
