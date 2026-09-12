@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Welcome to HomePrep",
+        "description": "HomePrep will guide you through a quick setup so your household profile and first preparedness targets are ready immediately. Everything can be changed later from the HomePrep sidebar panel."
+      },
+      "household": {
+        "title": "Household",
+        "description": "Tell HomePrep who and what you are preparing for. Choose Other if HomePrep does not yet include an official profile for your country.",
+        "data": {
+          "country_code": "Country / guidance profile",
+          "adults": "Adults",
+          "children": "Children",
+          "pets": "Pets",
+          "preparedness_days": "Preparedness horizon (days)"
+        }
+      },
+      "targets": {
+        "title": "Starter targets",
+        "description": "Choose the {authority} recommendations you want HomePrep to adopt as your first personal targets. These become editable personal targets; the source guidance remains unchanged.",
+        "data": {
+          "target_water": "Emergency water",
+          "target_food": "Food coverage",
+          "target_cooking": "Alternative cooking",
+          "target_communication": "Emergency communication / radio",
+          "target_power": "Alternative power / power banks",
+          "target_lighting": "Emergency lighting",
+          "target_warmth": "Warmth without normal heating",
+          "target_first_aid": "First aid and household medicine",
+          "target_hygiene": "Hygiene readiness",
+          "target_cash": "Alternative payment capability",
+          "target_documents": "Important contacts offline",
+          "target_pets": "Emergency supplies for pets"
+        }
+      },
+      "review": {
+        "title": "Ready to prepare",
+        "description": "Country/profile: {country}\n\nPeople: {people}\n\nPets: {pets}\n\nPreparedness horizon: {days} days\n\nStarter targets: {targets}\n\nFinish setup to create your HomePrep profile and selected personal targets."
+      }
+    },
+    "abort": {
+      "already_configured": "HomePrep is already configured."
+    }
+  }
+}
