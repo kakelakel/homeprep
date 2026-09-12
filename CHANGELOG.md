@@ -4,17 +4,26 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
-## [0.6.1b4] - 2026-09-12
+## [0.6.1] - 2026-09-12
+
+### Added
+- Multilingual frontend foundation with automatic Home Assistant language detection and an optional HomePrep language override.
+- Initial language support for English, Swedish, Norwegian Bokmål, Danish, Finnish, German and French.
+- Translation coverage across the setup wizard, sidebar navigation, inventory, tasks, targets, household, settings, notifications, categories, common units, status labels and Lovelace UI.
+- Swedish localization for the Swedish MSB guidance shown in HomePrep, including recommendation titles, readiness requirements, descriptions and advisory notes.
+- Pattern-aware localization for dynamic values such as item counts, readiness counts, days, due dates and inspection metadata.
 
 ### Improved
-- Final Swedish UI polish for remaining mixed-language strings in Tasks, Inventory and Personal targets.
-- Composite metadata such as category, target type, guidance origin and linked-task state now translates cleanly instead of leaving partial English fragments.
-- Additional Swedish translations for older adopted target titles and readiness text retained from earlier guidance versions.
+- The **HomePrep** summary card now combines Inventory and Tasks and reflects the most important overall status.
+- **HomePrep Mini** now provides a compact combined Inventory + Tasks summary.
+- Summary cards refresh automatically so inventory and task changes are reflected without reloading the dashboard.
+- Swedish UI polish for remaining mixed-language strings in Tasks, Inventory, Personal targets and guidance-related metadata.
+- Composite metadata such as category, target type, guidance origin and linked-task state now localizes more cleanly.
 - Singular/plural handling was tightened for inventory counts and simple quantity labels.
-- Lovelace receives the same final Swedish localization pass as the sidebar panel.
-
-### Notes
-- This beta is intended as the final translation-polish check before stable `0.6.1`.
+- The language selector is integrated into the Settings view.
+- English remains the canonical source language and fallback when a translated string is unavailable.
+- Public README and roadmap documentation were refreshed to match the current feature set, release workflow and localization support.
+- Frontend cache versioning was bumped where needed so updated localization and Lovelace modules are fetched reliably after upgrades.
 
 ## [0.6.1b3] - 2026-09-12
 
