@@ -4,6 +4,22 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.6.1b2] - 2026-09-12
+
+### Added
+- Expanded frontend translations for English, Swedish, Norwegian Bokmål, Danish, Finnish, German and French.
+- Translation coverage for sidebar navigation, inventory, tasks, targets, household, settings, notifications, categories, common units and status labels.
+- Dynamic translation handling for inventory counts, attention counts, expiry dates and inspection dates.
+- Lovelace localization layer for HomePrep cards and visual editors.
+
+### Improved
+- The language selector now appears inside the Settings view below the Settings heading instead of above it.
+- Frontend translation helpers can now localize rendered elements as well as raw HTML.
+- English remains the canonical source language and fallback for untranslated strings.
+
+### Notes
+- This is a beta release intended for opt-in testing through HACS prerelease updates before the stable 0.6.1 release.
+
 ## [0.6.1b1] - 2026-09-12
 
 ### Added
