@@ -15,6 +15,7 @@ from .const import DOMAIN, SERVICE_ADD_ITEM, SERVICE_DELETE_ITEM, SERVICE_UPDATE
 from .core.identity import HomePrepIdentity
 from .core.service import HomePrepService
 from .core.taxonomy import CATEGORIES, ITEM_TYPES, UNITS
+from .media import async_register_media
 from .notifications.service import HomePrepNotificationService
 from .notifications.websocket import NOTIFICATION_SERVICE_KEY, async_register_notification_websocket
 from .planning.recommendations import RecommendationCatalog
@@ -35,7 +36,7 @@ IDENTITY_KEY = "identity"
 
 FRONTEND_PATH = Path(__file__).parent / "frontend"
 FRONTEND_URL = "/api/homeprep/frontend"
-UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=1"
+UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=2"
 
 PANEL_URL_PATH = "homeprep"
 PANEL_WEB_COMPONENT = "homeprep-panel"
@@ -198,6 +199,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     async_register_planning_websocket(hass)
     async_register_task_websocket(hass)
     async_register_notification_websocket(hass)
+    async_register_media(hass)
     return True
 
 
