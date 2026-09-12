@@ -6,7 +6,7 @@ import {
   getHomePrepLanguageOverride,
   hpT,
   setHomePrepLanguageOverride,
-} from "./homeprep-i18n.js?v=1";
+} from "./homeprep-i18n.js?v=2";
 
 const HomePrepPanel = customElements.get("homeprep-panel");
 
@@ -136,7 +136,10 @@ if (HomePrepPanel) {
       <label><span>${hpT("Language", this._hass)}</span><select name="homeprep_language">${languageOptions(this._hass)}</select></label>
     </section>`;
 
-    return `${languageCard}${html}`;
+    return html.replace(
+      /(<div class="page-title">[\s\S]*?<\/div><\/div>)/,
+      `$1${languageCard}`,
+    );
   };
 
   const oldStyles = HomePrepPanel.prototype.styles;
@@ -149,7 +152,7 @@ if (HomePrepPanel) {
       .notification-actions button:disabled{opacity:.65;cursor:wait}
       .notification-save-feedback .spin{animation:hp-notification-spin .8s linear infinite}
       @keyframes hp-notification-spin{to{transform:rotate(360deg)}}
-      .hp-language-card{margin-bottom:16px}
+      .hp-language-card{margin:0 0 16px}
       .hp-language-card label{display:grid;gap:6px;max-width:420px}
       .hp-language-card select{min-height:40px;border-radius:8px;padding:0 10px;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color)}
 
