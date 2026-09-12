@@ -1,0 +1,207 @@
+{
+  "id": "no-dsb-2026-v1",
+  "country_code": "NO",
+  "authority": "Direktoratet for samfunnssikkerhet og beredskap (DSB)",
+  "authority_url": "https://www.dsb.no/",
+  "title": "Norway – self-preparedness",
+  "version": "2026.1",
+  "reviewed_at": "2026-09-12",
+  "default_duration_days": 7,
+  "disclaimer": "Official guidance is translated into HomePrep planning primitives. Personal circumstances always take precedence.",
+  "sources": [
+    {
+      "title": "How to contribute to Norway's emergency preparedness",
+      "url": "https://www.dsb.no/en/Safe-everyday-life/Self-preparedness/How-to-contribute-to-Norway_78s-emergency-preparedness2/"
+    },
+    {
+      "title": "Emergency water",
+      "url": "https://www.dsb.no/en/Safe-everyday-life/Self-preparedness/emergency-water/"
+    },
+    {
+      "title": "Frequently asked questions about self-preparedness",
+      "url": "https://www.dsb.no/en/Safe-everyday-life/Self-preparedness/Frequently-asked-questions-about-self-preparedness/"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "water",
+      "title": "Stored emergency water",
+      "category": "water",
+      "target_type": "quantity",
+      "matcher": {
+        "category": "water"
+      },
+      "priority": "critical",
+      "rule": {
+        "kind": "quantity_per_person_total",
+        "value": 20,
+        "unit": "liter"
+      },
+      "advisory_note": "DSB recommends storing around 20 litres of drinking water per person, intended to cover minimum needs for one week."
+    },
+    {
+      "id": "food_coverage",
+      "title": "Food for one week",
+      "category": "food",
+      "target_type": "coverage",
+      "matcher": {
+        "category": "food"
+      },
+      "priority": "critical",
+      "rule": {
+        "kind": "coverage_days",
+        "days": 7
+      }
+    },
+    {
+      "id": "alternative_cooking",
+      "title": "Alternative cooking capability",
+      "category": "cooking",
+      "target_type": "capability",
+      "matcher": {
+        "category": "cooking",
+        "item_type": "equipment"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "capability"
+      }
+    },
+    {
+      "id": "warmth",
+      "title": "Warmth without normal heating",
+      "category": "shelter_warmth",
+      "target_type": "capability",
+      "matcher": {
+        "category": "shelter_warmth"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "capability"
+      }
+    },
+    {
+      "id": "lighting",
+      "title": "Battery, crank or solar emergency lighting",
+      "category": "lighting",
+      "target_type": "presence",
+      "matcher": {
+        "category": "lighting"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "radio",
+      "title": "DAB radio independent of mains power",
+      "category": "communication",
+      "target_type": "presence",
+      "matcher": {
+        "category": "communication"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "medicine_first_aid",
+      "title": "Medicines and first-aid equipment",
+      "category": "first_aid",
+      "target_type": "presence",
+      "matcher": {
+        "category": "first_aid"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "regular_medicine",
+      "title": "Extra regular medicine reserve",
+      "category": "medicine",
+      "target_type": "coverage",
+      "matcher": {
+        "category": "medicine"
+      },
+      "priority": "critical",
+      "conditional": true,
+      "condition_note": "Relevant when someone uses regular medication.",
+      "rule": {
+        "kind": "coverage_days",
+        "days": 7
+      },
+      "advisory_note": "DSB advises at least a seven-day extra supply of medicines and medical equipment used regularly."
+    },
+    {
+      "id": "hygiene",
+      "title": "Personal hygiene supplies",
+      "category": "hygiene",
+      "target_type": "presence",
+      "matcher": {
+        "category": "hygiene"
+      },
+      "priority": "normal",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "powerbanks",
+      "title": "Batteries and charged power banks",
+      "category": "power",
+      "target_type": "presence",
+      "matcher": {
+        "category": "power"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "cash",
+      "title": "Cash and alternative payment cards",
+      "category": "cash",
+      "target_type": "capability",
+      "matcher": {
+        "category": "cash"
+      },
+      "priority": "normal",
+      "rule": {
+        "kind": "capability"
+      }
+    },
+    {
+      "id": "paper_contacts",
+      "title": "Important phone numbers on paper",
+      "category": "documents",
+      "target_type": "presence",
+      "matcher": {
+        "category": "documents"
+      },
+      "priority": "normal",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "pet_supplies",
+      "title": "Food and water for pets",
+      "category": "pet_supplies",
+      "target_type": "presence",
+      "matcher": {
+        "category": "pet_supplies"
+      },
+      "priority": "high",
+      "conditional": true,
+      "condition_note": "Relevant when the household has pets.",
+      "rule": {
+        "kind": "presence"
+      }
+    }
+  ]
+}

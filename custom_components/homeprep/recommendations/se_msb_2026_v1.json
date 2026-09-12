@@ -1,0 +1,211 @@
+{
+  "id": "se-msb-2026-v1",
+  "country_code": "SE",
+  "authority": "Myndigheten för samhällsskydd och beredskap (MSB)",
+  "authority_url": "https://www.msb.se/",
+  "title": "Sweden – household preparedness",
+  "version": "2026.1",
+  "reviewed_at": "2026-09-12",
+  "default_duration_days": 7,
+  "disclaimer": "Official guidance is translated into HomePrep planning primitives. Personal circumstances always take precedence.",
+  "sources": [
+    {
+      "title": "Hemberedskap – preppa för minst en vecka",
+      "url": "https://www.msb.se/sv/rad-till-privatpersoner/hemberedskap---preppa-for-minst-en-vecka/"
+    },
+    {
+      "title": "Tillgång till vatten i kris",
+      "url": "https://www.msb.se/sv/rad-till-privatpersoner/forbered-dig-for-kris/hemberedskap---preppa-for-en-vecka/vatten/"
+    },
+    {
+      "title": "Sju dagar – öva för att klara en vecka i kris eller krig",
+      "url": "https://www.msb.se/"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "water",
+      "title": "Stored emergency water",
+      "category": "water",
+      "target_type": "quantity",
+      "matcher": {
+        "category": "water"
+      },
+      "priority": "critical",
+      "rule": {
+        "kind": "quantity_per_adult_per_day",
+        "minimum": 3,
+        "maximum": 5,
+        "unit": "liter"
+      },
+      "advisory_note": "MSB states that an adult needs about 3–5 litres per day for drinking, cooking and basic hygiene. Children, pets and special circumstances require individual adjustment."
+    },
+    {
+      "id": "food_coverage",
+      "title": "Food for one week",
+      "category": "food",
+      "target_type": "coverage",
+      "matcher": {
+        "category": "food"
+      },
+      "priority": "critical",
+      "rule": {
+        "kind": "coverage_days",
+        "days": 7
+      },
+      "advisory_note": "Keep food that supplies enough energy and can be stored at room temperature, prepared quickly, with little water, or eaten without cooking."
+    },
+    {
+      "id": "alternative_cooking",
+      "title": "Alternative cooking capability",
+      "category": "cooking",
+      "target_type": "capability",
+      "matcher": {
+        "category": "cooking",
+        "item_type": "equipment"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "capability"
+      }
+    },
+    {
+      "id": "emergency_radio",
+      "title": "Radio independent of mains power",
+      "category": "communication",
+      "target_type": "presence",
+      "matcher": {
+        "category": "communication"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "presence"
+      },
+      "advisory_note": "MSB recommends a radio powered by batteries, solar cells or a hand crank."
+    },
+    {
+      "id": "powerbank",
+      "title": "Alternative phone power",
+      "category": "power",
+      "target_type": "presence",
+      "matcher": {
+        "category": "power"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "lighting",
+      "title": "Emergency lighting",
+      "category": "lighting",
+      "target_type": "presence",
+      "matcher": {
+        "category": "lighting"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "warmth",
+      "title": "Warmth without normal heating",
+      "category": "shelter_warmth",
+      "target_type": "capability",
+      "matcher": {
+        "category": "shelter_warmth"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "capability"
+      }
+    },
+    {
+      "id": "first_aid_medicine",
+      "title": "First aid and household medicine",
+      "category": "first_aid",
+      "target_type": "presence",
+      "matcher": {
+        "category": "first_aid"
+      },
+      "priority": "high",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "long_term_medicine",
+      "title": "Long-term prescription medicine reserve",
+      "category": "medicine",
+      "target_type": "coverage",
+      "matcher": {
+        "category": "medicine"
+      },
+      "priority": "critical",
+      "conditional": true,
+      "condition_note": "Relevant for people with long-term prescription treatment.",
+      "rule": {
+        "kind": "coverage_days",
+        "days": 30
+      },
+      "advisory_note": "MSB advises people with long-term prescription treatment to preferably keep medicine for one month at home."
+    },
+    {
+      "id": "hygiene",
+      "title": "Hygiene supplies without running water",
+      "category": "hygiene",
+      "target_type": "presence",
+      "matcher": {
+        "category": "hygiene"
+      },
+      "priority": "normal",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "cash_payment",
+      "title": "Alternative payment capability",
+      "category": "cash",
+      "target_type": "capability",
+      "matcher": {
+        "category": "cash"
+      },
+      "priority": "normal",
+      "rule": {
+        "kind": "capability"
+      },
+      "advisory_note": "MSB recommends cash in smaller denominations and alternative payment options."
+    },
+    {
+      "id": "paper_contacts",
+      "title": "Important phone numbers on paper",
+      "category": "documents",
+      "target_type": "presence",
+      "matcher": {
+        "category": "documents"
+      },
+      "priority": "normal",
+      "rule": {
+        "kind": "presence"
+      }
+    },
+    {
+      "id": "pet_supplies",
+      "title": "Emergency supplies for pets",
+      "category": "pet_supplies",
+      "target_type": "presence",
+      "matcher": {
+        "category": "pet_supplies"
+      },
+      "priority": "high",
+      "conditional": true,
+      "condition_note": "Relevant when the household has pets.",
+      "rule": {
+        "kind": "presence"
+      }
+    }
+  ]
+}
