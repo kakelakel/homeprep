@@ -1,18 +1,56 @@
-class HomePrepCard extends HTMLElement {
-  setConfig(config) {
-    this.config = {
-      show_actions: true,
-      ...config,
-    };
-  }
-
+class HomePrepApiCard extends HTMLElement {
   set hass(hass) {
+    const firstLoad = !this._hass;
+
     this._hass = hass;
-    this.render();
+
+    if (firstLoad) {
+      this.loadSummary();
+    }
   }
 
-  getCardSize() {
-    return this.config?.show_actions ? 6 : 4;
+  connectedCallback() {
+    if (!this._refreshTimer) {
+      this._refreshTimer = setInterval(
+        () => this.loadSummary(),
+        30000
+      );
+    }
+  }
+
+  disconnectedCallback() {
+    if (this._refreshTimer) {
+      clearInterval(this._refreshTimer);
+      this._refreshTimer = null;
+    }
+  }
+
+  async loadSummary() {
+    if (!this._hass || this._loading) {
+      return;
+    }
+
+    this._loading = true;
+
+    try {
+      this._summary =
+        await this._hass.callWS({
+          type: "homeprep/summary",
+        });
+
+      this._error = null;
+    } catch (error) {
+      console.error(
+        "HomePrep: Failed to load summary",
+        error
+      );
+
+      this._error = error;
+    }
+
+    this._loading = false;
+
+    this.render();
   }
 
   escapeHtml(value) {
@@ -23,20 +61,37 @@ class HomePrepCard extends HTMLElement {
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
+}
 
-  getStatusEntity() {
-    return this._hass.states["sensor.homeprep_status"];
+
+class HomePrepCard extends HomePrepApiCard {
+  setConfig(config) {
+    this.config = {
+      show_actions: true,
+      ...config,
+    };
+  }
+
+  getCardSize() {
+    return this.config?.show_actions
+      ? 6
+      : 4;
   }
 
   getStatusData() {
-    const status = this.getStatusEntity()?.state ?? "unknown";
+    const status =
+      this._summary?.status
+      ?? "unknown";
 
     if (status === "critical") {
       return {
         label: "Action required",
-        detail: "One or more items require your attention",
-        color: "var(--error-color, #db4437)",
-        background: "rgba(219, 68, 55, 0.12)",
+        detail:
+          "One or more items require your attention",
+        color:
+          "var(--error-color, #db4437)",
+        background:
+          "rgba(219, 68, 55, 0.12)",
         icon: "mdi:shield-alert",
       };
     }
@@ -44,9 +99,12 @@ class HomePrepCard extends HTMLElement {
     if (status === "attention") {
       return {
         label: "Requires attention",
-        detail: "Some items should be checked soon",
-        color: "var(--warning-color, #ff9800)",
-        background: "rgba(255, 152, 0, 0.12)",
+        detail:
+          "Some items should be checked soon",
+        color:
+          "var(--warning-color, #ff9800)",
+        background:
+          "rgba(255, 152, 0, 0.12)",
         icon: "mdi:alert",
       };
     }
@@ -54,134 +112,215 @@ class HomePrepCard extends HTMLElement {
     if (status === "ok") {
       return {
         label: "Home is ready",
-        detail: "Nothing requires attention right now",
-        color: "var(--success-color, #43a047)",
-        background: "rgba(67, 160, 71, 0.12)",
+        detail:
+          "Nothing requires attention right now",
+        color:
+          "var(--success-color, #43a047)",
+        background:
+          "rgba(67, 160, 71, 0.12)",
         icon: "mdi:shield-check",
       };
     }
 
     return {
       label: "Status unknown",
-      detail: "HomePrep could not read the current status",
-      color: "var(--secondary-text-color)",
-      background: "rgba(128, 128, 128, 0.12)",
+      detail:
+        "HomePrep could not read the current status",
+      color:
+        "var(--secondary-text-color)",
+      background:
+        "rgba(128, 128, 128, 0.12)",
       icon: "mdi:help-circle",
     };
   }
 
-  getState(entityId) {
-    return this._hass.states[entityId]?.state ?? "0";
-  }
-
-  plural(value, singular, plural) {
-    return Number(value) === 1 ? singular : plural;
+  plural(
+    value,
+    singular,
+    plural
+  ) {
+    return Number(value) === 1
+      ? singular
+      : plural;
   }
 
   getActionItems() {
-    const attributes = this.getStatusEntity()?.attributes ?? {};
+    const expired =
+      this._summary
+        ?.expired_items
+      ?? [];
 
-    const expired = attributes.expired_items ?? [];
-    const due = attributes.due_for_check_items ?? [];
-    const expiring = attributes.expiring_soon_items ?? [];
+    const due =
+      this._summary
+        ?.due_for_check_items
+      ?? [];
+
+    const expiring =
+      this._summary
+        ?.expiring_soon_items
+      ?? [];
 
     const items = new Map();
 
     const getItem = (item) => {
-      const key = item.id ?? `${item.name}-${Math.random()}`;
+      const key =
+        item.id
+        ?? `${item.name}-${Math.random()}`;
 
       if (!items.has(key)) {
-        items.set(key, {
-          id: key,
-          name: item.name ?? "Unnamed item",
-          alerts: [],
-          priority: 0,
-          icon: "mdi:alert",
-          color: "var(--warning-color, #ff9800)",
-          background: "rgba(255, 152, 0, 0.12)",
-        });
+        items.set(
+          key,
+          {
+            id: key,
+            name:
+              item.name
+              ?? "Unnamed item",
+            alerts: [],
+            priority: 0,
+            icon: "mdi:alert",
+            color:
+              "var(--warning-color, #ff9800)",
+            background:
+              "rgba(255, 152, 0, 0.12)",
+          }
+        );
       }
 
       return items.get(key);
     };
 
     expired.forEach((item) => {
-      const target = getItem(item);
-      const days = Number(item.days_overdue ?? 0);
+      const target =
+        getItem(item);
 
-      target.priority = Math.max(target.priority, 3);
-      target.icon = "mdi:calendar-remove";
-      target.color = "var(--error-color, #db4437)";
-      target.background = "rgba(219, 68, 55, 0.12)";
+      const days = Number(
+        item.days_overdue ?? 0
+      );
+
+      target.priority = 3;
+      target.icon =
+        "mdi:calendar-remove";
+
+      target.color =
+        "var(--error-color, #db4437)";
+
+      target.background =
+        "rgba(219, 68, 55, 0.12)";
 
       target.alerts.push(
         days <= 0
           ? "Expired"
-          : `Expired ${days} ${this.plural(days, "day", "days")} ago`
+          : `Expired ${days} ${this.plural(
+              days,
+              "day",
+              "days"
+            )} ago`
       );
     });
 
     due.forEach((item) => {
-      const target = getItem(item);
-      const days = Number(item.days_overdue ?? 0);
+      const target =
+        getItem(item);
+
+      const days = Number(
+        item.days_overdue ?? 0
+      );
 
       if (target.priority < 3) {
-        target.icon = "mdi:clipboard-alert";
-        target.color = "var(--error-color, #db4437)";
-        target.background = "rgba(219, 68, 55, 0.12)";
-      }
+        target.priority = 3;
 
-      target.priority = Math.max(target.priority, 3);
+        target.icon =
+          "mdi:clipboard-alert";
+
+        target.color =
+          "var(--error-color, #db4437)";
+
+        target.background =
+          "rgba(219, 68, 55, 0.12)";
+      }
 
       target.alerts.push(
         days === 0
           ? "Check due today"
-          : `Check overdue by ${days} ${this.plural(days, "day", "days")}`
+          : `Check overdue by ${days} ${this.plural(
+              days,
+              "day",
+              "days"
+            )}`
       );
     });
 
     expiring.forEach((item) => {
-      const target = getItem(item);
-      const days = Number(item.days_remaining ?? 0);
+      const target =
+        getItem(item);
+
+      const days = Number(
+        item.days_remaining ?? 0
+      );
 
       if (target.priority < 2) {
         target.priority = 2;
-        target.icon = "mdi:calendar-alert";
-        target.color = "var(--warning-color, #ff9800)";
-        target.background = "rgba(255, 152, 0, 0.12)";
+
+        target.icon =
+          "mdi:calendar-alert";
+
+        target.color =
+          "var(--warning-color, #ff9800)";
+
+        target.background =
+          "rgba(255, 152, 0, 0.12)";
       }
 
       target.alerts.push(
         days === 0
           ? "Expires today"
-          : `Expires in ${days} ${this.plural(days, "day", "days")}`
+          : `Expires in ${days} ${this.plural(
+              days,
+              "day",
+              "days"
+            )}`
       );
     });
 
     return [...items.values()].sort(
       (a, b) =>
-        b.priority - a.priority ||
-        a.name.localeCompare(b.name)
+        b.priority
+        - a.priority
+        || a.name.localeCompare(
+          b.name
+        )
     );
   }
 
   renderActionSection() {
-    if (!this.config.show_actions) {
+    if (
+      !this.config?.show_actions
+    ) {
       return "";
     }
 
-    const actions = this.getActionItems();
+    const actions =
+      this.getActionItems();
 
-    if (actions.length === 0) {
+    if (!actions.length) {
       return "";
     }
 
     const rows = actions
       .map((item) => {
-        const name = this.escapeHtml(item.name);
-        const details = item.alerts
-          .map((alert) => this.escapeHtml(alert))
-          .join(" • ");
+        const name =
+          this.escapeHtml(
+            item.name
+          );
+
+        const details =
+          item.alerts
+            .map((alert) =>
+              this.escapeHtml(
+                alert
+              )
+            )
+            .join(" • ");
 
         return `
           <div class="action-row">
@@ -192,7 +331,9 @@ class HomePrepCard extends HTMLElement {
                 background:${item.background};
               "
             >
-              <ha-icon icon="${item.icon}"></ha-icon>
+              <ha-icon
+                icon="${item.icon}"
+              ></ha-icon>
             </div>
 
             <div class="action-content">
@@ -233,16 +374,23 @@ class HomePrepCard extends HTMLElement {
       return;
     }
 
-    const status = this.getStatusData();
+    const status =
+      this.getStatusData();
 
-    const items = this.getState("sensor.homeprep_items");
-    const expired = this.getState("sensor.homeprep_expired");
-    const expiringSoon = this.getState(
-      "sensor.homeprep_expiring_soon"
-    );
-    const dueForCheck = this.getState(
-      "sensor.homeprep_due_for_check"
-    );
+    const summary =
+      this._summary ?? {};
+
+    const items =
+      summary.items ?? 0;
+
+    const expired =
+      summary.expired ?? 0;
+
+    const expiringSoon =
+      summary.expiring_soon ?? 0;
+
+    const dueForCheck =
+      summary.due_for_check ?? 0;
 
     this.innerHTML = `
       <ha-card>
@@ -279,7 +427,8 @@ class HomePrepCard extends HTMLElement {
             margin-top: 4px;
             font-size: 9px;
             letter-spacing: 1px;
-            color: var(--secondary-text-color);
+            color:
+              var(--secondary-text-color);
           }
 
           .status {
@@ -289,7 +438,8 @@ class HomePrepCard extends HTMLElement {
             padding: 13px 14px;
             border-radius: 12px;
             margin-bottom: 12px;
-            background: ${status.background};
+            background:
+              ${status.background};
           }
 
           .status-icon {
@@ -298,10 +448,6 @@ class HomePrepCard extends HTMLElement {
 
           .status-icon ha-icon {
             --mdc-icon-size: 28px;
-          }
-
-          .status-text {
-            min-width: 0;
           }
 
           .status-title {
@@ -313,12 +459,17 @@ class HomePrepCard extends HTMLElement {
           .status-detail {
             margin-top: 2px;
             font-size: 12px;
-            color: var(--secondary-text-color);
+            color:
+              var(--secondary-text-color);
           }
 
           .grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns:
+              repeat(
+                2,
+                minmax(0, 1fr)
+              );
             gap: 10px;
           }
 
@@ -329,11 +480,16 @@ class HomePrepCard extends HTMLElement {
             min-height: 62px;
             padding: 12px;
             border-radius: 12px;
-            background: var(
-              --ha-card-background,
-              var(--card-background-color)
-            );
-            border: 1px solid var(--divider-color);
+            background:
+              var(
+                --ha-card-background,
+                var(
+                  --card-background-color
+                )
+              );
+            border:
+              1px solid
+              var(--divider-color);
           }
 
           .metric-icon {
@@ -359,39 +515,75 @@ class HomePrepCard extends HTMLElement {
           .metric-label {
             margin-top: 4px;
             font-size: 11px;
-            color: var(--secondary-text-color);
+            color:
+              var(--secondary-text-color);
           }
 
           .blue {
             color: #42a5f5;
-            background: rgba(66, 165, 245, 0.12);
+            background:
+              rgba(
+                66,
+                165,
+                245,
+                0.12
+              );
           }
 
           .red {
-            color: var(--error-color, #db4437);
-            background: rgba(219, 68, 55, 0.12);
+            color:
+              var(
+                --error-color,
+                #db4437
+              );
+            background:
+              rgba(
+                219,
+                68,
+                55,
+                0.12
+              );
           }
 
           .orange {
-            color: var(--warning-color, #ff9800);
-            background: rgba(255, 152, 0, 0.12);
+            color:
+              var(
+                --warning-color,
+                #ff9800
+              );
+            background:
+              rgba(
+                255,
+                152,
+                0,
+                0.12
+              );
           }
 
           .amber {
             color: #f9a825;
-            background: rgba(249, 168, 37, 0.12);
+            background:
+              rgba(
+                249,
+                168,
+                37,
+                0.12
+              );
           }
 
           .actions {
             margin-top: 14px;
             padding-top: 14px;
-            border-top: 1px solid var(--divider-color);
+            border-top:
+              1px solid
+              var(--divider-color);
           }
 
           .actions-header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content:
+              space-between;
             margin-bottom: 9px;
           }
 
@@ -411,8 +603,13 @@ class HomePrepCard extends HTMLElement {
             box-sizing: border-box;
             font-size: 11px;
             font-weight: 700;
-            color: var(--primary-text-color);
-            background: rgba(128, 128, 128, 0.14);
+            background:
+              rgba(
+                128,
+                128,
+                128,
+                0.14
+              );
           }
 
           .action-list {
@@ -427,7 +624,13 @@ class HomePrepCard extends HTMLElement {
             gap: 10px;
             padding: 9px 10px;
             border-radius: 10px;
-            background: rgba(128, 128, 128, 0.06);
+            background:
+              rgba(
+                128,
+                128,
+                128,
+                0.06
+              );
           }
 
           .action-icon {
@@ -444,21 +647,16 @@ class HomePrepCard extends HTMLElement {
             --mdc-icon-size: 19px;
           }
 
-          .action-content {
-            min-width: 0;
-          }
-
           .action-name {
             font-size: 12px;
             font-weight: 700;
-            line-height: 1.2;
           }
 
           .action-detail {
             margin-top: 3px;
             font-size: 10px;
-            color: var(--secondary-text-color);
-            line-height: 1.3;
+            color:
+              var(--secondary-text-color);
           }
         </style>
 
@@ -483,10 +681,12 @@ class HomePrepCard extends HTMLElement {
 
           <div class="status">
             <div class="status-icon">
-              <ha-icon icon="${status.icon}"></ha-icon>
+              <ha-icon
+                icon="${status.icon}"
+              ></ha-icon>
             </div>
 
-            <div class="status-text">
+            <div>
               <div class="status-title">
                 ${status.label}
               </div>
@@ -499,8 +699,12 @@ class HomePrepCard extends HTMLElement {
 
           <div class="grid">
             <div class="metric">
-              <div class="metric-icon blue">
-                <ha-icon icon="mdi:package-variant"></ha-icon>
+              <div
+                class="metric-icon blue"
+              >
+                <ha-icon
+                  icon="mdi:package-variant"
+                ></ha-icon>
               </div>
 
               <div>
@@ -515,8 +719,12 @@ class HomePrepCard extends HTMLElement {
             </div>
 
             <div class="metric">
-              <div class="metric-icon red">
-                <ha-icon icon="mdi:calendar-remove"></ha-icon>
+              <div
+                class="metric-icon red"
+              >
+                <ha-icon
+                  icon="mdi:calendar-remove"
+                ></ha-icon>
               </div>
 
               <div>
@@ -531,8 +739,12 @@ class HomePrepCard extends HTMLElement {
             </div>
 
             <div class="metric">
-              <div class="metric-icon orange">
-                <ha-icon icon="mdi:calendar-alert"></ha-icon>
+              <div
+                class="metric-icon orange"
+              >
+                <ha-icon
+                  icon="mdi:calendar-alert"
+                ></ha-icon>
               </div>
 
               <div>
@@ -547,8 +759,12 @@ class HomePrepCard extends HTMLElement {
             </div>
 
             <div class="metric">
-              <div class="metric-icon amber">
-                <ha-icon icon="mdi:clipboard-alert"></ha-icon>
+              <div
+                class="metric-icon amber"
+              >
+                <ha-icon
+                  icon="mdi:clipboard-alert"
+                ></ha-icon>
               </div>
 
               <div>
@@ -571,14 +787,11 @@ class HomePrepCard extends HTMLElement {
 }
 
 
-class HomePrepMiniCard extends HTMLElement {
-  setConfig(config) {
-    this.config = config;
-  }
+class HomePrepMiniCard
+  extends HomePrepApiCard {
 
-  set hass(hass) {
-    this._hass = hass;
-    this.render();
+  setConfig(config) {
+    this.config = config || {};
   }
 
   getCardSize() {
@@ -586,14 +799,17 @@ class HomePrepMiniCard extends HTMLElement {
   }
 
   getStatusData() {
-    const entity = this._hass.states["sensor.homeprep_status"];
-    const status = entity?.state ?? "unknown";
+    const status =
+      this._summary?.status
+      ?? "unknown";
 
     if (status === "critical") {
       return {
         label: "Requires attention",
-        color: "var(--error-color, #db4437)",
-        background: "rgba(219, 68, 55, 0.12)",
+        color:
+          "var(--error-color, #db4437)",
+        background:
+          "rgba(219, 68, 55, 0.12)",
         icon: "mdi:alert-circle",
       };
     }
@@ -601,8 +817,10 @@ class HomePrepMiniCard extends HTMLElement {
     if (status === "attention") {
       return {
         label: "Requires attention",
-        color: "var(--warning-color, #ff9800)",
-        background: "rgba(255, 152, 0, 0.12)",
+        color:
+          "var(--warning-color, #ff9800)",
+        background:
+          "rgba(255, 152, 0, 0.12)",
         icon: "mdi:alert",
       };
     }
@@ -610,16 +828,20 @@ class HomePrepMiniCard extends HTMLElement {
     if (status === "ok") {
       return {
         label: "OK",
-        color: "var(--success-color, #43a047)",
-        background: "rgba(67, 160, 71, 0.12)",
+        color:
+          "var(--success-color, #43a047)",
+        background:
+          "rgba(67, 160, 71, 0.12)",
         icon: "mdi:check-circle",
       };
     }
 
     return {
       label: "Unknown",
-      color: "var(--secondary-text-color)",
-      background: "rgba(128, 128, 128, 0.12)",
+      color:
+        "var(--secondary-text-color)",
+      background:
+        "rgba(128, 128, 128, 0.12)",
       icon: "mdi:help-circle",
     };
   }
@@ -629,7 +851,8 @@ class HomePrepMiniCard extends HTMLElement {
       return;
     }
 
-    const status = this.getStatusData();
+    const status =
+      this.getStatusData();
 
     this.innerHTML = `
       <ha-card>
@@ -663,7 +886,8 @@ class HomePrepMiniCard extends HTMLElement {
             margin-top: 2px;
             font-size: 11px;
             font-weight: 600;
-            color: ${status.color};
+            color:
+              ${status.color};
           }
 
           .status-icon {
@@ -673,8 +897,10 @@ class HomePrepMiniCard extends HTMLElement {
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            background: ${status.background};
-            color: ${status.color};
+            background:
+              ${status.background};
+            color:
+              ${status.color};
             flex-shrink: 0;
           }
 
@@ -701,7 +927,9 @@ class HomePrepMiniCard extends HTMLElement {
           </div>
 
           <div class="status-icon">
-            <ha-icon icon="${status.icon}"></ha-icon>
+            <ha-icon
+              icon="${status.icon}"
+            ></ha-icon>
           </div>
         </div>
       </ha-card>
@@ -710,14 +938,18 @@ class HomePrepMiniCard extends HTMLElement {
 }
 
 
-if (!customElements.get("homeprep-card")) {
+if (!customElements.get(
+  "homeprep-card"
+)) {
   customElements.define(
     "homeprep-card",
     HomePrepCard
   );
 }
 
-if (!customElements.get("homeprep-mini-card")) {
+if (!customElements.get(
+  "homeprep-mini-card"
+)) {
   customElements.define(
     "homeprep-mini-card",
     HomePrepMiniCard
@@ -725,16 +957,19 @@ if (!customElements.get("homeprep-mini-card")) {
 }
 
 
-window.customCards = window.customCards || [];
+window.customCards =
+  window.customCards || [];
 
 window.customCards.push({
   type: "homeprep-card",
   name: "HomePrep",
-  description: "HomePrep preparedness overview",
+  description:
+    "HomePrep preparedness overview",
 });
 
 window.customCards.push({
   type: "homeprep-mini-card",
   name: "HomePrep Mini",
-  description: "Compact HomePrep status card",
+  description:
+    "Compact HomePrep status card",
 });
