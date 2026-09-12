@@ -39,6 +39,21 @@ Ideas may move, change shape, or be dropped as HomePrep evolves and real-world f
 
 ## Medium term ideas
 
+### Food and crisis cooking
+- Build a recipe section focused on cooking during disruptions, outages and other crisis situations.
+- Include recipes that work with long-life preparedness foods and limited fresh ingredients.
+- Support filtering by available inventory so HomePrep can suggest meals based on what the household already has.
+- Include low-energy and no-grid cooking options for situations with limited electricity or fuel.
+- Support dietary preferences, serving sizes and simple substitution suggestions.
+
+### Community and preparedness discussion
+- Add an optional community discussion area to the standalone app for preparedness topics.
+- Support topic-based discussions such as food storage, water, power outages, evacuation, communications and household planning.
+- Allow useful guides, experiences and practical tips to be shared between HomePrep users.
+- Design community features with clear moderation, reporting and safety controls from the beginning.
+- Keep community participation optional and separate from private household preparedness data.
+
+### Other ideas
 - Import/export and backup-friendly HomePrep data formats.
 - Barcode or QR-assisted inventory entry.
 - Item templates for common preparedness supplies and equipment.
@@ -56,6 +71,7 @@ These are larger product tracks HomePrep should stay technically ready for. They
 - Keep the app local-first, with useful offline capability.
 - Reuse the same core HomePrep concepts for inventory, tasks, targets, guidance and household preparedness.
 - Support shared household use across multiple people and devices.
+- Provide access to crisis-cooking recipes and, when online, optional community features.
 
 ### HomePrep cloud service
 - Build an optional HomePrep cloud service for synchronization between Home Assistant and standalone HomePrep clients.
@@ -64,6 +80,7 @@ These are larger product tracks HomePrep should stay technically ready for. They
 - Keep Home Assistant-specific settings, such as local notification targets, local to the Home Assistant installation.
 - Preserve local-first operation so a HomePrep cloud account is not required for basic Home Assistant use.
 - Support offline-first synchronization and safe conflict/deletion handling as the product matures.
+- Provide the online services needed for optional community functionality without exposing private household data.
 
 ### Platform expansion
 - Make Home Assistant one HomePrep client rather than the definition of HomePrep itself.
