@@ -1,4 +1,5 @@
 import "./homeprep-panel-v6.js?v=7";
+import { applyHomePrepV8 } from "./homeprep-panel-v8.js?v=1";
 
 const HomePrepPanel = customElements.get("homeprep-panel");
 
@@ -94,4 +95,6 @@ if (HomePrepPanel) {
       @keyframes hp-notification-spin{to{transform:rotate(360deg)}}
     `;
   };
+
+  applyHomePrepV8(HomePrepPanel);
 }
