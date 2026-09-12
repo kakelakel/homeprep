@@ -40,7 +40,7 @@ FRONTEND_URL = "/api/homeprep/frontend"
 
 PANEL_URL_PATH = "homeprep"
 PANEL_WEB_COMPONENT = "homeprep-panel"
-PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel.js?v=1"
+PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel.js?v=3"
 
 INSPECTION_FIELDS = {
     "inspection_enabled",
@@ -86,7 +86,6 @@ ADD_ITEM_SCHEMA = vol.Schema(
     }
 )
 
-
 UPDATE_ITEM_SCHEMA = vol.Schema(
     {
         vol.Required("item_id"): cv.string,
@@ -103,12 +102,7 @@ UPDATE_ITEM_SCHEMA = vol.Schema(
     }
 )
 
-
-DELETE_ITEM_SCHEMA = vol.Schema(
-    {
-        vol.Required("item_id"): cv.string,
-    }
-)
+DELETE_ITEM_SCHEMA = vol.Schema({vol.Required("item_id"): cv.string})
 
 
 def _split_inventory_and_inspection(
@@ -117,14 +111,12 @@ def _split_inventory_and_inspection(
     inventory = {}
     inspection = {}
     inspection_supplied = False
-
     for key, value in data.items():
         if key in INSPECTION_FIELDS:
             inspection_supplied = True
             inspection[key] = value
         else:
             inventory[key] = value
-
     return inventory, inspection if inspection_supplied else None
 
 
@@ -137,24 +129,12 @@ async def _async_sync_item_inspection(
     if inspection is None:
         return
 
-    existing = task_service.find_linked_task(
-        item["id"],
-        "inspection",
-    )
-
-    enabled = bool(
-        inspection.get(
-            "inspection_enabled",
-            False,
-        )
-    )
+    existing = task_service.find_linked_task(item["id"], "inspection")
+    enabled = bool(inspection.get("inspection_enabled", False))
 
     if not enabled:
         if existing is not None:
-            await task_service.async_update_task(
-                existing["id"],
-                {"enabled": False},
-            )
+            await task_service.async_update_task(existing["id"], {"enabled": False})
         return
 
     task_data = {
@@ -187,10 +167,7 @@ async def _async_sync_item_inspection(
     if existing is None:
         await task_service.async_add_task(task_data)
     else:
-        await task_service.async_update_task(
-            existing["id"],
-            task_data,
-        )
+        await task_service.async_update_task(existing["id"], task_data)
 
 
 async def _async_apply_setup_wizard(
@@ -212,18 +189,13 @@ async def _async_apply_setup_wizard(
 
     if profile_id:
         existing_sources = {
-            (
-                target.get("source_profile_id"),
-                target.get("source_recommendation_id"),
-            )
+            (target.get("source_profile_id"), target.get("source_recommendation_id"))
             for target in planning_service.targets
         }
-
         for recommendation_id in target_ids:
             source_key = (profile_id, recommendation_id)
             if source_key in existing_sources:
                 continue
-
             try:
                 await planning_service.async_adopt_recommendation(
                     profile_id,
@@ -231,23 +203,16 @@ async def _async_apply_setup_wizard(
                 )
                 existing_sources.add(source_key)
             except KeyError:
-                # A profile update should not prevent HomePrep from loading.
                 continue
 
     new_data = dict(entry.data)
     new_data["setup_applied"] = True
-    hass.config_entries.async_update_entry(
-        entry,
-        data=new_data,
-    )
+    hass.config_entries.async_update_entry(entry, data=new_data)
 
 
 async def _async_register_panel(hass: HomeAssistant) -> None:
     """Register the HomePrep sidebar application once."""
-    if frontend.async_panel_exists(
-        hass,
-        PANEL_URL_PATH,
-    ):
+    if frontend.async_panel_exists(hass, PANEL_URL_PATH):
         return
 
     await panel_custom.async_register_panel(
@@ -264,10 +229,7 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
     )
 
 
-async def async_setup(
-    hass: HomeAssistant,
-    config: dict,
-) -> bool:
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up HomePrep."""
     async_register_websocket_api(hass)
     async_register_planning_websocket(hass)
@@ -275,31 +237,18 @@ async def async_setup(
     return True
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HomePrep from a config entry."""
     await hass.http.async_register_static_paths(
-        [
-            StaticPathConfig(
-                FRONTEND_URL,
-                str(FRONTEND_PATH),
-                False,
-            )
-        ]
+        [StaticPathConfig(FRONTEND_URL, str(FRONTEND_PATH), False)]
     )
-
     await _async_register_panel(hass)
 
-    # Inventory
     repository = HAStorageRepository(hass)
     service = HomePrepService(hass, repository)
     await service.async_load()
-
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = service
 
-    # Planning
     planning_repository = HAPlanningRepository(hass)
     planning_service = HomePrepPlanningService(
         planning_repository,
@@ -307,139 +256,60 @@ async def async_setup_entry(
         service,
     )
     await planning_service.async_load()
-
     hass.data[DOMAIN][PLANNING_SERVICE_KEY] = planning_service
+    await _async_apply_setup_wizard(hass, entry, planning_service)
 
-    await _async_apply_setup_wizard(
-        hass,
-        entry,
-        planning_service,
-    )
-
-    # Tasks
     task_repository = HATaskRepository(hass)
-    task_service = HomePrepTaskService(
-        task_repository,
-        service,
-    )
+    task_service = HomePrepTaskService(task_repository, service)
     await task_service.async_load()
-
     hass.data[DOMAIN][TASK_SERVICE_KEY] = task_service
 
-    await hass.config_entries.async_forward_entry_setups(
-        entry,
-        PLATFORMS,
-    )
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Inventory actions + optional inspection orchestration
-    async def async_handle_add_item(
-        call: ServiceCall,
-    ) -> None:
-        inventory_data, inspection = _split_inventory_and_inspection(
-            dict(call.data)
-        )
+    async def async_handle_add_item(call: ServiceCall) -> None:
+        inventory_data, inspection = _split_inventory_and_inspection(dict(call.data))
+        item = await service.async_add_item(inventory_data)
+        await _async_sync_item_inspection(task_service, item, inspection)
 
-        item = await service.async_add_item(
-            inventory_data
-        )
-
-        await _async_sync_item_inspection(
-            task_service,
-            item,
-            inspection,
-        )
-
-    async def async_handle_update_item(
-        call: ServiceCall,
-    ) -> None:
+    async def async_handle_update_item(call: ServiceCall) -> None:
         data = dict(call.data)
         item_id = data.pop("item_id")
-
-        inventory_data, inspection = _split_inventory_and_inspection(
-            data
-        )
-
+        inventory_data, inspection = _split_inventory_and_inspection(data)
         if inventory_data:
-            updated = await service.async_update_item(
-                item_id,
-                inventory_data,
-            )
+            updated = await service.async_update_item(item_id, inventory_data)
             if not updated:
                 return
-
         item = service.get_item(item_id)
         if item is None:
             return
+        await _async_sync_item_inspection(task_service, item, inspection)
 
-        await _async_sync_item_inspection(
-            task_service,
-            item,
-            inspection,
-        )
-
-    async def async_handle_delete_item(
-        call: ServiceCall,
-    ) -> None:
+    async def async_handle_delete_item(call: ServiceCall) -> None:
         item_id = call.data["item_id"]
-
-        linked_inspection = task_service.find_linked_task(
-            item_id,
-            "inspection",
-        )
-
+        linked_inspection = task_service.find_linked_task(item_id, "inspection")
         if linked_inspection:
-            await task_service.async_delete_task(
-                linked_inspection["id"]
-            )
-
+            await task_service.async_delete_task(linked_inspection["id"])
         await service.async_delete_item(item_id)
 
-    if not hass.services.has_service(
-        DOMAIN,
-        SERVICE_ADD_ITEM,
-    ):
+    if not hass.services.has_service(DOMAIN, SERVICE_ADD_ITEM):
         hass.services.async_register(
-            DOMAIN,
-            SERVICE_ADD_ITEM,
-            async_handle_add_item,
-            schema=ADD_ITEM_SCHEMA,
+            DOMAIN, SERVICE_ADD_ITEM, async_handle_add_item, schema=ADD_ITEM_SCHEMA
         )
-
-    if not hass.services.has_service(
-        DOMAIN,
-        SERVICE_UPDATE_ITEM,
-    ):
+    if not hass.services.has_service(DOMAIN, SERVICE_UPDATE_ITEM):
         hass.services.async_register(
-            DOMAIN,
-            SERVICE_UPDATE_ITEM,
-            async_handle_update_item,
-            schema=UPDATE_ITEM_SCHEMA,
+            DOMAIN, SERVICE_UPDATE_ITEM, async_handle_update_item, schema=UPDATE_ITEM_SCHEMA
         )
-
-    if not hass.services.has_service(
-        DOMAIN,
-        SERVICE_DELETE_ITEM,
-    ):
+    if not hass.services.has_service(DOMAIN, SERVICE_DELETE_ITEM):
         hass.services.async_register(
-            DOMAIN,
-            SERVICE_DELETE_ITEM,
-            async_handle_delete_item,
-            schema=DELETE_ITEM_SCHEMA,
+            DOMAIN, SERVICE_DELETE_ITEM, async_handle_delete_item, schema=DELETE_ITEM_SCHEMA
         )
 
     return True
 
 
-async def async_unload_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload HomePrep."""
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        entry,
-        PLATFORMS,
-    )
-
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if not unload_ok:
         return False
 
@@ -448,39 +318,16 @@ async def async_unload_entry(
         SERVICE_UPDATE_ITEM,
         SERVICE_DELETE_ITEM,
     ):
-        if hass.services.has_service(
-            DOMAIN,
-            service_name,
-        ):
-            hass.services.async_remove(
-                DOMAIN,
-                service_name,
-            )
+        if hass.services.has_service(DOMAIN, service_name):
+            hass.services.async_remove(DOMAIN, service_name)
 
-    if frontend.async_panel_exists(
-        hass,
-        PANEL_URL_PATH,
-    ):
-        frontend.async_remove_panel(
-            hass,
-            PANEL_URL_PATH,
-            warn_if_unknown=False,
-        )
+    if frontend.async_panel_exists(hass, PANEL_URL_PATH):
+        frontend.async_remove_panel(hass, PANEL_URL_PATH, warn_if_unknown=False)
 
     if DOMAIN in hass.data:
-        hass.data[DOMAIN].pop(
-            entry.entry_id,
-            None,
-        )
-        hass.data[DOMAIN].pop(
-            PLANNING_SERVICE_KEY,
-            None,
-        )
-        hass.data[DOMAIN].pop(
-            TASK_SERVICE_KEY,
-            None,
-        )
-
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+        hass.data[DOMAIN].pop(PLANNING_SERVICE_KEY, None)
+        hass.data[DOMAIN].pop(TASK_SERVICE_KEY, None)
         if not hass.data[DOMAIN]:
             hass.data.pop(DOMAIN)
 
