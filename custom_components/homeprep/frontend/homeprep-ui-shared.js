@@ -999,6 +999,224 @@ class HomePrepUniversalEditor extends HTMLElement {
 
     if (
       type ===
+      "custom:homeprep-tasks-card"
+    ) {
+      return `
+        ${titleField}
+
+        <div class="two-col">
+          <label class="field">
+            <span>View</span>
+
+            <select
+              data-path="view"
+            >
+              ${[
+                ["all", "All tasks"],
+                ["attention", "Needs attention"],
+                ["overdue", "Overdue"],
+                ["due", "Due today"],
+                ["upcoming", "Upcoming"],
+                ["ok", "OK"]
+              ]
+                .map(
+                  ([value, label]) => `
+                    <option
+                      value="${value}"
+                      ${this.selected(
+                        this._config.view || "all",
+                        value
+                      )}
+                    >
+                      ${label}
+                    </option>
+                  `
+                )
+                .join("")}
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Task type</span>
+
+            <select
+              data-path="task_kind"
+            >
+              <option
+                value=""
+                ${this.selected(
+                  this._config.task_kind || "",
+                  ""
+                )}
+              >
+                All types
+              </option>
+
+              <option
+                value="general"
+                ${this.selected(
+                  this._config.task_kind,
+                  "general"
+                )}
+              >
+                General
+              </option>
+
+              <option
+                value="inspection"
+                ${this.selected(
+                  this._config.task_kind,
+                  "inspection"
+                )}
+              >
+                Inspections
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <div class="two-col">
+          <label class="field">
+            <span>Category</span>
+
+            <select
+              data-path="category"
+            >
+              <option value="">
+                All categories
+              </option>
+
+              ${this._taxonomy.categories
+                .map(
+                  (category) => `
+                    <option
+                      value="${this.esc(
+                        category.id
+                      )}"
+                      ${this.selected(
+                        this._config.category,
+                        category.id
+                      )}
+                    >
+                      ${this.esc(
+                        category.label
+                      )}
+                    </option>
+                  `
+                )
+                .join("")}
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Sort by</span>
+
+            <select
+              data-path="sort"
+            >
+              ${[
+                ["status", "Status / urgency"],
+                ["due", "Due date"],
+                ["name", "Name"]
+              ]
+                .map(
+                  ([value, label]) => `
+                    <option
+                      value="${value}"
+                      ${this.selected(
+                        this._config.sort || "status",
+                        value
+                      )}
+                    >
+                      ${label}
+                    </option>
+                  `
+                )
+                .join("")}
+            </select>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Maximum tasks</span>
+
+          <input
+            data-path="max_tasks"
+            type="number"
+            min="1"
+            max="250"
+            value="${this.esc(
+              this._config.max_tasks ?? 25
+            )}"
+          >
+        </label>
+
+        <div class="two-col">
+          <label class="toggle">
+            <input
+              data-path="show_summary"
+              type="checkbox"
+              ${this.checked(
+                this._config.show_summary !== false
+              )}
+            >
+            <span>Show summary</span>
+          </label>
+
+          <label class="toggle">
+            <input
+              data-path="show_complete"
+              type="checkbox"
+              ${this.checked(
+                this._config.show_complete !== false
+              )}
+            >
+            <span>Show Complete button</span>
+          </label>
+
+          <label class="toggle">
+            <input
+              data-path="show_linked_item"
+              type="checkbox"
+              ${this.checked(
+                this._config.show_linked_item !== false
+              )}
+            >
+            <span>Show linked item</span>
+          </label>
+
+          <label class="toggle">
+            <input
+              data-path="show_recurrence"
+              type="checkbox"
+              ${this.checked(
+                this._config.show_recurrence !== false
+              )}
+            >
+            <span>Show recurrence</span>
+          </label>
+
+          <label class="toggle">
+            <input
+              data-path="show_disabled"
+              type="checkbox"
+              ${this.checked(
+                this._config.show_disabled === true
+              )}
+            >
+            <span>Include disabled tasks</span>
+          </label>
+        </div>
+
+        <div class="hint">
+          One card can be reused as a full task list, an attention queue,
+          an inspection-only view, or a category-specific task panel.
+        </div>
+      `;
+    }
+
+    if (
+      type ===
       "custom:homeprep-manage-card"
     ) {
       return `
@@ -1254,9 +1472,7 @@ class HomePrepUniversalEditor extends HTMLElement {
           </select>
         </label>
 
-        <label
-          class="toggle compact-toggle"
-        >
+        <label class="toggle compact-toggle">
           <input
             data-path="appearance.border"
             type="checkbox"
@@ -1264,18 +1480,8 @@ class HomePrepUniversalEditor extends HTMLElement {
               a.border !== false
             )}
           >
-
-          <span>
-            Show border
-          </span>
+          <span>Show border</span>
         </label>
-      </div>
-
-      <div class="hint">
-        Use the color palette for a
-        normal HEX color, or type HEX,
-        rgba(...), or a Home Assistant
-        CSS variable manually.
       </div>
     `;
   }
@@ -1289,44 +1495,31 @@ class HomePrepUniversalEditor extends HTMLElement {
     const configured =
       appearance[key] || "";
 
-    const picker =
-      this.pickerValue(
-        configured,
-        fallback
-      );
-
     return `
       <label class="field">
-        <span>
-          ${this.esc(label)}
-        </span>
+        <span>${this.esc(label)}</span>
 
         <div class="color-row">
           <input
             class="color-picker"
+            data-color-key="${this.esc(key)}"
             type="color"
-            data-color-key="${this.esc(
-              key
-            )}"
             value="${this.esc(
-              picker
+              this.pickerValue(
+                configured,
+                fallback
+              )
             )}"
             title="Choose color"
           >
 
           <input
             class="color-text"
+            data-path="appearance.${this.esc(key)}"
+            data-color-text="${this.esc(key)}"
             type="text"
-            data-path="appearance.${this.esc(
-              key
-            )}"
-            data-color-text="${this.esc(
-              key
-            )}"
-            value="${this.esc(
-              configured
-            )}"
-            placeholder="Preset / #RRGGBB / rgba(...)"
+            value="${this.esc(configured)}"
+            placeholder="Preset / CSS color"
           >
         </div>
       </label>
@@ -1334,27 +1527,29 @@ class HomePrepUniversalEditor extends HTMLElement {
   }
 
   render() {
+    if (!this._config) return;
+
     this.innerHTML = `
       <style>
+        :host {
+          display: block;
+        }
+
         .editor {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          padding: 4px 0 12px;
+          padding: 4px 0;
         }
 
         .section-title {
-          margin-top: 4px;
-          padding-bottom: 6px;
-          border-bottom:
-            1px solid
-            var(--divider-color);
-          font-size: 14px;
+          margin-top: 3px;
+          font-size: 13px;
           font-weight: 700;
         }
 
         .subheading {
-          margin-top: 4px;
+          margin-top: 3px;
           font-size: 11px;
           font-weight: 700;
           color:
@@ -1365,19 +1560,20 @@ class HomePrepUniversalEditor extends HTMLElement {
           display: flex;
           flex-direction: column;
           gap: 5px;
+          font-size: 11px;
         }
 
-        .field span {
-          font-size: 11px;
+        .field > span {
           color:
             var(--secondary-text-color);
         }
 
         input,
         select {
-          width: 100%;
           box-sizing: border-box;
-          padding: 9px 10px;
+          width: 100%;
+          min-height: 40px;
+          padding: 8px 10px;
           border:
             1px solid
             var(--divider-color);
@@ -1385,8 +1581,9 @@ class HomePrepUniversalEditor extends HTMLElement {
           color:
             var(--primary-text-color);
           background:
-            var(--card-background-color);
-          font: inherit;
+            var(
+              --card-background-color
+            );
         }
 
         .color-row {
