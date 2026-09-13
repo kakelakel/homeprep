@@ -110,6 +110,6 @@ import("./homeprep-plan-asset-links.js?v=1").catch((error) => {
 });
 
 /* Load all HomePrep Lovelace cards automatically so they appear in the card picker. */
-import("./homeprep-lovelace.js?v=7").catch((error) => {
+import("./homeprep-lovelace.js?v=8").catch((error) => {
   console.error("HomePrep Lovelace frontend failed to load", error);
 });
