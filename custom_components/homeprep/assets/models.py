@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-ASSET_SCHEMA_VERSION = 1
+ASSET_SCHEMA_VERSION = 2
 ASSET_TYPES = {
     "water_shutoff",
     "isolation_valve",
@@ -44,6 +44,10 @@ def create_asset(data: dict[str, Any], household_id: str | None = None) -> dict[
         "last_checked_at": data.get("last_checked_at") or None,
         "next_check_at": data.get("next_check_at") or None,
         "notes": str(data.get("notes") or "").strip() or None,
+        "image_id": data.get("image_id"),
+        "image_token": data.get("image_token"),
+        "image_content_type": data.get("image_content_type"),
+        "image_filename": data.get("image_filename"),
         "created_at": data.get("created_at", now),
         "updated_at": data.get("updated_at", now),
         "deleted_at": data.get("deleted_at"),
