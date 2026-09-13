@@ -1,0 +1,1 @@
+"""HomePrep household assets."""
