@@ -102,17 +102,21 @@ customElements.whenDefined("homeprep-mini-card").then(() => {
     const label = this.statusLabel(status);
     const containerAttention = (this._containerSummary?.critical ?? 0) + (this._containerSummary?.attention ?? 0);
     const planAttention = this._planSummary?.attention ?? 0;
+    const planReviewRequired = this._planSummary?.review_required ?? 0;
+    const containerState = this._containerSummary?.status === "critical" ? "critical" : containerAttention ? "attention" : "";
+    const planState = planAttention || planReviewRequired ? "attention" : "";
     this.innerHTML = this.shell(`
       <div class="wrap">
         <div class="head"><img class="logo" src="/api/homeprep/frontend/icon.png"><div style="flex:1;min-width:0"><div class="title">${esc(this.config?.title || "HomePrep")}</div><div class="sub">${esc(label)}</div></div><div class="status ${status}" style="margin-top:0;padding:7px 9px">${esc(label)}</div></div>
         <div class="mini-stats">
           <span class="mini-chip"><ha-icon icon="mdi:package-variant-closed"></ha-icon><strong>${esc(this._summary?.items ?? 0)}</strong>${esc(hpT("Inventory", this._hass))}</span>
           <span class="mini-chip"><ha-icon icon="mdi:clipboard-check-outline"></ha-icon><strong>${esc(this._taskSummary?.tasks ?? 0)}</strong>${esc(hpT("Tasks", this._hass))}</span>
-          <span class="mini-chip ${containerAttention ? "attention" : ""}"><ha-icon icon="mdi:archive-outline"></ha-icon><strong>${esc(this._containerSummary?.containers ?? 0)}</strong>${esc(hpT("Containers", this._hass))}</span>
-          <span class="mini-chip ${planAttention ? "attention" : ""}"><ha-icon icon="mdi:clipboard-list-outline"></ha-icon><strong>${esc(this._planSummary?.plans ?? 0)}</strong>${esc(hpT("Plans", this._hass))}</span>
+          <span class="mini-chip ${containerState}"><ha-icon icon="mdi:archive-outline"></ha-icon><strong>${esc(this._containerSummary?.containers ?? 0)}</strong>${esc(hpT("Containers", this._hass))}</span>
+          <span class="mini-chip ${planState}"><ha-icon icon="mdi:clipboard-list-outline"></ha-icon><strong>${esc(this._planSummary?.plans ?? 0)}</strong>${esc(hpT("Plans", this._hass))}</span>
           ${(this._taskSummary?.overdue ?? 0) ? `<span class="mini-chip critical"><strong>${esc(this._taskSummary.overdue)}</strong>${esc(hpT("Overdue", this._hass))}</span>` : ""}
-          ${containerAttention ? `<span class="mini-chip attention"><strong>${esc(containerAttention)}</strong>${esc(hpT("Containers", this._hass))}</span>` : ""}
-          ${planAttention ? `<span class="mini-chip attention"><strong>${esc(planAttention)}</strong>${esc(hpT("Plans", this._hass))}</span>` : ""}
+          ${(this._taskSummary?.due ?? 0) ? `<span class="mini-chip attention"><strong>${esc(this._taskSummary.due)}</strong>${esc(hpT("Due today", this._hass))}</span>` : ""}
+          ${(this._taskSummary?.upcoming ?? 0) ? `<span class="mini-chip attention"><strong>${esc(this._taskSummary.upcoming)}</strong>${esc(hpT("Upcoming", this._hass))}</span>` : ""}
+          ${planReviewRequired ? `<span class="mini-chip attention"><strong>${esc(planReviewRequired)}</strong>${esc(hpT("Review required", this._hass))}</span>` : ""}
         </div>
       </div>`);
   };
