@@ -4,6 +4,28 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.7.0b1] - 2026-09-13
+
+### Added
+- **Containers** as a new HomePrep building block for organizing preparedness supplies by where they are stored or what they are packed for.
+- Container types for go bags, preparedness crates, water containers, first-aid kits, vehicle kits, general storage and other use cases.
+- Container location, description, notes and optional last/next check dates.
+- Inventory items can now be assigned to a container.
+- Container readiness is calculated from both the container's own check date and the status of the inventory stored inside it.
+- New **Plans** area with household preparedness checklists.
+- Starter templates for fire safety, flood/water damage and rapid evacuation planning.
+- Checklist completion tracking, custom checklist items, meeting-point information and plan readiness status.
+- Swedish UI labels for the new Containers and Plans views.
+- All HomePrep Lovelace cards can now be clicked to open the HomePrep sidebar application directly.
+
+### Improved
+- Preparedness is no longer limited to supplies, tasks and numeric targets; HomePrep can now model where critical supplies are kept and whether household emergency procedures are actually prepared.
+- Deleting a container keeps its inventory items and safely removes their container assignment.
+- Lovelace navigation ignores interactive controls such as buttons, forms and task actions, so existing card controls remain usable.
+
+### Notes
+- This is the first beta of the 0.7 line. Containers and Plans are intentionally being tested before the next stable release.
+
 ## [0.6.1] - 2026-09-12
 
 ### Added
