@@ -76,11 +76,13 @@ class HomePrepPlanService:
         household_id: str,
         inventory_service: Any | None = None,
         container_service: Any | None = None,
+        asset_service: Any | None = None,
     ) -> None:
         self._repository = repository
         self._household_id = household_id
         self._inventory_service = inventory_service
         self._container_service = container_service
+        self._asset_service = asset_service
 
     async def async_load(self) -> None:
         await self._repository.async_load()
@@ -143,6 +145,7 @@ class HomePrepPlanService:
         description: str | None = None,
         linked_inventory_item_ids: list[str] | None = None,
         linked_container_ids: list[str] | None = None,
+        linked_asset_ids: list[str] | None = None,
     ) -> dict[str, Any]:
         plan = self._require(plan_id)
         item = normalize_check_item({
@@ -152,6 +155,7 @@ class HomePrepPlanService:
             "completed": False,
             "linked_inventory_item_ids": linked_inventory_item_ids or [],
             "linked_container_ids": linked_container_ids or [],
+            "linked_asset_ids": linked_asset_ids or [],
         })
         self._validate_links([item])
         return await self.async_update(plan_id, {"checklist": [*plan.get("checklist", []), item]})
@@ -216,6 +220,7 @@ class HomePrepPlanService:
             for item in checklist:
                 linked_inventory = []
                 linked_containers = []
+                linked_assets = []
                 if self._inventory_service:
                     for item_id in item.get("linked_inventory_item_ids", []):
                         inv = self._inventory_service.get_item(item_id)
@@ -226,7 +231,12 @@ class HomePrepPlanService:
                         container = self._container_service.get_container(container_id)
                         if container:
                             linked_containers.append({"id": container["id"], "name": container["name"], "location": container.get("location")})
-                enriched.append({**item, "linked_inventory_items": linked_inventory, "linked_containers": linked_containers})
+                if self._asset_service:
+                    for asset_id in item.get("linked_asset_ids", []):
+                        asset = self._asset_service.get_asset(asset_id)
+                        if asset:
+                            linked_assets.append({"id": asset["id"], "name": asset["name"], "location": asset.get("location"), "asset_type": asset.get("asset_type")})
+                enriched.append({**item, "linked_inventory_items": linked_inventory, "linked_containers": linked_containers, "linked_assets": linked_assets})
             result.append({
                 **plan,
                 "checklist": enriched,
@@ -265,6 +275,10 @@ class HomePrepPlanService:
                 for container_id in item.get("linked_container_ids", []):
                     if self._container_service.get_container(container_id) is None:
                         raise KeyError(f"Container not found: {container_id}")
+            if self._asset_service:
+                for asset_id in item.get("linked_asset_ids", []):
+                    if self._asset_service.get_asset(asset_id) is None:
+                        raise KeyError(f"Asset not found: {asset_id}")
 
     def _require(self, plan_id: str) -> dict[str, Any]:
         plan = self.get_plan(plan_id)
