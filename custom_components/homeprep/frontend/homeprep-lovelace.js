@@ -7,7 +7,7 @@ import "./homeprep-lovelace-images.js?v=2";
 import "./homeprep-lovelace-buttons.js?v=1";
 import "./homeprep-lovelace-i18n.js?v=3";
 import "./homeprep-lovelace-navigation.js?v=1";
-import "./homeprep-lovelace-readiness.js?v=2";
+import "./homeprep-lovelace-readiness.js?v=3";
 
 // Home Assistant keeps custom card metadata in a global array. During frontend
 // reloads, or when an older HomePrep resource is still present in the browser,
