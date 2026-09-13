@@ -33,4 +33,26 @@ if (HomePrepPanel && !HomePrepPanel.prototype.__homePrepV14Applied) {
     }
     return html.replace("<span>Next check</span>", "<span>First due / next check</span>");
   };
+
+  /*
+   * The desktop dropdown is intentionally offset a few pixels below its
+   * top-level navigation item. Without a hit area across that visual gap,
+   * pointerleave fires before the cursor can reach the submenu and closes it.
+   * This invisible bridge keeps the pointer inside the <details> hit area
+   * while moving from the top-level item into the dropdown.
+   */
+  const oldStyles = proto.styles;
+  proto.styles = function styles() {
+    return `${oldStyles.call(this)}
+      .hp-side-nav details[open]::after {
+        content:"";
+        position:absolute;
+        left:0;
+        right:0;
+        top:100%;
+        height:8px;
+        z-index:19;
+      }
+    `;
+  };
 }
