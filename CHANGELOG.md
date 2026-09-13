@@ -4,6 +4,22 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.7.0b6] - 2026-09-13
+
+### Added
+- A compact, data-rich Overview with readiness bars for Inventory, Containers, Tasks, Assets, Plans and Targets plus an overall readiness score.
+- A smaller attention queue for shopping, plan reviews, Asset checks and Container attention so the Overview has more room for actionable information.
+- Immediate local preview when choosing a new Asset image before the Asset is saved.
+
+### Improved
+- Grouped HomePrep navigation is horizontal again, with grouped dropdown menus that open on hover for desktop pointer devices and still support click/tap.
+- Assets now use the reliable `mdi:hammer-wrench` icon consistently in the sidebar, standard HomePrep card, HomePrep Mini and linked Asset Tasks.
+- Inventory and Container editors now present recurring inspection due dates consistently as `First due / next check` and display the linked Task's due date as the authoritative value when recurring checks are enabled.
+- Frontend cache versions were refreshed so navigation, Asset icons and Lovelace changes are fetched after upgrading.
+
+### Notes
+- Recurring Inventory, Container and Asset checks all use HomePrep Tasks as the scheduling source. Completing a linked recurring Task recalculates and synchronizes the resource's next-check date.
+
 ## [0.7.0b5] - 2026-09-13
 
 ### Added
