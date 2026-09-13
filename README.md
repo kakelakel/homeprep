@@ -21,6 +21,18 @@
 
 > HomePrep is actively developed. Version 0.8 expands HomePrep from inventory tracking into a broader household preparedness system while remaining local-first and usable without a cloud account.
 
+## The HomePrep project family
+
+HomePrep is evolving into several cooperating clients around the same preparedness model:
+
+- **HomePrep for Home Assistant** — this repository. The existing local-first Home Assistant integration.
+- **[HomePrep Server](https://github.com/kakelakel/homeprep-server)** — an optional self-hosted server, API and web layer for users who want multiple HomePrep clients while retaining control of their own data.
+- **[HomePrep Android](https://github.com/kakelakel/homeprep-android)** — the planned Android client for connecting to a user's own HomePrep Server.
+
+The guiding direction is simple: **Your preparedness. Your server. Your data.**
+
+Home Assistant-only operation remains a first-class mode. HomePrep Server will be optional rather than a replacement requirement.
+
 ## Highlights in 0.8
 
 HomePrep 0.8 brings together the major preparedness building blocks in one workflow:
@@ -202,7 +214,7 @@ Minimum supported Home Assistant version: **2026.3.0**.
 
 HomePrep stores its operational data locally through Home Assistant, including Inventory, Containers, Assets, Shopping List, Tasks, Plans, household planning, Targets, image references and notification settings. HomePrep media files are also stored locally.
 
-A HomePrep cloud account is **not required**. Future optional synchronization services are part of the longer-term roadmap, but local Home Assistant operation remains a core product principle.
+A HomePrep cloud account is **not required**. The project is now exploring an optional self-hosted **HomePrep Server** so multi-client use can be added without requiring households to place preparedness data in a central HomePrep-operated database.
 
 ## Releases and updating
 
@@ -217,9 +229,14 @@ See **[CHANGELOG.md](CHANGELOG.md)** for release details.
 
 ## Roadmap
 
-See **[ROADMAP.md](ROADMAP.md)** for current priorities and future product direction, including stronger shopping/replacement workflows, richer household planning, the standalone HomePrep app and optional HomePrep cloud synchronization.
+See **[ROADMAP.md](ROADMAP.md)** for the Home Assistant integration roadmap.
 
-The roadmap is directional and not a fixed release promise.
+Server and Android development now have their own roadmaps:
+
+- **[HomePrep Server roadmap](https://github.com/kakelakel/homeprep-server/blob/main/ROADMAP.md)**
+- **[HomePrep Android roadmap](https://github.com/kakelakel/homeprep-android/blob/main/ROADMAP.md)**
+
+The roadmaps are directional and not fixed release promises.
 
 ## Project status
 
