@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 
 DOMAIN = "homeprep"
 CONTAINER_SERVICE_KEY = "container_service"
+TASK_SERVICE_KEY = "task_service"
 
 
 def async_register_container_websocket(hass: HomeAssistant) -> None:
@@ -21,6 +22,10 @@ def async_register_container_websocket(hass: HomeAssistant) -> None:
 
 def _service(hass: HomeAssistant):
     return hass.data[DOMAIN][CONTAINER_SERVICE_KEY]
+
+
+def _task_service(hass: HomeAssistant):
+    return hass.data.get(DOMAIN, {}).get(TASK_SERVICE_KEY)
 
 
 @websocket_api.websocket_command({vol.Required("type"): "homeprep/containers"})
@@ -56,6 +61,11 @@ async def websocket_container_update(hass, connection, msg):
 @websocket_api.async_response
 async def websocket_container_delete(hass, connection, msg):
     try:
+        task_service = _task_service(hass)
+        if task_service:
+            linked = task_service.find_linked_task(msg["container_id"], "container_inspection")
+            if linked:
+                await task_service.async_delete_task(linked["id"])
         await _service(hass).async_delete(msg["container_id"])
     except KeyError:
         connection.send_error(msg["id"], "not_found", "Container not found"); return
@@ -66,9 +76,15 @@ async def websocket_container_delete(hass, connection, msg):
 @websocket_api.async_response
 async def websocket_container_mark_checked(hass, connection, msg):
     try:
-        result = await _service(hass).async_mark_checked(msg["container_id"], msg.get("checked_on"))
-    except KeyError:
-        connection.send_error(msg["id"], "not_found", "Container not found"); return
+        task_service = _task_service(hass)
+        linked = task_service.find_linked_task(msg["container_id"], "container_inspection") if task_service else None
+        if linked and linked.get("enabled", True):
+            await task_service.async_complete_task(linked["id"], msg.get("checked_on"))
+            result = _service(hass).get_container(msg["container_id"])
+        else:
+            result = await _service(hass).async_mark_checked(msg["container_id"], msg.get("checked_on"))
+    except (KeyError, ValueError):
+        connection.send_error(msg["id"], "not_found", "Container or linked task not found"); return
     connection.send_result(msg["id"], result)
 
 
