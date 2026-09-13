@@ -4,6 +4,27 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.8.0b1] - 2026-09-13
+
+### Added
+- **Household Assets** for important fixed or semi-permanent preparedness points such as main water shutoffs, isolation valves, floor drains, leak sensors, sump pumps, smoke alarms, fire extinguishers and electrical panels.
+- Asset location, instructions, notes and optional last/next check dates.
+- **Shopping List** with manual entries plus automatic replacement entries for inventory whose expiry date has passed.
+- Automatic shopping entries carry quantity, unit, category, container reference and the originating inventory item without creating duplicates.
+- Shopping-list states for pending, purchased and ignored items.
+- Preparedness plan checklist items can store links to household assets alongside inventory and containers.
+- Grouped, collapsible sidebar navigation replacing the increasingly crowded horizontal tab row.
+
+### Improved
+- HomePrep navigation is now organized into Preparedness, Maintenance, Plans & Guidance and Household families while Overview remains directly accessible.
+- The Overview includes Assets and Shopping List readiness alongside Inventory, Containers, Tasks, Plans, Targets and Guidance.
+- HomePrep Lovelace summary cards now include household assets and pending shopping-list replacements in the combined preparedness status.
+- Deleted automatically generated shopping entries remain deduplicated and are not recreated repeatedly for the same expired inventory item.
+
+### Notes
+- This is the first beta of the 0.8 line and focuses on validating the new Assets, Shopping List and grouped-navigation model before stable release.
+- Automatic shopping-list generation currently starts with expired inventory. The source model is designed so future releases can also add shortages from targets, containers, plans and asset maintenance.
+
 ## [0.7.0b3] - 2026-09-13
 
 ### Fixed
