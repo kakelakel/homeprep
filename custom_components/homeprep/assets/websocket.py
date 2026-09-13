@@ -7,6 +7,7 @@ from homeassistant.core import HomeAssistant
 
 DOMAIN = "homeprep"
 ASSET_SERVICE_KEY = "asset_service"
+TASK_SERVICE_KEY = "task_service"
 
 
 def async_register_asset_websocket(hass: HomeAssistant) -> None:
@@ -19,6 +20,10 @@ def async_register_asset_websocket(hass: HomeAssistant) -> None:
 
 def _service(hass: HomeAssistant):
     return hass.data[DOMAIN][ASSET_SERVICE_KEY]
+
+
+def _task_service(hass: HomeAssistant):
+    return hass.data.get(DOMAIN, {}).get(TASK_SERVICE_KEY)
 
 
 @websocket_api.websocket_command({vol.Required("type"): "homeprep/assets"})
@@ -54,6 +59,11 @@ async def websocket_asset_update(hass, connection, msg):
 @websocket_api.async_response
 async def websocket_asset_delete(hass, connection, msg):
     try:
+        task_service = _task_service(hass)
+        if task_service:
+            linked = task_service.find_linked_task(msg["asset_id"], "asset_inspection")
+            if linked:
+                await task_service.async_delete_task(linked["id"])
         await _service(hass).async_delete(msg["asset_id"])
     except KeyError:
         connection.send_error(msg["id"], "not_found", "Asset not found"); return
@@ -64,7 +74,15 @@ async def websocket_asset_delete(hass, connection, msg):
 @websocket_api.async_response
 async def websocket_asset_mark_checked(hass, connection, msg):
     try:
-        result = await _service(hass).async_mark_checked(msg["asset_id"], msg.get("checked_on"))
+        task_service = _task_service(hass)
+        linked = task_service.find_linked_task(msg["asset_id"], "asset_inspection") if task_service else None
+        if linked and linked.get("enabled", True):
+            await task_service.async_complete_task(linked["id"], msg.get("checked_on"))
+            result = _service(hass).get_asset(msg["asset_id"])
+        else:
+            result = await _service(hass).async_mark_checked(msg["asset_id"], msg.get("checked_on"))
     except KeyError:
         connection.send_error(msg["id"], "not_found", "Asset not found"); return
+    except ValueError as error:
+        connection.send_error(msg["id"], "invalid_date", str(error)); return
     connection.send_result(msg["id"], result)
