@@ -6,7 +6,8 @@ Ideas may move, change shape, or be dropped as HomePrep evolves and real-world f
 
 ## Current focus
 
-- Finish the 0.6.1 multilingual UI pass and stabilize the current Home Assistant experience.
+- Test the new Containers and Preparedness Plans foundations introduced in the 0.7 beta line.
+- Refine go-bag, preparedness-crate, water-storage and evacuation workflows from real-world feedback.
 - Complete the HACS default-repository review process so HomePrep can be discovered directly in HACS.
 - Keep HACS and Hassfest validation green across stable and prerelease channels.
 - Polish the HomePrep sidebar app and Lovelace cards based on real usage feedback.
@@ -21,32 +22,45 @@ Ideas may move, change shape, or be dropped as HomePrep evolves and real-world f
 - Initial multilingual support with automatic Home Assistant language detection and optional HomePrep language override.
 - English, Swedish, Norwegian Bokmål, Danish, Finnish, German and French language foundations.
 - HomePrep and HomePrep Mini cards upgraded to summarize both Inventory and Tasks.
+- Preparedness Containers that can represent go bags, preparedness crates, water containers, first-aid kits, vehicle kits and storage locations.
+- Inventory-to-container assignment and readiness status based on container checks plus the inventory inside.
+- Preparedness Plans with reusable checklists and starter templates for fire safety, flood/water damage and rapid evacuation.
+- Direct navigation from HomePrep Lovelace cards to the HomePrep sidebar application.
 
 ## Near term
 
-### Inventory
+### Inventory and containers
 - Better filtering, sorting and searching.
-- Storage-location support, for example pantry, basement, garage or evacuation bag.
 - Faster bulk editing for common inventory maintenance.
 - Clearer expiry and rotation workflows.
+- Improve container readiness and maintenance workflows, including water rotation and go-bag review cycles.
+- Explore optional nested storage/location modelling without making simple setups complicated.
+
+### Plans and household resilience
+- Refine fire-safety, flood/water-damage and evacuation checklist templates from user feedback.
+- Add more plan templates such as power outage, communications and shelter-in-place.
+- Explore links between checklist items and inventory/tasks so plan readiness can increasingly be verified automatically.
+- Improve household meeting-point, evacuation-route and dependant/pet planning support.
 
 ### Tasks and notifications
 - More actionable task notifications.
 - Better links from notifications directly into the relevant HomePrep item/task.
 - Optional notification milestones for expiring inventory.
 - Improved task history and completion visibility.
+- Connect container/plan attention states to notifications where useful.
 
 ### Lovelace and UI
 - Continue refining visual editors and reusable display options while keeping the number of card types small.
 - Further mobile-first improvements.
 - Continue localization coverage across all card/editor subtexts and dynamic content.
-- Improve summary cards and dashboard views without duplicating the detailed Inventory and Tasks cards.
+- Improve summary cards and dashboard views without duplicating the detailed HomePrep sidebar experience.
 
 ### Guidance and preparedness planning
 - Add more country-specific preparedness guidance from authoritative public sources.
 - Improve explanation of why a recommendation exists and what counts as ready.
 - Expand household-specific planning without silently changing personal targets.
 - Continue localized presentation of curated guidance content.
+- Explore guidance that can suggest relevant preparedness plans or container types without silently creating personal data.
 
 ## Medium term ideas
 
@@ -80,14 +94,14 @@ These are larger product tracks HomePrep should stay technically ready for. They
 ### Standalone HomePrep app
 - Build a standalone HomePrep application that can be used without Home Assistant.
 - Keep the app local-first, with useful offline capability.
-- Reuse the same core HomePrep concepts for inventory, tasks, targets, guidance and household preparedness.
+- Reuse the same core HomePrep concepts for inventory, containers, tasks, plans, targets, guidance and household preparedness.
 - Support shared household use across multiple people and devices.
 - Provide access to crisis-cooking recipes and, when online, optional community features.
 
 ### HomePrep cloud service
 - Build an optional HomePrep cloud service for synchronization between Home Assistant and standalone HomePrep clients.
 - Support secure multi-device and multi-user household synchronization.
-- Synchronize inventory, tasks, targets, household settings and other platform-neutral HomePrep data.
+- Synchronize inventory, containers, tasks, plans, targets, household settings and other platform-neutral HomePrep data.
 - Keep Home Assistant-specific settings, such as local notification targets, local to the Home Assistant installation.
 - Preserve local-first operation so a HomePrep cloud account is not required for basic Home Assistant use.
 - Support offline-first synchronization and safe conflict/deletion handling as the product matures.
