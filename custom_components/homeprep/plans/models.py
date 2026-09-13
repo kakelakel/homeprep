@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-PLAN_SCHEMA_VERSION = 2
+PLAN_SCHEMA_VERSION = 3
 PLAN_TYPES = {"fire", "flood", "evacuation", "power_outage", "communication", "shelter", "other"}
 
 
@@ -25,6 +25,7 @@ def normalize_check_item(item: dict[str, Any]) -> dict[str, Any]:
         "last_confirmed_at": item.get("last_confirmed_at"),
         "linked_inventory_item_ids": [str(value) for value in item.get("linked_inventory_item_ids", []) if value],
         "linked_container_ids": [str(value) for value in item.get("linked_container_ids", []) if value],
+        "linked_asset_ids": [str(value) for value in item.get("linked_asset_ids", []) if value],
     }
 
 
