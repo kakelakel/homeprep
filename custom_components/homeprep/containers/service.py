@@ -65,9 +65,12 @@ class HomePrepContainerService:
             items = [item for item in self._inventory_service.items if item.get("container_id") == container["id"]]
             critical = 0
             attention = 0
+            check_dates = [container.get("last_checked_at")]
             for item in items:
                 expires = self._parse_date(item.get("expires_at"))
                 next_check = self._parse_date(item.get("next_check_at"))
+                if item.get("last_checked"):
+                    check_dates.append(item.get("last_checked"))
                 if (expires and expires < today) or (next_check and next_check <= today):
                     critical += 1
                 elif expires and 0 <= (expires - today).days <= 30:
@@ -78,12 +81,14 @@ class HomePrepContainerService:
             elif own_check and 0 < (own_check - today).days <= 30:
                 attention += 1
             status = "critical" if critical else "attention" if attention else "ok"
+            effective_last_checked = max((value for value in check_dates if value), default=None)
             result.append({
                 **container,
                 "status": status,
                 "item_count": len(items),
                 "critical_count": critical,
                 "attention_count": attention,
+                "effective_last_checked_at": effective_last_checked,
                 "items": [
                     {
                         "id": item["id"],
@@ -92,6 +97,7 @@ class HomePrepContainerService:
                         "quantity": item.get("quantity"),
                         "unit": item.get("unit"),
                         "expires_at": item.get("expires_at"),
+                        "last_checked": item.get("last_checked"),
                         "next_check_at": item.get("next_check_at"),
                     }
                     for item in items
