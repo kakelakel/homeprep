@@ -4,6 +4,30 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.7.0b2] - 2026-09-13
+
+### Added
+- Generic container types such as bags, boxes/crates, water containers, cabinet/storage and vehicle storage so the container name can describe the actual use case without repeating the type.
+- Optional recurring container inspections backed by HomePrep Tasks, including cadence, reminders and automatic next-check scheduling.
+- Rich preparedness checklist items with descriptions/instructions and links to specific inventory items and containers.
+- Native HomePrep checklist-item editor instead of browser prompt dialogs.
+- Preparedness-plan review intervals with last-review, next-review and review-required state.
+- Plan review and container/plan readiness information on the HomePrep Overview.
+- Containers and Plans are now included in the HomePrep, HomePrep Mini and HomePrep Status Lovelace summaries.
+- Container selection in the Lovelace inventory management editor.
+
+### Improved
+- Existing beta container types are migrated to the new generic type model automatically.
+- Container status badges are displayed as properly aligned pills rather than oversized circular badges.
+- Marking a container checked completes its linked recurring container task when one exists.
+- Deleting a container also removes its linked recurring inspection task while preserving contained inventory items.
+- Plan checklist completion keeps the last confirmation timestamp so future review workflows can distinguish historic confirmation from current readiness.
+- HomePrep Lovelace summary spacing was adjusted so section icons and labels have clearer separation.
+
+### Notes
+- Checklist links currently support Inventory and Containers. Assets are intentionally planned as the next HomePrep building block rather than being folded into this beta prematurely.
+- Plan review expiry marks the plan as requiring review but does not silently erase previous checklist confirmations.
+
 ## [0.7.0b1] - 2026-09-13
 
 ### Added
@@ -93,7 +117,7 @@ HomePrep uses semantic versioning while it is in active `0.x` development. Patch
 - Home Assistant setup-wizard translations for the supported languages.
 
 ### Improved
-- English remains the canonical source language and fallback when a translated frontend string is unavailable.
+- English remains the canonical source language and fallback when an translated frontend string is unavailable.
 - Sidebar frontend cache versioning was bumped so updated frontend modules are fetched reliably after upgrades.
 
 ### Notes
