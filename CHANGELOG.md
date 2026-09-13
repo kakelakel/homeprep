@@ -4,6 +4,28 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.7.0b5] - 2026-09-13
+
+### Added
+- Optional images for household Assets, reusing HomePrep's tokenized media storage for JPEG, PNG and WebP files up to 5 MB.
+- Recurring Asset checks backed by HomePrep Tasks, with cadence, reminders, scheduling mode and automatic next-check calculation.
+- Configurable sections in the standard HomePrep Lovelace card, including visibility and display order for Inventory, Containers, Shopping List, Tasks, Assets and Plans.
+- Linked Asset information in recurring Tasks, including Asset images where available.
+
+### Improved
+- Sidebar navigation now uses reliable icons for Preparedness and Assets.
+- Navigation groups expand on hover on desktop/pointer devices while retaining click/tap behavior for touch and as a fallback.
+- Asset and Inventory views now explain the distinction between fixed household preparedness points and movable/stored supplies.
+- Asset images are shown where they help identify the actual point or control in the home.
+- The HomePrep and HomePrep Mini Lovelace cards now use a reliable Assets icon.
+- Asset check dates are synchronized from their recurring Task in the same way as Inventory and Container inspections.
+- Marking an Asset checked completes its linked recurring Task and recalculates the next check date.
+- Deleting an Asset removes its linked Asset inspection Task.
+
+### Notes
+- Assets remain part of the HomePrep summary cards rather than introducing a separate dedicated Asset Lovelace card in this beta.
+- `Next check` is treated as the first/next due date when a recurring inspection is enabled; subsequent dates are calculated by the linked Task schedule.
+
 ## [0.7.0b4] - 2026-09-13
 
 ### Added
@@ -160,7 +182,7 @@ HomePrep uses semantic versioning while it is in active `0.x` development. Patch
 - Linked inspection tasks can reuse the inventory item's thumbnail in both the sidebar and Lovelace task views.
 - Separate image-file storage so binary image data is not embedded in HomePrep's inventory JSON.
 - Replace and remove controls for existing inventory images.
-- Automatic loading and registration of HomePrep Lovelace cards so they appear in Home Assistant's card picker.
+- Automatic loading and registration of HomePrep Lovelace cards so they appear in the card picker.
 
 ### Improved
 - Linked inspection tasks now show that they are managed from Inventory and provide a direct **Manage item** action.
