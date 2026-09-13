@@ -106,6 +106,6 @@
 })();
 
 /* Load all HomePrep Lovelace cards automatically so they appear in the card picker. */
-import("./homeprep-lovelace.js?v=5").catch((error) => {
+import("./homeprep-lovelace.js?v=6").catch((error) => {
   console.error("HomePrep Lovelace frontend failed to load", error);
 });
