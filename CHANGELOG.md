@@ -4,6 +4,12 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.7.0b3] - 2026-09-13
+
+### Fixed
+- HomePrep Mini no longer shows duplicate Containers and Plans chips when those areas need attention.
+- Frontend cache versioning was bumped so the corrected Mini card is fetched reliably after upgrading.
+
 ## [0.7.0b2] - 2026-09-13
 
 ### Added
