@@ -17,16 +17,22 @@ function overallStatus(...statuses) {
 async function loadExtendedSummary(card) {
   if (!card._hass) return;
   try {
-    const [containers, plans] = await Promise.all([
+    const [containers, plans, assets, shopping] = await Promise.all([
       card._hass.callWS({ type: "homeprep/containers" }),
       card._hass.callWS({ type: "homeprep/plans" }),
+      card._hass.callWS({ type: "homeprep/assets" }),
+      card._hass.callWS({ type: "homeprep/shopping" }),
     ]);
     card._containerSummary = containers?.summary || null;
     card._planSummary = plans?.summary || null;
+    card._assetSummary = assets?.summary || null;
+    card._shoppingSummary = shopping?.summary || null;
   } catch (error) {
     console.error("HomePrep extended summary load failed", error);
     card._containerSummary = null;
     card._planSummary = null;
+    card._assetSummary = null;
+    card._shoppingSummary = null;
   }
 }
 
@@ -50,6 +56,8 @@ for (const tag of ["homeprep-card", "homeprep-mini-card"]) {
         this._taskSummary?.status || "ok",
         this._containerSummary?.status || "ok",
         this._planSummary?.status || "ok",
+        this._assetSummary?.status || "ok",
+        this._shoppingSummary?.status || "ok",
       );
     };
   });
@@ -64,7 +72,9 @@ customElements.whenDefined("homeprep-card").then(() => {
     const tasks = this._taskSummary;
     const containers = this._containerSummary;
     const plans = this._planSummary;
-    if (!inventory && !tasks && !containers && !plans) {
+    const assets = this._assetSummary;
+    const shopping = this._shoppingSummary;
+    if (!inventory && !tasks && !containers && !plans && !assets && !shopping) {
       this.innerHTML = this.shell(`<div class="wrap">${esc(hpT("HomePrep unavailable", this._hass))}</div>`);
       return;
     }
@@ -76,10 +86,14 @@ customElements.whenDefined("homeprep-card").then(() => {
         <div class="status ${status}">${esc(label)}</div>
         <div class="section-label"><ha-icon icon="mdi:package-variant-closed"></ha-icon><span>${esc(hpT("Inventory", this._hass))}</span></div>
         <div class="metrics">${this.metric("Inventory", inventory?.items)}${this.metric("Expired", inventory?.expired)}${this.metric("Expiring soon", inventory?.expiring_soon)}${this.metric("Check required", inventory?.due_for_check)}</div>
-        <div class="section-label"><ha-icon icon="mdi:clipboard-check-outline"></ha-icon><span>${esc(hpT("Tasks", this._hass))}</span></div>
-        <div class="metrics">${this.metric("Tasks", tasks?.tasks)}${this.metric("Overdue", tasks?.overdue)}${this.metric("Due today", tasks?.due)}${this.metric("Upcoming", tasks?.upcoming)}</div>
         <div class="section-label"><ha-icon icon="mdi:archive-outline"></ha-icon><span>${esc(hpT("Containers", this._hass))}</span></div>
         <div class="metrics hp-two-metrics">${this.metric("Containers", containers?.containers)}${this.metric("Needs attention", (containers?.critical ?? 0) + (containers?.attention ?? 0))}</div>
+        <div class="section-label"><ha-icon icon="mdi:cart-outline"></ha-icon><span>${esc(hpT("Shopping List", this._hass))}</span></div>
+        <div class="metrics hp-two-metrics">${this.metric("To buy", shopping?.pending)}${this.metric("Purchased", shopping?.purchased)}</div>
+        <div class="section-label"><ha-icon icon="mdi:clipboard-check-outline"></ha-icon><span>${esc(hpT("Tasks", this._hass))}</span></div>
+        <div class="metrics">${this.metric("Tasks", tasks?.tasks)}${this.metric("Overdue", tasks?.overdue)}${this.metric("Due today", tasks?.due)}${this.metric("Upcoming", tasks?.upcoming)}</div>
+        <div class="section-label"><ha-icon icon="mdi:home-cog-outline"></ha-icon><span>${esc(hpT("Assets", this._hass))}</span></div>
+        <div class="metrics hp-two-metrics">${this.metric("Assets", assets?.assets)}${this.metric("Checks due", assets?.critical)}</div>
         <div class="section-label"><ha-icon icon="mdi:clipboard-list-outline"></ha-icon><span>${esc(hpT("Plans", this._hass))}</span></div>
         <div class="metrics hp-three-metrics">${this.metric("Plans", plans?.plans)}${this.metric("Needs attention", plans?.attention)}${this.metric("Review required", plans?.review_required)}</div>
       </div>
@@ -103,15 +117,21 @@ customElements.whenDefined("homeprep-mini-card").then(() => {
     const containerAttention = (this._containerSummary?.critical ?? 0) + (this._containerSummary?.attention ?? 0);
     const planAttention = this._planSummary?.attention ?? 0;
     const planReviewRequired = this._planSummary?.review_required ?? 0;
+    const assetAttention = this._assetSummary?.critical ?? 0;
+    const shoppingPending = this._shoppingSummary?.pending ?? 0;
     const containerState = this._containerSummary?.status === "critical" ? "critical" : containerAttention ? "attention" : "";
     const planState = planAttention || planReviewRequired ? "attention" : "";
+    const assetState = assetAttention ? "critical" : "";
+    const shoppingState = shoppingPending ? "attention" : "";
     this.innerHTML = this.shell(`
       <div class="wrap">
         <div class="head"><img class="logo" src="/api/homeprep/frontend/icon.png"><div style="flex:1;min-width:0"><div class="title">${esc(this.config?.title || "HomePrep")}</div><div class="sub">${esc(label)}</div></div><div class="status ${status}" style="margin-top:0;padding:7px 9px">${esc(label)}</div></div>
         <div class="mini-stats">
           <span class="mini-chip"><ha-icon icon="mdi:package-variant-closed"></ha-icon><strong>${esc(this._summary?.items ?? 0)}</strong>${esc(hpT("Inventory", this._hass))}</span>
-          <span class="mini-chip"><ha-icon icon="mdi:clipboard-check-outline"></ha-icon><strong>${esc(this._taskSummary?.tasks ?? 0)}</strong>${esc(hpT("Tasks", this._hass))}</span>
           <span class="mini-chip ${containerState}"><ha-icon icon="mdi:archive-outline"></ha-icon><strong>${esc(this._containerSummary?.containers ?? 0)}</strong>${esc(hpT("Containers", this._hass))}</span>
+          <span class="mini-chip ${shoppingState}"><ha-icon icon="mdi:cart-outline"></ha-icon><strong>${esc(shoppingPending)}</strong>${esc(hpT("Shopping", this._hass))}</span>
+          <span class="mini-chip"><ha-icon icon="mdi:clipboard-check-outline"></ha-icon><strong>${esc(this._taskSummary?.tasks ?? 0)}</strong>${esc(hpT("Tasks", this._hass))}</span>
+          <span class="mini-chip ${assetState}"><ha-icon icon="mdi:home-cog-outline"></ha-icon><strong>${esc(this._assetSummary?.assets ?? 0)}</strong>${esc(hpT("Assets", this._hass))}</span>
           <span class="mini-chip ${planState}"><ha-icon icon="mdi:clipboard-list-outline"></ha-icon><strong>${esc(this._planSummary?.plans ?? 0)}</strong>${esc(hpT("Plans", this._hass))}</span>
           ${(this._taskSummary?.overdue ?? 0) ? `<span class="mini-chip critical"><strong>${esc(this._taskSummary.overdue)}</strong>${esc(hpT("Overdue", this._hass))}</span>` : ""}
           ${(this._taskSummary?.due ?? 0) ? `<span class="mini-chip attention"><strong>${esc(this._taskSummary.due)}</strong>${esc(hpT("Due today", this._hass))}</span>` : ""}
@@ -134,11 +154,22 @@ customElements.whenDefined("homeprep-status-card").then(() => {
     this.render();
   };
   proto.render = function render() {
-    if (!this._hass) return;
-    if (!this._summary) return;
-    const status = overallStatus(this._summary.status || "ok", this._containerSummary?.status || "ok", this._planSummary?.status || "ok");
+    if (!this._hass || !this._summary) return;
+    const status = overallStatus(
+      this._summary.status || "ok",
+      this._containerSummary?.status || "ok",
+      this._planSummary?.status || "ok",
+      this._assetSummary?.status || "ok",
+      this._shoppingSummary?.status || "ok",
+    );
     const label = status === "critical" ? "Action required" : status === "attention" ? "Requires attention" : "Home is ready";
-    this.innerHTML = this.wrap(`${this.renderHeader(this.config?.title || "HomePrep", "Preparedness overview", "mdi:shield-home")}<div class="hp-status-banner hp-${status}">${esc(label)}</div><div class="hp-grid">${[["Inventory",this._summary.items],["Containers",this._containerSummary?.containers ?? 0],["Plans",this._planSummary?.plans ?? 0],["Needs attention",(this._containerSummary?.critical ?? 0)+(this._containerSummary?.attention ?? 0)+(this._planSummary?.attention ?? 0)]].map(([labelText,value])=>`<div class="hp-metric"><div class="hp-metric-value">${value ?? 0}</div><div class="hp-metric-label">${esc(labelText)}</div></div>`).join("")}</div>`);
+    const needsAttention =
+      (this._containerSummary?.critical ?? 0) +
+      (this._containerSummary?.attention ?? 0) +
+      (this._planSummary?.attention ?? 0) +
+      (this._assetSummary?.critical ?? 0) +
+      (this._shoppingSummary?.pending ?? 0);
+    this.innerHTML = this.wrap(`${this.renderHeader(this.config?.title || "HomePrep", "Preparedness overview", "mdi:shield-home")}<div class="hp-status-banner hp-${status}">${esc(label)}</div><div class="hp-grid">${[["Inventory",this._summary.items],["Containers",this._containerSummary?.containers ?? 0],["Assets",this._assetSummary?.assets ?? 0],["Needs attention",needsAttention]].map(([labelText,value])=>`<div class="hp-metric"><div class="hp-metric-value">${value ?? 0}</div><div class="hp-metric-label">${esc(labelText)}</div></div>`).join("")}</div>`);
   };
 });
 
