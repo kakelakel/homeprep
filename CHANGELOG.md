@@ -4,6 +4,55 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
+## [0.8.0] - 2026-09-13
+
+### Highlights
+- HomePrep now models household preparedness across **Inventory, Containers, Household Assets, Shopping, Tasks, Plans, Targets and Guidance** rather than treating preparedness as inventory alone.
+- New data-rich Overview with per-area readiness bars, an overall readiness score, a compact attention queue and next actions.
+- New grouped horizontal navigation for Preparedness, Maintenance, Plans & Guidance and Household.
+
+### Added
+- **Household Assets** for fixed or semi-permanent preparedness points such as main water shutoffs, isolation valves, floor drains, leak sensors, pumps, smoke alarms, fire extinguishers, electrical panels and generators.
+- Asset location, description, operating instructions, notes, check dates and optional JPEG/PNG/WebP images up to 5 MB.
+- Recurring Asset inspections backed by HomePrep Tasks, including recurrence cadence, reminder lead time and rescheduling mode.
+- **Shopping List** with manual entries and automatic replacement entries for expired Inventory.
+- Automatic Shopping entries retain useful Inventory context such as quantity, unit, category and Container while avoiding duplicate replacement entries for the same expired item.
+- Shopping states for pending, purchased and ignored entries.
+- Preparedness Plan checklist links to Inventory, Containers and Household Assets.
+- Rich Plan checklist items with descriptions/instructions and native HomePrep editing.
+- Plan review intervals, review-required state and review tracking without silently clearing previous checklist confirmations.
+- Configurable standard HomePrep Lovelace summary card with show/hide and ordering controls for Inventory, Containers, Shopping List, Tasks, Assets and Plans.
+- Asset information and images in linked recurring Task views where useful.
+- Immediate local Asset image preview before saving.
+
+### Improved
+- Inventory, Container and Asset recurring checks now use HomePrep Tasks as the scheduling source for next-check dates.
+- Completing a linked recurring check updates the resource's last-check value and recalculates/synchronizes the next due date.
+- Container types are more generic so names can describe the actual use case without repeating the type.
+- Container readiness reflects both the Container's own state and the Inventory stored inside it.
+- Deleting a Container preserves its Inventory while removing the linked recurring Container inspection.
+- Deleting an Asset removes its linked recurring Asset inspection.
+- HomePrep and HomePrep Mini include Containers, Plans, Assets and Shopping attention in their broader preparedness summaries.
+- Asset and Inventory views explain the distinction between fixed household preparedness points and movable/stored supplies.
+- Navigation is organized into clear families while remaining horizontal and compact.
+- Desktop dropdowns open on hover, remain open while moving into the submenu, and retain click/tap behavior for touch and fallback use.
+- Readiness attention tiles were replaced by more compact progress/data presentation so actions remain prominent.
+- Assets use a reliable and consistent icon across the sidebar, Lovelace summaries and linked Tasks.
+- Frontend cache versions were refreshed across the beta cycle to ensure updated UI modules are fetched after upgrading.
+
+### Fixed
+- HomePrep Mini no longer duplicates Container or Plan chips when those areas need attention.
+- Asset images preview immediately after file selection instead of only after saving.
+- Inventory and Container editors display the linked Task's due date as the authoritative value when recurring checks are enabled.
+- Removed a redundant standalone shopping-cart indicator from the readiness area because Shopping attention is already represented in the Attention queue.
+- Fixed the hover gap that could collapse grouped navigation before the pointer reached submenu items.
+
+### Notes
+- The 0.8 release consolidates the functionality tested across the 0.7.0 beta series.
+- Shopping automation currently starts with expired Inventory; future versions may carefully add other shortage/replacement sources.
+- The overall readiness percentage is currently the average of configured readiness areas. Empty areas are excluded from the average, while critical/attention states are evaluated separately so urgent issues can still surface even with a high percentage.
+- HomePrep remains local-first and does not require a HomePrep cloud account.
+
 ## [0.7.0b6] - 2026-09-13
 
 ### Added
@@ -183,7 +232,7 @@ HomePrep uses semantic versioning while it is in active `0.x` development. Patch
 
 ### Improved
 - English remains the canonical source language and fallback when an translated frontend string is unavailable.
-- Sidebar frontend cache versioning was bumped so updated frontend modules are fetched reliably after upgrades.
+- Sidebar frontend cache versioning was bumped so updated frontend modules are fetched after upgrade.
 
 ### Notes
 - This is a beta release intended for opt-in testing through HACS prerelease updates before the stable 0.6.1 release.
@@ -235,7 +284,7 @@ HomePrep uses semantic versioning while it is in active `0.x` development. Patch
 - Task notifications for reminders, due-today events and overdue tasks.
 - Configurable expiry warning window.
 - Test notification action in HomePrep settings.
-- Notification deduplication to avoid repeatedly sending the same notification.
+- Notification deduplication to avoid repeatedly sending the same event.
 
 ## [0.3.3] - 2026-09-12
 
