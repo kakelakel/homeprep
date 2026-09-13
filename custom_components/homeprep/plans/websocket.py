@@ -93,6 +93,7 @@ async def websocket_plan_toggle_item(hass, connection, msg):
     vol.Optional("description"): str,
     vol.Optional("linked_inventory_item_ids", default=[]): [str],
     vol.Optional("linked_container_ids", default=[]): [str],
+    vol.Optional("linked_asset_ids", default=[]): [str],
 })
 @websocket_api.async_response
 async def websocket_plan_add_item(hass, connection, msg):
@@ -103,6 +104,7 @@ async def websocket_plan_add_item(hass, connection, msg):
             msg.get("description"),
             msg.get("linked_inventory_item_ids"),
             msg.get("linked_container_ids"),
+            msg.get("linked_asset_ids"),
         )
     except (KeyError, ValueError) as error:
         connection.send_error(msg["id"], "invalid_item", str(error)); return
