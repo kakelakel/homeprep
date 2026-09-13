@@ -4,7 +4,7 @@ All notable user-facing changes to HomePrep are documented here.
 
 HomePrep uses semantic versioning while it is in active `0.x` development. Patch releases contain fixes and refinements; minor releases may add or reshape features.
 
-## [0.8.0b1] - 2026-09-13
+## [0.7.0b4] - 2026-09-13
 
 ### Added
 - **Household Assets** for important fixed or semi-permanent preparedness points such as main water shutoffs, isolation valves, floor drains, leak sensors, sump pumps, smoke alarms, fire extinguishers and electrical panels.
@@ -22,7 +22,7 @@ HomePrep uses semantic versioning while it is in active `0.x` development. Patch
 - Deleted automatically generated shopping entries remain deduplicated and are not recreated repeatedly for the same expired inventory item.
 
 ### Notes
-- This is the first beta of the 0.8 line and focuses on validating the new Assets, Shopping List and grouped-navigation model before stable release.
+- This beta continues the 0.7 prerelease line and focuses on validating Assets, Shopping List and grouped navigation before the next stable release.
 - Automatic shopping-list generation currently starts with expired inventory. The source model is designed so future releases can also add shortages from targets, containers, plans and asset maintenance.
 
 ## [0.7.0b3] - 2026-09-13
