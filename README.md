@@ -21,17 +21,29 @@
 
 > HomePrep is actively developed. Version 0.8 expands HomePrep from inventory tracking into a broader household preparedness system while remaining local-first and usable without a cloud account.
 
+## Your preparedness. Your infrastructure. Your data.
+
+Preparedness data can reveal a great deal about a household: what supplies exist, where important equipment is located, what plans are in place and where the weak points are.
+
+For HomePrep, data ownership is therefore part of the security model itself.
+
+**Core private HomePrep data will not require centralized HomePrep-operated storage.**
+
+Home Assistant-only operation will remain a first-class mode. The broader HomePrep platform is being designed around self-hosted infrastructure controlled by the user. Future optional hosted services may exist, but they must remain optional and must not remove the ability to run HomePrep using infrastructure you control.
+
+> **Convenience may be centralized. Ownership must not be.**
+
+This is a permanent project principle, not a temporary limitation of the current version. See [DATA-OWNERSHIP.md](DATA-OWNERSHIP.md).
+
 ## The HomePrep project family
 
 HomePrep is evolving into several cooperating clients around the same preparedness model:
 
 - **HomePrep for Home Assistant** — this repository. The existing local-first Home Assistant integration.
-- **[HomePrep Server](https://github.com/kakelakel/homeprep-server)** — an optional self-hosted server, API and web layer for users who want multiple HomePrep clients while retaining control of their own data.
+- **[HomePrep Server](https://github.com/kakelakel/homeprep-server)** — an optional self-hosted server, API and web layer for users who want multiple HomePrep clients while retaining control of their own database and infrastructure.
 - **[HomePrep Android](https://github.com/kakelakel/homeprep-android)** — the planned Android client for connecting to a user's own HomePrep Server.
 
-The guiding direction is simple: **Your preparedness. Your server. Your data.**
-
-Home Assistant-only operation remains a first-class mode. HomePrep Server will be optional rather than a replacement requirement.
+The server is optional. HomePrep in Home Assistant will continue to work without it.
 
 ## Highlights in 0.8
 
@@ -40,13 +52,13 @@ HomePrep 0.8 brings together the major preparedness building blocks in one workf
 - **Inventory** for supplies and movable preparedness equipment.
 - **Containers** for where supplies are stored or what is packed together.
 - **Household Assets** for fixed or semi-permanent preparedness points such as water shutoffs, floor drains, leak sensors, smoke alarms, extinguishers and electrical panels.
-- **Shopping List** with automatic replacement entries for expired inventory plus manual entries.
+- **Shopping List** with manual entries and automatic replacement entries for expired inventory.
 - **Preparedness Plans** with scenario checklists, review intervals and links to real Inventory, Containers and Assets.
 - **Recurring checks** for Inventory, Containers and Assets, all backed by the same HomePrep Task scheduling system.
 - **Readiness Overview** with per-area progress bars, an overall readiness score, an attention queue and next actions.
-- **Grouped horizontal navigation** for Preparedness, Maintenance, Plans & Guidance and Household.
-- **Configurable HomePrep Lovelace summary card** with selectable sections and display order.
-- **Asset images** to help household members quickly identify important controls or locations.
+- **Grouped navigation** for Preparedness, Maintenance, Plans & Guidance and Household.
+- **Configurable Lovelace summary card** with selectable sections and display order.
+- **Asset and Inventory images** where a visual helps identify or act on something.
 
 The goal is not just to tell you what you own. HomePrep helps answer: **What do we have? Where is it? What needs attention? What should we do in an incident?**
 
@@ -55,130 +67,80 @@ The goal is not just to tell you what you own. HomePrep helps answer: **What do 
 ### Inventory
 Use Inventory for supplies and movable equipment you store, consume, rotate or replace: food, drinking water, batteries, radios, first-aid supplies, hygiene items, flashlights and similar items.
 
-Inventory supports quantities, units, categories, expiry dates, inspection dates, containers, notes and optional images. Expired inventory can automatically create replacement entries in the Shopping List.
+Inventory supports quantities, units, categories, expiry dates, inspection dates, containers, notes and optional images.
 
 ### Containers
-Containers describe **where things are stored or what belongs together**. Examples include a hallway emergency box, family evacuation bag, vehicle kit, cabinet or water-storage area.
+Containers describe **where things are stored or what belongs together**. Examples include an emergency box, family evacuation bag, vehicle kit, cabinet or water-storage area.
 
-Inventory can be assigned to Containers. Containers can have their own recurring inspection task and readiness state, while still reflecting problems with inventory stored inside them.
+Inventory can be assigned to Containers. Containers can have their own recurring inspection task and readiness state.
 
 ### Household Assets
-Assets describe **important fixed or semi-permanent points in the home**, not normal supplies. Examples include:
+Assets describe important fixed or semi-permanent preparedness points in the home, such as:
 
-- main water shutoff
-- isolation valves
-- floor drains
-- leak sensors
-- backflow valves
+- main water shutoff and isolation valves
+- floor drains and leak sensors
 - sump/drainage pumps
-- smoke alarms
-- fire extinguishers
+- smoke alarms and fire extinguishers
 - electrical panels
 - generators
 
-Assets can store a location, description, operating instructions, notes, check dates and an optional image. Images are particularly useful for helping another household member quickly find the correct valve, panel or control.
-
-Assets can also have recurring inspection Tasks. Completing the linked Task updates the Asset's last-check date and calculates the next check automatically.
+Assets can store a location, description, operating instructions, notes, inspection schedule and optional image.
 
 ### Tasks and recurring checks
 HomePrep Tasks handle both standalone preparedness work and linked recurring inspections.
 
-Inventory, Containers and Assets can create recurring checks directly from their editors. The linked Task becomes the scheduling source for the next due date. Completing a recurring check updates the linked resource and calculates the next date from the selected cadence.
-
-Supported recurrence periods include days, weeks, months and years, with reminder lead time and a choice between maintaining planned cadence or scheduling from completion.
+Inventory, Containers and Assets can create recurring checks directly from their editors. The linked Task becomes the scheduling source for the next due date. Completing the check updates the resource and calculates the next date automatically.
 
 ### Shopping List
-The Shopping List can contain manual entries and automatically generated replacement entries.
-
-In 0.8, expired Inventory is the first automatic source. HomePrep carries over useful context such as item name, quantity, unit, category and Container and avoids repeatedly creating duplicate shopping entries for the same expired item.
-
-Shopping entries can be pending, purchased or ignored.
+The Shopping List supports manual entries and automatically generated replacement entries. In 0.8, expired Inventory is the first automatic source.
 
 ### Preparedness Plans
-Plans cover procedures and household readiness that cannot be represented by inventory alone.
+Plans cover household procedures that cannot be represented by inventory alone. Starter templates include fire safety, flood/water damage and rapid evacuation.
 
-Starter templates include:
-
-- fire safety
-- flood / water damage
-- rapid evacuation
-
-Plans support checklists, descriptions/instructions, meeting points, review intervals and readiness state. Checklist items can link to actual Inventory, Containers and Household Assets so plans increasingly reflect real household data rather than isolated tick boxes.
+Checklist items can link to actual Inventory, Containers and Household Assets.
 
 ### Targets and guidance
-Personal Targets define what "ready" means for your household. HomePrep can evaluate quantity, count, coverage and checklist-style readiness goals.
+Personal Targets define what "ready" means for your household.
 
-Current guidance profiles include:
+Current guidance profiles include Sweden (MSB-based), Norway (DSB-based) and a clearly labelled HomePrep general baseline for other countries.
 
-- **Sweden** — MSB-based preparedness profile
-- **Norway** — DSB-based preparedness profile
-- **Other countries** — clearly labelled HomePrep general baseline
-
-Guidance can be adopted into editable personal Targets. HomePrep does not silently overwrite personal Targets when guidance or household settings later change.
+Guidance can be adopted into editable personal Targets. HomePrep does not silently overwrite personal Targets when guidance changes.
 
 ## Readiness Overview
 
-The Overview is designed to give a fast preparedness picture without forcing every issue into a large alert tile.
+HomePrep calculates readiness across configured areas including Inventory, Containers, Tasks, Assets, Plans and Targets.
 
-HomePrep currently calculates readiness across:
-
-- Inventory
-- Containers
-- Tasks
-- Assets
-- Plans
-- Targets
-
-Each configured area receives a readiness percentage based on tracked items versus items needing attention. Empty areas are excluded from the overall average rather than counted as zero.
-
-The **overall readiness score** is the average of the configured area scores. A separate status layer can still show **Action required** or **Needs attention** when a critical or attention-level issue exists, even when the numeric score remains high.
+Empty areas are excluded from the overall average rather than counted as zero. A separate status layer can still show **Action required** or **Needs attention** when a critical issue exists, even when the numeric score remains high.
 
 Shopping items do not directly lower the percentage today; they appear in the attention workflow and influence the overall attention state.
 
-## Sidebar app and navigation
+## Local storage and privacy
 
-After setup, HomePrep appears directly in the Home Assistant sidebar.
+When HomePrep is used in Home Assistant-only mode, operational data and media stay in the user's own Home Assistant installation.
 
-The app uses grouped horizontal navigation:
+No HomePrep cloud account is required. No central HomePrep database is required. HomePrep does not need to know what you keep in your preparedness inventory.
 
-- **Overview**
-- **Preparedness** — Inventory, Containers, Shopping List, Targets
-- **Maintenance** — Tasks, Assets
-- **Plans & Guidance** — Plans, Guidance
-- **Household** — Household, Settings
+Users who later want Web or Android access across multiple clients will be able to run their own **HomePrep Server**. The server is designed to provide synchronization, API access, backup/restore and a web interface while keeping the database under the user's control.
 
-Desktop pointer devices support hover-open dropdown menus, while click/tap remains available for touch and fallback use.
+Local-network-only operation is a valid deployment choice. Remote access is something the infrastructure owner decides to provide and secure.
+
+For the full project commitment, see [DATA-OWNERSHIP.md](DATA-OWNERSHIP.md).
 
 ## Images
 
-HomePrep currently supports optional images for Inventory and Household Assets.
+HomePrep supports optional images for Inventory and Household Assets.
 
-JPEG, PNG and WebP files up to 5 MB are stored separately from HomePrep's structured JSON data. Records contain only media references and metadata. Images appear where they help identify or act on something rather than as decoration.
+JPEG, PNG and WebP files up to 5 MB are stored separately from HomePrep's structured JSON data. Images are used where they help identify or act on something rather than as decoration.
 
 ## Notifications
 
-HomePrep uses Home Assistant's existing notification services. Available recipients can include Home Assistant Companion App devices.
-
-Current notifications include inventory expiring soon, expired inventory, Task reminders, Tasks due today and overdue Tasks. A built-in test action verifies delivery and persisted deduplication avoids repeatedly sending the same event.
+HomePrep uses Home Assistant's existing notification services. Current notifications include inventory expiring soon, expired inventory, Task reminders, Tasks due today and overdue Tasks.
 
 ## Lovelace cards
 
-HomePrep ships its own Lovelace cards and does **not** require Card Mod or third-party card dependencies. Cards register automatically with Home Assistant.
+HomePrep ships its own Lovelace cards and does **not** require Card Mod or third-party card dependencies.
 
-The standard **HomePrep** summary card can now be configured in its visual editor to show or hide and reorder sections for:
-
-- Inventory
-- Containers
-- Shopping List
-- Tasks
-- Assets
-- Plans
-
-The **HomePrep Mini** card provides a compact status view for dense dashboards. Detailed Inventory, Task, category/group, attention and management cards remain available where more information or actions are useful.
-
-HomePrep cards can navigate directly to the HomePrep sidebar application while preserving normal interaction with buttons, forms and task controls.
-
-Most cards share the same appearance system, including presets, custom colors/HEX values, status colors, radius, density, shadow and border options.
+The standard HomePrep summary card can be configured to show, hide and reorder Inventory, Containers, Shopping List, Tasks, Assets and Plans. The HomePrep Mini card provides a compact status view for dense dashboards.
 
 ## Languages
 
@@ -194,7 +156,7 @@ The localization foundation currently supports:
 - German
 - French
 
-HomePrep follows the active Home Assistant frontend language where supported. A HomePrep-specific language override is available in **HomePrep → Settings**. Translation coverage continues to expand as new areas mature.
+HomePrep follows the active Home Assistant frontend language where supported. A HomePrep-specific language override is available in **HomePrep → Settings**.
 
 ## Installation with HACS
 
@@ -210,12 +172,6 @@ HomePrep currently installs as a **custom HACS repository** while inclusion in t
 
 Minimum supported Home Assistant version: **2026.3.0**.
 
-## Data and privacy
-
-HomePrep stores its operational data locally through Home Assistant, including Inventory, Containers, Assets, Shopping List, Tasks, Plans, household planning, Targets, image references and notification settings. HomePrep media files are also stored locally.
-
-A HomePrep cloud account is **not required**. The project is now exploring an optional self-hosted **HomePrep Server** so multi-client use can be added without requiring households to place preparedness data in a central HomePrep-operated database.
-
 ## Releases and updating
 
 HomePrep uses GitHub Releases as its HACS update channel.
@@ -225,18 +181,15 @@ HomePrep uses GitHub Releases as its HACS update channel.
 - Patch releases focus on fixes and refinements.
 - Minor releases may add or reshape functionality while HomePrep remains in active `0.x` development.
 
-See **[CHANGELOG.md](CHANGELOG.md)** for release details.
+See [CHANGELOG.md](CHANGELOG.md) for release details.
 
-## Roadmap
+## Roadmaps
 
-See **[ROADMAP.md](ROADMAP.md)** for the Home Assistant integration roadmap.
+- **[HomePrep for Home Assistant](ROADMAP.md)**
+- **[HomePrep Server](https://github.com/kakelakel/homeprep-server/blob/main/ROADMAP.md)**
+- **[HomePrep Android](https://github.com/kakelakel/homeprep-android/blob/main/ROADMAP.md)**
 
-Server and Android development now have their own roadmaps:
-
-- **[HomePrep Server roadmap](https://github.com/kakelakel/homeprep-server/blob/main/ROADMAP.md)**
-- **[HomePrep Android roadmap](https://github.com/kakelakel/homeprep-android/blob/main/ROADMAP.md)**
-
-The roadmaps are directional and not fixed release promises.
+The roadmaps are directional and not fixed release promises. The data-ownership principle above is an architectural constraint across those roadmaps.
 
 ## Project status
 
