@@ -69,7 +69,7 @@ customElements.whenDefined("homeprep-card").then(() => {
         body: `<div class="metrics">${this.metric("Tasks", summaries.tasks?.tasks)}${this.metric("Overdue", summaries.tasks?.overdue)}${this.metric("Due today", summaries.tasks?.due)}${this.metric("Upcoming", summaries.tasks?.upcoming)}</div>`,
       },
       {
-        id: "assets", icon: "mdi:home-cog", label: "Assets",
+        id: "assets", icon: "mdi:hammer-wrench", label: "Assets",
         body: `<div class="metrics hp-two-metrics">${this.metric("Assets", summaries.assets?.assets)}${this.metric("Checks due", summaries.assets?.critical)}</div>`,
       },
       {
@@ -102,13 +102,13 @@ customElements.whenDefined("homeprep-card").then(() => {
 
 customElements.whenDefined("homeprep-mini-card").then(() => {
   const cls = customElements.get("homeprep-mini-card");
-  if (!cls || cls.prototype.__homePrepAssetIconPatched) return;
+  if (!cls || cls.prototype.__homePrepAssetIconV2Patched) return;
   const proto = cls.prototype;
-  proto.__homePrepAssetIconPatched = true;
+  proto.__homePrepAssetIconV2Patched = true;
   const oldRender = proto.render;
   proto.render = function render(...args) {
     const result = oldRender.apply(this, args);
-    this.querySelectorAll('ha-icon[icon="mdi:home-cog-outline"]').forEach((icon) => icon.setAttribute("icon", "mdi:home-cog"));
+    this.querySelectorAll('ha-icon[icon="mdi:home-cog-outline"],ha-icon[icon="mdi:home-cog"]').forEach((icon) => icon.setAttribute("icon", "mdi:hammer-wrench"));
     return result;
   };
 });
@@ -125,7 +125,7 @@ customElements.whenDefined("homeprep-tasks-card").then(() => {
     const isAsset = task.task_kind === "asset_inspection";
     const resource = isAsset ? task.linked_asset : task.linked_container;
     const image = isAsset ? resourceImage(resource) : null;
-    const icon = isAsset ? "mdi:home-cog" : "mdi:archive-outline";
+    const icon = isAsset ? "mdi:hammer-wrench" : "mdi:archive-outline";
     const kind = isAsset ? "Asset check" : "Container check";
     const recurrence = this.config?.show_recurrence !== false ? this.recurrenceLabel(task) : null;
     const linked = this.config?.show_linked_item !== false && resource ? resource.name : null;
