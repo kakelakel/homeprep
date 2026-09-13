@@ -14,11 +14,13 @@ class HomePrepTaskService:
         inventory_service: Any,
         household_id: str,
         container_service: Any | None = None,
+        asset_service: Any | None = None,
     ) -> None:
         self._repository = repository
         self._inventory_service = inventory_service
         self._household_id = household_id
         self._container_service = container_service
+        self._asset_service = asset_service
 
     async def async_load(self) -> None:
         await self._repository.async_load()
@@ -31,7 +33,12 @@ class HomePrepTaskService:
         return next((task for task in self.tasks if task["id"] == task_id), None)
 
     def find_linked_task(self, linked_id: str, task_kind: str) -> dict[str, Any] | None:
-        key = "linked_container_id" if task_kind == "container_inspection" else "linked_item_id"
+        if task_kind == "container_inspection":
+            key = "linked_container_id"
+        elif task_kind == "asset_inspection":
+            key = "linked_asset_id"
+        else:
+            key = "linked_item_id"
         return next(
             (
                 task
@@ -91,6 +98,11 @@ class HomePrepTaskService:
                 await self._container_service.async_update(existing["linked_container_id"], {"next_check_at": None})
             except KeyError:
                 pass
+        if existing.get("task_kind") == "asset_inspection" and existing.get("linked_asset_id") and self._asset_service:
+            try:
+                await self._asset_service.async_update(existing["linked_asset_id"], {"next_check_at": None})
+            except KeyError:
+                pass
 
     async def async_complete_task(
         self,
@@ -117,12 +129,16 @@ class HomePrepTaskService:
         for task in self.tasks:
             item = None
             container = None
+            asset = None
             linked_item_id = task.get("linked_item_id")
             linked_container_id = task.get("linked_container_id")
+            linked_asset_id = task.get("linked_asset_id")
             if linked_item_id:
                 item = self._inventory_service.get_item(linked_item_id)
             if linked_container_id and self._container_service:
                 container = self._container_service.get_container(linked_container_id)
+            if linked_asset_id and self._asset_service:
+                asset = self._asset_service.get_asset(linked_asset_id)
             result.append(
                 {
                     **task,
@@ -142,6 +158,19 @@ class HomePrepTaskService:
                     "linked_container": (
                         {"id": container["id"], "name": container["name"], "location": container.get("location")}
                         if container else None
+                    ),
+                    "linked_asset": (
+                        {
+                            "id": asset["id"],
+                            "name": asset["name"],
+                            "location": asset.get("location"),
+                            "asset_type": asset.get("asset_type"),
+                            "image_id": asset.get("image_id"),
+                            "image_token": asset.get("image_token"),
+                            "image_content_type": asset.get("image_content_type"),
+                            "image_filename": asset.get("image_filename"),
+                        }
+                        if asset else None
                     ),
                 }
             )
@@ -170,6 +199,12 @@ class HomePrepTaskService:
                 raise KeyError("Container service unavailable")
             if self._container_service.get_container(linked_container_id) is None:
                 raise KeyError(f"Container not found: {linked_container_id}")
+        linked_asset_id = data.get("linked_asset_id")
+        if linked_asset_id:
+            if not self._asset_service:
+                raise KeyError("Asset service unavailable")
+            if self._asset_service.get_asset(linked_asset_id) is None:
+                raise KeyError(f"Asset not found: {linked_asset_id}")
 
     async def _sync_linked_resource(self, task: dict[str, Any]) -> None:
         if task.get("task_kind") == "inspection":
@@ -196,6 +231,19 @@ class HomePrepTaskService:
             if task.get("last_completed_at"):
                 updates["last_checked_at"] = task["last_completed_at"]
             await self._container_service.async_update(container_id, updates)
+            return
+
+        if task.get("task_kind") == "asset_inspection" and self._asset_service:
+            asset_id = task.get("linked_asset_id")
+            if not asset_id:
+                return
+            if not task.get("enabled", True):
+                await self._asset_service.async_update(asset_id, {"next_check_at": None})
+                return
+            updates = {"next_check_at": task.get("next_due_at")}
+            if task.get("last_completed_at"):
+                updates["last_checked_at"] = task["last_completed_at"]
+            await self._asset_service.async_update(asset_id, updates)
 
     def _require_task(self, task_id: str) -> dict[str, Any]:
         task = self.get_task(task_id)
