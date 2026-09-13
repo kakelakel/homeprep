@@ -1,16 +1,26 @@
 # HomePrep Roadmap
 
-HomePrep is under active development. This roadmap covers the **Home Assistant integration** in this repository. HomePrep Server and HomePrep Android now have their own roadmaps and release lifecycles.
+HomePrep is under active development. This roadmap covers the **Home Assistant integration** in this repository. HomePrep Server and HomePrep Android have their own roadmaps and release lifecycles.
 
 Ideas may move, change shape or be dropped as HomePrep evolves and real-world feedback comes in.
+
+## Permanent project principle
+
+**Your preparedness. Your infrastructure. Your data.**
+
+Core private household preparedness data will not require centralized HomePrep-operated storage.
+
+Home Assistant-only operation will remain a first-class mode. Future optional managed services may exist elsewhere in the HomePrep ecosystem, but they must remain optional and must not remove the user's ability to run core HomePrep functionality using infrastructure they control.
+
+> **Convenience may be centralized. Ownership must not be.**
+
+This principle is an architectural constraint across the HomePrep project family. See [DATA-OWNERSHIP.md](DATA-OWNERSHIP.md).
 
 ## Project family
 
 - [`kakelakel/homeprep`](https://github.com/kakelakel/homeprep) — Home Assistant integration
 - [`kakelakel/homeprep-server`](https://github.com/kakelakel/homeprep-server) — optional self-hosted server, API and web client
 - [`kakelakel/homeprep-android`](https://github.com/kakelakel/homeprep-android) — planned Android client
-
-The broader product direction is **local-first and self-hosted by default**: *Your preparedness. Your server. Your data.*
 
 ## Current focus after 0.8
 
@@ -21,6 +31,7 @@ The broader product direction is **local-first and self-hosted by default**: *Yo
 - Refine Plan templates and resource links so household procedures increasingly reflect real Inventory, Containers and Assets.
 - Continue polishing the configurable HomePrep Lovelace summary experience.
 - Keep local Home Assistant-only operation strong while preparing an optional future HomePrep Server mode.
+- Preserve local storage and avoid introducing dependencies on HomePrep-operated infrastructure into the Home Assistant-only path.
 - Complete the HACS default-repository review process so HomePrep can be discovered directly in HACS.
 - Keep HACS and Hassfest validation green across stable and prerelease channels.
 
@@ -111,6 +122,16 @@ Planned Home Assistant work includes:
 - compatibility across Home Assistant and Server versions
 
 The existing local Home Assistant storage model will not be removed merely because Server mode exists.
+
+## Architecture constraints for the Home Assistant client
+
+- Home Assistant-only operation remains supported.
+- No mandatory HomePrep account for core functionality.
+- No mandatory central HomePrep database.
+- No hidden upload of household preparedness data to HomePrep-operated infrastructure.
+- No mandatory telemetry for core operation.
+- Any future Server mode must clearly show which user-controlled server is connected.
+- Migration to Server mode must be explicit rather than automatic.
 
 ## Medium term ideas for the Home Assistant client
 
