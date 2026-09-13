@@ -1,16 +1,26 @@
 # HomePrep Roadmap
 
-HomePrep is under active development. This roadmap is a public direction board rather than a fixed promise or release schedule.
+HomePrep is under active development. This roadmap covers the **Home Assistant integration** in this repository. HomePrep Server and HomePrep Android now have their own roadmaps and release lifecycles.
 
 Ideas may move, change shape or be dropped as HomePrep evolves and real-world feedback comes in.
 
+## Project family
+
+- [`kakelakel/homeprep`](https://github.com/kakelakel/homeprep) — Home Assistant integration
+- [`kakelakel/homeprep-server`](https://github.com/kakelakel/homeprep-server) — optional self-hosted server, API and web client
+- [`kakelakel/homeprep-android`](https://github.com/kakelakel/homeprep-android) — planned Android client
+
+The broader product direction is **local-first and self-hosted by default**: *Your preparedness. Your server. Your data.*
+
 ## Current focus after 0.8
 
-- Refine the new **Household Assets**, **Shopping List**, readiness Overview and grouped navigation from real household use.
+- Use HomePrep 0.8 in real household workflows and refine what actually matters day to day.
+- Refine **Household Assets**, **Shopping List**, readiness Overview and grouped navigation from real use.
 - Improve the end-to-end replacement workflow from expired Inventory → Shopping List → purchased replacement → refreshed Inventory.
 - Continue improving recurring checks for Inventory, Containers and Assets using the shared Task scheduling model.
 - Refine Plan templates and resource links so household procedures increasingly reflect real Inventory, Containers and Assets.
 - Continue polishing the configurable HomePrep Lovelace summary experience.
+- Keep local Home Assistant-only operation strong while preparing an optional future HomePrep Server mode.
 - Complete the HACS default-repository review process so HomePrep can be discovered directly in HACS.
 - Keep HACS and Hassfest validation green across stable and prerelease channels.
 
@@ -35,11 +45,11 @@ Ideas may move, change shape or be dropped as HomePrep evolves and real-world fe
 - Proper GitHub release flow with semantic versions and HACS prerelease testing.
 - Inventory images in the sidebar and applicable Lovelace/task views.
 - Automatic Lovelace card registration and visual card editors.
-- Recurring tasks, linked Inventory inspections and Home Assistant notifications.
-- Preparedness targets, household planning and country guidance profiles.
+- Recurring Tasks, linked Inventory inspections and Home Assistant notifications.
+- Preparedness Targets, household planning and country guidance profiles.
 - Initial multilingual support with automatic Home Assistant language detection and optional HomePrep language override.
 - English, Swedish, Norwegian Bokmål, Danish, Finnish, German and French language foundations.
-- Preparedness Containers with inventory assignment, readiness status and recurring checks.
+- Preparedness Containers with Inventory assignment, readiness status and recurring checks.
 - Preparedness Plans with starter templates for fire safety, flood/water damage and rapid evacuation.
 - Direct navigation from HomePrep Lovelace cards to the HomePrep sidebar application.
 - Stable platform-neutral IDs and synchronization-oriented metadata foundations for future clients.
@@ -75,9 +85,9 @@ Ideas may move, change shape or be dropped as HomePrep evolves and real-world fe
 - Connect Container, Asset, Shopping and Plan attention states to notifications where useful.
 
 ### Lovelace and UI
-- Continue refining the grouped horizontal navigation on desktop and mobile.
+- Continue refining grouped horizontal navigation on desktop and mobile.
 - Continue improving visual editors and reusable display options while keeping the number of card types small.
-- Add richer readiness visualizations where they are useful without duplicating the sidebar app.
+- Add richer readiness visualizations where useful without duplicating the sidebar app.
 - Further mobile-first improvements.
 - Continue localization coverage across newer 0.8 areas, editor subtexts and dynamic content.
 
@@ -87,23 +97,23 @@ Ideas may move, change shape or be dropped as HomePrep evolves and real-world fe
 - Expand household-specific planning without silently changing personal Targets.
 - Explore guidance that can suggest relevant Plans, Assets or Container types without silently creating personal data.
 
-## Medium term ideas
+## HomePrep Server integration track
 
-### Food and crisis cooking
-- Build a recipe section focused on cooking during disruptions, outages and other crisis situations.
-- Include recipes that work with long-life preparedness foods and limited fresh ingredients.
-- Support filtering by available Inventory so HomePrep can suggest meals based on what the household already has.
-- Include low-energy and no-grid cooking options for situations with limited electricity or fuel.
-- Support dietary preferences, serving sizes and simple substitution suggestions.
+The self-hosted server itself is developed in [`homeprep-server`](https://github.com/kakelakel/homeprep-server). This repository will later focus on the **Home Assistant client side** of that integration.
 
-### Community and preparedness discussion
-- Add an optional community discussion area to the standalone app for preparedness topics.
-- Support topic-based discussions such as food storage, water, power outages, evacuation, communications and household planning.
-- Allow useful guides, experiences and practical tips to be shared between HomePrep users.
-- Design community features with clear moderation, reporting and safety controls from the beginning.
-- Keep community participation optional and separate from private household preparedness data.
+Planned Home Assistant work includes:
 
-### Other ideas
+- optional Server mode alongside the existing local-only mode
+- import/migration of existing HomePrep household data to a user's own HomePrep Server
+- secure server pairing/configuration
+- preserving Home Assistant-specific notification and Lovelace functionality
+- clear connection/synchronization status
+- compatibility across Home Assistant and Server versions
+
+The existing local Home Assistant storage model will not be removed merely because Server mode exists.
+
+## Medium term ideas for the Home Assistant client
+
 - Import/export and backup-friendly HomePrep data formats.
 - Barcode or QR-assisted Inventory entry.
 - Item templates for common preparedness supplies and equipment.
@@ -111,33 +121,22 @@ Ideas may move, change shape or be dropped as HomePrep evolves and real-world fe
 - Better support for replacement cycles, maintenance intervals and consumable rotation.
 - More flexible dashboards and preparedness summaries.
 - Additional accessibility work.
+- Useful links/actions between Home Assistant automations and HomePrep resources.
 
-## Longer-term product direction
+## Separate product roadmaps
 
-These are larger product tracks HomePrep should stay technically ready for. They are intended directions, but no release dates are promised.
+### HomePrep Server
+The self-hosted backend, API, Web UI, synchronization and backup/restore roadmap lives here:
 
-### Standalone HomePrep app
-- Build a standalone HomePrep application that can be used without Home Assistant.
-- Keep the app local-first, with useful offline capability.
-- Reuse the same core HomePrep concepts for Inventory, Containers, Assets, Shopping, Tasks, Plans, Targets, Guidance and household preparedness.
-- Support shared household use across multiple people and devices.
-- Provide access to crisis-cooking recipes and, when online, optional community features.
+**[HomePrep Server Roadmap](https://github.com/kakelakel/homeprep-server/blob/main/ROADMAP.md)**
 
-### HomePrep cloud service
-- Build an optional HomePrep cloud service for synchronization between Home Assistant and standalone HomePrep clients.
-- Support secure multi-device and multi-user household synchronization.
-- Synchronize platform-neutral HomePrep data while keeping Home Assistant-specific settings local to the Home Assistant installation.
-- Preserve local-first operation so a HomePrep cloud account is not required for basic Home Assistant use.
-- Support offline-first synchronization and safe conflict/deletion handling as the product matures.
-- Provide online services needed for optional community functionality without exposing private household data.
+### HomePrep Android
+The Android client, pairing, offline behaviour and mobile-native workflow roadmap lives here:
 
-### Platform expansion
-- Make Home Assistant one HomePrep client rather than the definition of HomePrep itself.
-- Allow future clients to share a common HomePrep household while retaining platform-specific integrations and presentation.
-- Explore secure APIs and integrations for other smart-home or preparedness platforms over time.
+**[HomePrep Android Roadmap](https://github.com/kakelakel/homeprep-android/blob/main/ROADMAP.md)**
 
 ## Ideas welcome
 
 If you have an idea that would make HomePrep more useful for real household preparedness, open a GitHub issue and describe the use case rather than only the feature.
 
-That helps us understand what problem the feature should solve and how broadly useful it may be.
+That helps us understand what problem the feature should solve and which HomePrep repository it belongs in.
