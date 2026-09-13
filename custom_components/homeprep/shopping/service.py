@@ -29,7 +29,7 @@ class HomePrepShoppingService:
         today = date.today().isoformat()
         existing_sources = {
             item.get("source_id")
-            for item in self.items
+            for item in self._repository.all_items
             if item.get("source_type") == "inventory_expired" and item.get("source_id")
         }
         added = 0
