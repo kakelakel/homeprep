@@ -6,11 +6,11 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-TASK_SCHEMA_VERSION = 3
+TASK_SCHEMA_VERSION = 4
 
 RECURRENCE_TYPES = {"days", "weeks", "months", "years"}
 RESCHEDULE_MODES = {"completion", "scheduled"}
-TASK_KINDS = {"general", "inspection"}
+TASK_KINDS = {"general", "inspection", "container_inspection"}
 
 
 def utcnow_iso() -> str:
@@ -50,6 +50,7 @@ def create_task(
         "task_kind": task_kind,
         "category": data.get("category"),
         "linked_item_id": data.get("linked_item_id"),
+        "linked_container_id": data.get("linked_container_id"),
         "recurrence_type": recurrence_type,
         "recurrence_interval": recurrence_interval,
         "reschedule_mode": reschedule_mode,
