@@ -27,6 +27,10 @@ class HAShoppingRepository:
     def items(self) -> list[dict[str, Any]]:
         return [dict(item) for item in self._items if not item.get("deleted_at")]
 
+    @property
+    def all_items(self) -> list[dict[str, Any]]:
+        return [dict(item) for item in self._items]
+
     async def async_add(self, item: dict[str, Any]) -> dict[str, Any]:
         self._items.append(item)
         await self._save()
