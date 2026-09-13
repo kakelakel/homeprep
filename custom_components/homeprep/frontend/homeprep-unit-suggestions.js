@@ -92,6 +92,16 @@
       }
       return originalHandleChange.call(this, event);
     };
+
+    if (!proto.__homeprepContainerBadgePatched) {
+      proto.__homeprepContainerBadgePatched = true;
+      const oldStyles = proto.styles;
+      proto.styles = function styles() {
+        return `${oldStyles.call(this)}
+          .hp-container-card .badge{display:inline-flex!important;align-items:center;justify-content:center;width:auto!important;height:auto!important;min-height:28px;max-width:160px;padding:6px 10px!important;border-radius:999px!important;text-align:center;line-height:1.1}
+        `;
+      };
+    }
   });
 })();
 
