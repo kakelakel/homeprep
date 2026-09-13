@@ -11,6 +11,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 
+from .assets.repository import HAAssetRepository
+from .assets.service import HomePrepAssetService
+from .assets.websocket import ASSET_SERVICE_KEY, async_register_asset_websocket
 from .containers.repository import HAContainerRepository
 from .containers.service import HomePrepContainerService
 from .containers.websocket import CONTAINER_SERVICE_KEY, async_register_container_websocket
@@ -29,6 +32,9 @@ from .plans.repository import HAPlanRepository
 from .plans.service import HomePrepPlanService
 from .plans.websocket import PLAN_SERVICE_KEY, async_register_plan_websocket
 from .repositories.ha_storage import HAStorageRepository
+from .shopping.repository import HAShoppingRepository
+from .shopping.service import HomePrepShoppingService
+from .shopping.websocket import SHOPPING_SERVICE_KEY, async_register_shopping_websocket
 from .tasks.repository import HATaskRepository
 from .tasks.service import HomePrepTaskService
 from .tasks.websocket import async_register_task_websocket
@@ -46,7 +52,7 @@ UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=4"
 
 PANEL_URL_PATH = "homeprep"
 PANEL_WEB_COMPONENT = "homeprep-panel"
-PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel-v10.js?v=1"
+PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel-v11.js?v=1"
 
 INSPECTION_FIELDS = {
     "inspection_enabled",
@@ -207,6 +213,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     async_register_notification_websocket(hass)
     async_register_container_websocket(hass)
     async_register_plan_websocket(hass)
+    async_register_asset_websocket(hass)
+    async_register_shopping_websocket(hass)
     async_register_media(hass)
     return True
 
@@ -253,6 +261,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     plan_service = HomePrepPlanService(plan_repository, household_id, service, container_service)
     await plan_service.async_load()
     hass.data[DOMAIN][PLAN_SERVICE_KEY] = plan_service
+
+    asset_repository = HAAssetRepository(hass, household_id)
+    asset_service = HomePrepAssetService(asset_repository, household_id)
+    await asset_service.async_load()
+    hass.data[DOMAIN][ASSET_SERVICE_KEY] = asset_service
+
+    shopping_repository = HAShoppingRepository(hass, household_id)
+    shopping_service = HomePrepShoppingService(shopping_repository, service, household_id)
+    await shopping_service.async_load()
+    hass.data[DOMAIN][SHOPPING_SERVICE_KEY] = shopping_service
 
     notification_service = HomePrepNotificationService(hass, service, task_service)
     await notification_service.async_load()
@@ -320,6 +338,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(TASK_SERVICE_KEY, None)
         hass.data[DOMAIN].pop(CONTAINER_SERVICE_KEY, None)
         hass.data[DOMAIN].pop(PLAN_SERVICE_KEY, None)
+        hass.data[DOMAIN].pop(ASSET_SERVICE_KEY, None)
+        hass.data[DOMAIN].pop(SHOPPING_SERVICE_KEY, None)
         hass.data[DOMAIN].pop(NOTIFICATION_SERVICE_KEY, None)
         hass.data[DOMAIN].pop(IDENTITY_KEY, None)
         if not hass.data[DOMAIN]:
