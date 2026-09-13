@@ -14,7 +14,7 @@ from .taxonomy import (
 )
 
 
-ITEM_SCHEMA_VERSION = 3
+ITEM_SCHEMA_VERSION = 4
 
 
 def utcnow_iso() -> str:
@@ -39,6 +39,7 @@ def create_item(
         "item_type": validate_item_type(data["item_type"]),
         "quantity": data["quantity"],
         "unit": validate_unit(data["unit"]),
+        "container_id": data.get("container_id") or None,
         "expires_at": data.get("expires_at"),
         "last_checked": data.get("last_checked"),
         "next_check_at": data.get("next_check_at"),
@@ -69,6 +70,7 @@ def normalize_item(
     normalized["unit"] = normalize_unit(normalized.get("unit", "piece"))
     normalized.setdefault("id", str(uuid4()))
     normalized["household_id"] = str(normalized.get("household_id") or household_id or "")
+    normalized.setdefault("container_id", None)
     normalized.setdefault("image_id", None)
     normalized.setdefault("image_token", None)
     normalized.setdefault("image_content_type", None)
