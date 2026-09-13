@@ -42,11 +42,11 @@ IDENTITY_KEY = "identity"
 
 FRONTEND_PATH = Path(__file__).parent / "frontend"
 FRONTEND_URL = "/api/homeprep/frontend"
-UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=3"
+UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=4"
 
 PANEL_URL_PATH = "homeprep"
 PANEL_WEB_COMPONENT = "homeprep-panel"
-PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel-v9.js?v=1"
+PANEL_MODULE_URL = f"{FRONTEND_URL}/homeprep-panel-v10.js?v=1"
 
 INSPECTION_FIELDS = {
     "inspection_enabled",
@@ -239,18 +239,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][PLANNING_SERVICE_KEY] = planning_service
     await _async_apply_setup_wizard(hass, entry, planning_service)
 
-    task_repository = HATaskRepository(hass, household_id)
-    task_service = HomePrepTaskService(task_repository, service, household_id)
-    await task_service.async_load()
-    hass.data[DOMAIN][TASK_SERVICE_KEY] = task_service
-
     container_repository = HAContainerRepository(hass, household_id)
     container_service = HomePrepContainerService(container_repository, service, household_id)
     await container_service.async_load()
     hass.data[DOMAIN][CONTAINER_SERVICE_KEY] = container_service
 
+    task_repository = HATaskRepository(hass, household_id)
+    task_service = HomePrepTaskService(task_repository, service, household_id, container_service)
+    await task_service.async_load()
+    hass.data[DOMAIN][TASK_SERVICE_KEY] = task_service
+
     plan_repository = HAPlanRepository(hass, household_id)
-    plan_service = HomePrepPlanService(plan_repository, household_id)
+    plan_service = HomePrepPlanService(plan_repository, household_id, service, container_service)
     await plan_service.async_load()
     hass.data[DOMAIN][PLAN_SERVICE_KEY] = plan_service
 
