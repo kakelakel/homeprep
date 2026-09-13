@@ -48,7 +48,7 @@ IDENTITY_KEY = "identity"
 
 FRONTEND_PATH = Path(__file__).parent / "frontend"
 FRONTEND_URL = "/api/homeprep/frontend"
-UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=4"
+UNIT_SUGGESTIONS_URL = f"{FRONTEND_URL}/homeprep-unit-suggestions.js?v=5"
 
 PANEL_URL_PATH = "homeprep"
 PANEL_WEB_COMPONENT = "homeprep-panel"
@@ -257,15 +257,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await task_service.async_load()
     hass.data[DOMAIN][TASK_SERVICE_KEY] = task_service
 
-    plan_repository = HAPlanRepository(hass, household_id)
-    plan_service = HomePrepPlanService(plan_repository, household_id, service, container_service)
-    await plan_service.async_load()
-    hass.data[DOMAIN][PLAN_SERVICE_KEY] = plan_service
-
     asset_repository = HAAssetRepository(hass, household_id)
     asset_service = HomePrepAssetService(asset_repository, household_id)
     await asset_service.async_load()
     hass.data[DOMAIN][ASSET_SERVICE_KEY] = asset_service
+
+    plan_repository = HAPlanRepository(hass, household_id)
+    plan_service = HomePrepPlanService(
+        plan_repository,
+        household_id,
+        service,
+        container_service,
+        asset_service,
+    )
+    await plan_service.async_load()
+    hass.data[DOMAIN][PLAN_SERVICE_KEY] = plan_service
 
     shopping_repository = HAShoppingRepository(hass, household_id)
     shopping_service = HomePrepShoppingService(shopping_repository, service, household_id)
