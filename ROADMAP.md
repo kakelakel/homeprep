@@ -88,6 +88,14 @@ This principle is an architectural constraint across the HomePrep project family
 - Expand links between checklist items, Inventory, Containers, Assets and Tasks so Plan readiness can increasingly be verified from real HomePrep data.
 - Improve household meeting-point, evacuation-route and dependant/pet planning support.
 
+### Offline and printable preparedness
+- Add printable preparedness checklists that remain useful if Home Assistant, the network or household power is unavailable.
+- Add a printable current-stock report for Inventory.
+- Support grouping/cataloguing printed Inventory by Container and/or storage location.
+- Include useful metadata such as quantity, unit, expiry/rotation information and notes where applicable.
+- Support optional item/container images in print-friendly reports where they materially help identification.
+- Prefer a clean print/PDF-friendly representation that can also serve as a practical offline household reference.
+
 ### Tasks and notifications
 - More actionable Task notifications.
 - Better links from notifications directly into the relevant HomePrep resource.
